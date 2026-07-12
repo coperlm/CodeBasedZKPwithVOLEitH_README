@@ -1,0 +1,624 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>模块七：高级应用层签名</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="favicon-8114d1fc.png">
+        <link rel="stylesheet" href="css/variables-8adf115d.css">
+        <link rel="stylesheet" href="css/general-e96d0476.css">
+        <link rel="stylesheet" href="css/chrome-d279d366.css">
+        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex-9cb3f75c.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc-a46918db.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title"></h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="模块七高级应用层群签名与全动态属性基签名-fdabs"><a class="header" href="#模块七高级应用层群签名与全动态属性基签名-fdabs">模块七：高级应用层——群签名与全动态属性基签名 (FDABS)</a></h1>
+<hr>
+<h2 id="一概述"><a class="header" href="#一概述">一、概述</a></h2>
+<p>本模块构建在环签名（模块六）的基础上，增加了两个重要的密码学功能：</p>
+<ol>
+<li>
+<p><strong>群签名（Group Signature, GS）</strong>：除了环签名的匿名性外，群签名允许一个<strong>群管理员</strong>在必要时<strong>撤销匿名性</strong>，追踪出签名者的身份。这通过 McEliece 加密将身份信息 $j$ 和消息 $m$ 嵌入密文 $(c_1, c_2)$ 实现。</p>
+</li>
+<li>
+<p><strong>全动态属性基签名（Fully Dynamic Attribute-Based Signature, FDABS）</strong>：签名者拥有一个属性向量，只有当<strong>属性满足某个布尔电路策略（Policy）</strong> 时才能生成有效签名。代码将布尔电路编码为 AND 门约束，并利用 Merkle 树累加器证明属性集的有效性。</p>
+</li>
+</ol>
+<hr>
+<h2 id="二群签名group-signature"><a class="header" href="#二群签名group-signature">二、群签名（Group Signature）</a></h2>
+<h3 id="21-安全问题域"><a class="header" href="#21-安全问题域">2.1 安全问题域</a></h3>
+<p>群签名同时证明三个断言：</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>断言</th><th>安全目标</th><th>实现机制</th></tr>
+</thead>
+<tbody>
+<tr><td>签名者属于群</td><td><strong>匿名性</strong></td><td>Merkle 树累加器（同环签名）</td></tr>
+<tr><td>签名者的身份是 $j$</td><td><strong>可追踪性</strong></td><td>McEliece 加密 $c_1 = G_1 \cdot \binom{r_1}{\text{bin}(j)} \oplus \text{RE}(e’_1)$</td></tr>
+<tr><td>消息绑定</td><td><strong>不可伪造性</strong></td><td>$c_2 = G_2 \cdot \binom{r_2}{\text{bin}(m)} \oplus \text{RE}(e’_2)$</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="22-witness-结构"><a class="header" href="#22-witness-结构">2.2 Witness 结构</a></h3>
+<p>群签名的 witness 在环签名 witness 基础上增加了加密随机数和噪声种子：</p>
+<pre><code>witness = [j_0..j_{ell-1}]                    // ell 个方向比特
+        + [v_1] + [w_1]                       // Merkle 路径节点
+        + ...
+        + [v_ell] + [w_ell]
+        + [x_0] + [x_1]                       // 叶子秘密
+        + [r_1]                                // McEliece 随机数 1 (ke-ell 比特)
+        + [r_2]                                // McEliece 随机数 2 (ke-ell 比特)
+        + [e'_1]                               // 噪声种子 1 (k 比特)
+        + [e'_2]                               // 噪声种子 2 (k 比特)
+</code></pre>
+<p>总长度为：</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn expected_witness_len(pk: &amp;GroupPublicKey) -&gt; Result&lt;usize, String&gt; {
+    Ok(pk.ell + 2 * pk.ell * pk.n + 2 * pk.n   // Merkle 部分 (同环签名)
+       + 2 * (pk.ke - pk.ell)                    // 随机数 r1, r2
+       + 2 * pk.k)                               // 噪声种子 e'_1, e'_2
+}
+<span class="boring">}</span></code></pre>
+<h3 id="23-加密约束的构建"><a class="header" href="#23-加密约束的构建">2.3 加密约束的构建</a></h3>
+<p>群签名约束系统 = <strong>环签名约束 + 两个 McEliece 加密约束</strong>。</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 1. 复用环签名的 Merkle 路径约束
+let mut constraints = build_ring_signature_constraints(
+    b0_cols, b1_cols, root_u, ell, n, c_hash, hash_re_table
+)?;
+
+// 2. 添加 McEliece 加密约束 c1
+for row_idx in 0..ne {
+    let mut equation = BTreeSet::new();
+    // 线性部分: G1 · (r1 || bin(j))
+    append_linear_matrix_row_terms(
+        &amp;mut equation, g1_cols, 0..r_len, offsets.r1_start, row_idx);
+    append_linear_matrix_row_terms(
+        &amp;mut equation, g1_cols, r_len..r_len+ell, offsets.j_start, row_idx);
+    // 噪声部分: RE(e'_1)
+    append_re_terms(&amp;mut equation, row_idx, offsets.e1_prime_start, ...);
+    // 常数项: c1_bits
+    if c1_bits[row_idx] { xor_insert(&amp;mut equation, Vec::new()); }
+    constraints.push(equation.into_iter().collect());
+}
+
+// 3. 相同的结构用于 c2
+<span class="boring">}</span></code></pre>
+<p><strong>加密约束的 ANF 形式</strong>：</p>
+<p>对于密文 $c_1$ 的第 $i$ 个比特，约束为：</p>
+<p>$$
+c_{1,i} + \sum_{j: G_{1,i,j}=1} (r_1 | \text{bin}(j))_j + \text{RE}(e’_1)_i = 0
+$$</p>
+<p>其中：</p>
+<ul>
+<li><code>append_linear_matrix_row_terms</code> 处理 <strong>线性部分</strong> $G \cdot \binom{r}{\text{bin}(j)}$：遍历 $G$ 矩阵的第 $i$ 行、涉及的列范围，每一列为 1 的位置对应一个线性变量</li>
+<li><code>append_re_terms</code> 处理<strong>正则噪声</strong> $\text{RE}(e’)$：$\text{RE}(e’)_i$ 在约束层面被展开为多个 degree-$c_e$ 的 ANF 单项式的 XOR 求和（通过 <code>append_re_terms</code> 注入每个单项式）</li>
+<li>最后翻转常数项使方程等于 0</li>
+</ul>
+<p>这与公式 $c = G \cdot \binom{u}{m} \oplus \text{RE}(e’)$ 完美对应——只不过这个关系被编码在<strong>约束方程 $g_i(\cdot) = 0$</strong> 中，而不是直接计算。</p>
+<h3 id="24-签名流程"><a class="header" href="#24-签名流程">2.4 签名流程</a></h3>
+<pre><code>Algorithm: Group Sign(pk, sk, msg)
+Input:  pk = (B0, B1, G1, G2, root_u, ...), sk = membership_witness, msg
+Output: GroupSignature
+
+1.  生成一次性随机数 r1, r2, e'_1, e'_2
+2.  将 sk.membership_witness + (r1, r2, e'_1, e'_2) 拼接为完整 witness
+
+3.  Statement Digest:
+     absorb(pk.ell, pk.n, pk.ke, pk.ne, pk.k, pk.te,
+            pk.c_hash, pk.c_e, B0.seed, B1.seed, G1.seed, G2.seed, root_u, msg)
+
+4.  **加密并行计算**:
+     g_input1 = (r1 || bin(j)), g_input2 = (r2 || bin(j))
+     linear1 = linear_matrix_vector_mul_streaming_ct(G1, g_input1)
+     linear2 = linear_matrix_vector_mul_streaming_ct(G2, g_input2)
+     re_e1 = regular_encode_ct(e'_1, c_e)
+     re_e2 = regular_encode_ct(e'_2, c_e)
+     c1 = linear1 ⊕ re_e1
+     c2 = linear2 ⊕ re_e2
+
+5.  VOLE Commit → Correction → Challenges
+
+6.  Implicit Data:
+     Merkle χ'（同环签名）
+     G1 χ' = compute_chi_prime_streaming_f128(χ[c1_range], G1)
+     G2 χ' = compute_chi_prime_streaming_f128(χ[c2_range], G2)
+
+7.  Advanced Implicit Response:
+     自定义求值器 evaluate_group_implicit_from_affine
+     → 合并 Merkle 环 + 加密约束的隐式求值
+
+8.  FAEST Opening → VoleitHTranscript
+
+9.  Return σ = (CommitmentMessage, ProofMessage, VoleitHTranscript, c1_bits, c2_bits)
+</code></pre>
+<p>注意：密文 $(c_1, c_2)$ 被显式包含在签名中（Verifier 需要它们来验证约束）。由于这些密文本身就是公开值（任何知道公钥的人都可以验证其结构），这不影响匿名性。</p>
+<h3 id="25-公式-代码映射"><a class="header" href="#25-公式-代码映射">2.5 公式-代码映射</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>数学符号</th><th>代码</th></tr>
+</thead>
+<tbody>
+<tr><td>$G_1, G_2 \in \mathbb{F}_2^{n_e \times k_e}$</td><td><code>pk.g1_cols, pk.g2_cols: StreamingMatrixCols</code></td></tr>
+<tr><td>密文 $c_1, c_2 \in \mathbb{F}_2^{n_e}$</td><td><code>signature.c1_bits, signature.c2_bits: MainBitVec</code></td></tr>
+<tr><td>身份 $j \in {0,1}^\ell$</td><td><code>witness[j_start..j_start+ell]</code></td></tr>
+<tr><td>随机数 $r_1, r_2 \in \mathbb{F}_2^{k_e-\ell}$</td><td><code>witness[r1_start..r1_start+r_len]</code></td></tr>
+<tr><td>噪声种子 $e’_1, e’_2 \in \mathbb{F}_2^{k}$</td><td><code>witness[e1_prime_start..e1_prime_start+k]</code></td></tr>
+<tr><td>正则噪声（明文计算，生成 $c_1, c_2$ 时调用）</td><td><code>regular_encode_ct(e', c_e)</code></td></tr>
+<tr><td>正则噪声（ZK 约束表示，通过 ANF 单项式注入约束系统）</td><td><code>append_re_terms(...)</code></td></tr>
+<tr><td>线性项 $G \cdot (r | \text{bin}(j))$</td><td><code>linear_matrix_vector_mul_streaming_ct(G, input)</code></td></tr>
+<tr><td>加密约束</td><td><code>build_group_signature_constraints()</code> 中的 $2 \cdot n_e$ 个方程</td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="三全动态属性基签名-fdabs"><a class="header" href="#三全动态属性基签名-fdabs">三、全动态属性基签名 (FDABS)</a></h2>
+<h3 id="31-安全问题域"><a class="header" href="#31-安全问题域">3.1 安全问题域</a></h3>
+<p>FDABS 同时证明三个断言：</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>断言</th><th>实现机制</th></tr>
+</thead>
+<tbody>
+<tr><td>属性向量 $a$ 已被群管理员认证</td><td>Merkle 叶哈希 $v_\ell = B_\text{leaf} \cdot \text{RE}(a | \text{rand})$</td></tr>
+<tr><td>叶哈希的汉明重量为奇数</td><td>$\text{wt}(v_\ell) \equiv 1 \pmod{2}$（<strong>奇偶性约束</strong>）</td></tr>
+<tr><td>属性 $a$ 满足布尔电路策略</td><td>AND 门约束和最终输出约束</td></tr>
+<tr><td>属性属于已认证集合</td><td>Merkle 累加器路径（同环签名）</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="32-密钥结构"><a class="header" href="#32-密钥结构">3.2 密钥结构</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct FdabsPublicKey {
+    pub b0_cols: StreamingMatrixCols,     // Merkle 哈希矩阵 B0
+    pub b1_cols: StreamingMatrixCols,     // Merkle 哈希矩阵 B1
+    pub b_leaf_cols: StreamingMatrixCols, // 叶子哈希矩阵 B_leaf
+    pub root_u: MainBitVec,               // Merkle 根
+    pub circuit: BooleanCircuit,          // 策略电路
+    pub ell: usize,                       // Merkle 深度
+    pub n: usize,                         // 节点大小
+    pub attr_len: usize,                  // 属性长度
+    pub randomness_len: usize,            // 随机化长度
+    pub c: usize,                         // 正则编码块大小
+}
+
+pub struct BooleanCircuit {
+    pub num_input_wires: usize,      // 输入线数 = attr_len
+    pub num_internal_wires: usize,   // AND 门数量
+    pub and_gates: Vec&lt;AndGate&gt;,     // [left, right, output]
+    pub output_wire: usize,          // 最终输出线
+}
+
+pub struct AndGate {
+    pub left_wire: usize,    // 左输入线索引
+    pub right_wire: usize,   // 右输入线索引
+    pub output_wire: usize,  // 输出线索引
+}
+<span class="boring">}</span></code></pre>
+<h3 id="33-witness-结构"><a class="header" href="#33-witness-结构">3.3 Witness 结构</a></h3>
+<pre><code>witness = [j_0..j_{ell-1}]                    // ell 个方向比特
+        + [v_1] + [w_1]                       // Merkle 路径节点
+        + ...
+        + [v_ell] + [w_ell]
+        + [a_0..a_{attr_len-1}]                // 属性向量
+        + [rand_0..rand_{randomness_len-1}]    // 随机化比特
+        + [gate_output_0..gate_output_{G-1}]   // 每个 AND 门的输出比特
+</code></pre>
+<p>总长度：</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn expected_witness_len(pk: &amp;FdabsPublicKey) -&gt; usize {
+    pk.ell + 2 * pk.ell * pk.n    // Merkle 路径
+        + pk.attr_len              // 属性
+        + pk.randomness_len        // 随机化
+        + pk.circuit.num_internal_wires  // AND 门输出
+}
+<span class="boring">}</span></code></pre>
+<h3 id="34-与环签名的关键区别单矩阵叶哈希"><a class="header" href="#34-与环签名的关键区别单矩阵叶哈希">3.4 与环签名的关键区别：单矩阵叶哈希</a></h3>
+<p>FDABS 中，叶节点由<strong>单个矩阵</strong> $B_\text{leaf}$ 计算，而非环签名的双矩阵配对：</p>
+<p>$$
+v_\ell = B_\text{leaf} \cdot \text{RE}(a | \text{rand})
+$$</p>
+<p>这是因为 FDABS 没有 “左右兄弟节点” 的交换概念——叶节点是属性 + 随机数的直接哈希。</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// fdabs.rs 中: build_hash_terms（单矩阵版本）
+let leaf_terms = build_hash_terms(
+    b_leaf_cols,                    // 只有一个矩阵
+    offsets.attr_start,             // 输入起始 = 属性位置
+    attr_len + randomness_len,      // 输入长度 = 属性 + 随机数
+    c, &amp;local_monomials, n,
+    "leaf hash matrix",
+)?;
+<span class="boring">}</span></code></pre>
+<h3 id="35-叶奇偶性约束"><a class="header" href="#35-叶奇偶性约束">3.5 叶奇偶性约束</a></h3>
+<p>FDABS 要求叶哈希的汉明重量为奇数。这是一个重要的<strong>合法性标记</strong>——它防止攻击者使用一个无效的（但 ANF 上满足的）叶节点替代真正的认证叶节点。</p>
+<p>实现为单个方程：</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let mut leaf_parity = BTreeSet::new();
+for row_idx in 0..n {
+    xor_insert(&amp;mut leaf_parity, vec![leaf_v_offset + row_idx]);
+}
+xor_insert(&amp;mut leaf_parity, Vec::new());  // + 1（常数项）
+constraints.push(leaf_parity.into_iter().collect());
+<span class="boring">}</span></code></pre>
+<p>数学上表示：</p>
+<p>$$
+\left(\bigoplus_{i=0}^{n-1} v_{\ell,i}\right) + 1 = 0 \quad\Longleftrightarrow\quad \text{wt}(v_\ell) \equiv 1 \pmod{2}
+$$</p>
+<p>测试 <code>test_fdabs_constraints_reject_even_leaf_weight</code> 验证了当叶哈希的汉明重量为偶数时约束被违反。</p>
+<h3 id="36-nand-门二次约束名为-andgate实际上实现-nand"><a class="header" href="#36-nand-门二次约束名为-andgate实际上实现-nand">3.6 NAND 门二次约束（名为 <code>AndGate</code>，实际上实现 NAND）</a></h3>
+<p>代码中的门使用结构体名 <code>AndGate</code>，但约束实际实现的是 <strong>NAND（与非）门</strong>。对于每个门，要求 $x_{\text{out}} = \neg(x_{\text{in1}} \land x_{\text{in2}})$，在 $\mathbb{F}_2$ 上的 ANF 约束为：</p>
+<p>$$
+x_{\text{out}} + x_{\text{in1}} \cdot x_{\text{in2}} + 1 = 0
+$$</p>
+<p>验证：</p>
+<ul>
+<li>$x_{\text{in1}} = 1, x_{\text{in2}} = 1$ 时：$x_{\text{out}} = 0$ ✓ (NAND)</li>
+<li>$x_{\text{in1}} = 1, x_{\text{in2}} = 0$ 时：$x_{\text{out}} = 1$ ✓ (NAND)</li>
+<li>$x_{\text{in1}} = 0, x_{\text{in2}} = 1$ 时：$x_{\text{out}} = 1$ ✓ (NAND)</li>
+<li>$x_{\text{in1}} = 0, x_{\text{in2}} = 0$ 时：$x_{\text{out}} = 1$ ✓ (NAND)</li>
+</ul>
+<p>（注意：NAND 门构成的电路与 AND 门一样具有表达能力——任何布尔电路都可以用 NAND 门单独构建。<code>AndGate</code> 结构体名反映了论文中的记法，但约束的实际代数实现是 NAND。）</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// fdabs.rs 中 AND 门约束
+for gate in &amp;circuit.and_gates {
+    let left_idx = wire_to_witness_index(offsets, circuit, gate.left_wire);
+    let right_idx = wire_to_witness_index(offsets, circuit, gate.right_wire);
+    let output_idx = wire_to_witness_index(offsets, circuit, gate.output_wire);
+    constraints.push(vec![
+        normalize_monomial(vec![left_idx, right_idx]),  // x_in1 · x_in2
+        vec![output_idx],                                // + x_out
+        Vec::new(),                                      // + 1 (常数)
+    ]);
+}
+<span class="boring">}</span></code></pre>
+<p>这对应于多项式的三个单项式：$X_{\text{in1}}X_{\text{in2}} + X_{\text{out}} + 1 = 0$。这是<strong>NAND 门</strong>（与非门）的 ANF 约束：当 $X_{\text{in1}} = 1, X_{\text{in2}} = 1$ 时，方程要求 $X_{\text{out}} = 0$；其他情况要求 $X_{\text{out}} = 1$。</p>
+<h3 id="37-最终输出约束"><a class="header" href="#37-最终输出约束">3.7 最终输出约束</a></h3>
+<p>电路的最后要求是输出线 $x_{\text{out}}$ 必须为 1（策略满足）：</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let output_idx = wire_to_witness_index(offsets, circuit, circuit.output_wire);
+constraints.push(vec![vec![output_idx], Vec::new()]);
+<span class="boring">}</span></code></pre>
+<p>即 $X_{\text{output}} + 1 = 0$，等价于 $X_{\text{output}} = 1$。</p>
+<h3 id="38-完整的约束系统清单"><a class="header" href="#38-完整的约束系统清单">3.8 完整的约束系统清单</a></h3>
+<p>FDABS 约束总计 $(\ell+1) \cdot n + G + 2$ 个方程：</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>约束类型</th><th>数量</th><th>来源</th></tr>
+</thead>
+<tbody>
+<tr><td>Merkle 层路径</td><td>$\ell \cdot n$</td><td><code>build_pair_hash_terms</code>（同环签名）</td></tr>
+<tr><td>叶子哈希约束</td><td>$n$</td><td><code>build_hash_terms</code>（单矩阵）</td></tr>
+<tr><td>叶奇偶性</td><td>1</td><td>$(\bigoplus v_\ell) + 1 = 0$</td></tr>
+<tr><td>NAND 门（代码中名为 <code>AndGate</code>）</td><td>$G$</td><td>$x_{\text{out}} + x_{\text{in1}}x_{\text{in2}} + 1 = 0$</td></tr>
+<tr><td>最终输出</td><td>1</td><td>$x_{\text{output}} + 1 = 0$</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="39-隐式求值引擎fdabs-版本"><a class="header" href="#39-隐式求值引擎fdabs-版本">3.9 隐式求值引擎（FDABS 版本）</a></h3>
+<p><code>evaluate_fdabs_implicit_from_affine</code> 函数在 <code>respond_advanced_implicit</code> 中作为自定义求值器使用。其核心结构为：</p>
+<pre><code>Algorithm: evaluate_fdabs_implicit_from_affine(pk, challenges, data, affine, point)
+Input: affine (仿射基), point (p)
+Output: Σ_i χ_i · g̃_i(p) (所有约束在 p 点的 χ-加权和)
+
+1. Merkle 环部分 (同环签名):
+   total += Σ_θ [eval_a·(p+j_θ) + eval_b·j_θ + 父节点约束]
+
+2. 叶子哈希约束:
+   total += implicit_evaluate_extended_from_affine_no_const(
+       leaf_hash_chi,
+       affine[attr..attr+attr_len+randomness_len],
+       c, p, p)        // 额外乘子 = p (因此处是单矩阵, 度数对齐)
+   total += 父节点约束
+
+3. 叶奇偶性约束:
+   total += χ_parity · (Σ affine[leaf_v] · p^{c} + p^{c+1})
+
+4. NAND 门约束（对应代码中 `AndGate`）:
+   for each gate:
+     total += χ_gate · (affine[left]·affine[right] · p^{c-1}
+                        + affine[output] · p^{c}
+                        + p^{c+1})
+
+5. 最终输出约束:
+   total += χ_output · (affine[output] · p^{c} + p^{c+1})
+
+6. return total
+</code></pre>
+<h3 id="310-签名流程"><a class="header" href="#310-签名流程">3.10 签名流程</a></h3>
+<pre><code>Algorithm: FDABS Sign(pk, sk, msg, info, epoch)
+Input:  pk = (B0, B1, B_leaf, root_u, circuit, ...), sk = witness, msg, info, epoch
+Output: FdabsSignature
+
+1. Statement Digest:
+     absorb(pk.ell, n, attr_len, randomness_len, c,
+            circuit wires + gates,
+            B0.seed, B1.seed, B_leaf.seed, root_u,
+            msg, info, epoch)
+
+2. VOLE Commit → Correction → Challenges
+
+3. Implicit Data:
+     Merkle χ' (配对哈希, 每层计算 left/right χ')
+     B_leaf χ' (单矩阵 χ')
+
+4. Advanced Implicit Response:
+     自定义求值器 evaluate_fdabs_implicit_from_affine
+     → 合并 Merkle + 叶子 + 奇偶性 + NAND 门 + 最终输出的隐式求值
+
+5. FAEST Opening → VoleitHTranscript
+
+6. Return σ
+</code></pre>
+<p><strong>信息字段</strong> <code>info</code> 和 <code>epoch</code> 使 FDABS 支持动态撤销和策略更新——签名还绑定到特定时期 <code>epoch</code> 和上下文 <code>info</code>。</p>
+<h3 id="311-公式-代码映射"><a class="header" href="#311-公式-代码映射">3.11 公式-代码映射</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>数学概念</th><th>代码</th></tr>
+</thead>
+<tbody>
+<tr><td>叶子哈希矩阵 $B_\text{leaf}$</td><td><code>pk.b_leaf_cols: StreamingMatrixCols</code></td></tr>
+<tr><td>叶哈希 $v_\ell = B_\text{leaf} \cdot \text{RE}(a | \text{rand})$</td><td><code>build_hash_terms(b_leaf_cols, attr_start, attr_len+randomness_len, ...)</code></td></tr>
+<tr><td>叶奇偶性 $\text{wt}(v_\ell) \equiv 1 \pmod{2}$</td><td><code>leaf_parity</code> 方程</td></tr>
+<tr><td>NAND 门（代码中名为 <code>AndGate</code>）$x_{\text{out}} = \neg(x_{\text{in1}} \land x_{\text{in2}})$</td><td><code>[vec![left, right], vec![output], Vec::new()]</code></td></tr>
+<tr><td>最终输出 $x_{\text{output}} = 1$</td><td><code>[vec![output_idx], Vec::new()]</code></td></tr>
+<tr><td>布尔电路</td><td><code>BooleanCircuit { num_input_wires, num_internal_wires, and_gates, output_wire }</code></td></tr>
+<tr><td>隐式求值器</td><td><code>evaluate_fdabs_implicit_from_affine</code></td></tr>
+<tr><td>扩展求值（单矩阵 × 额外乘子）</td><td><code>implicit_evaluate_extended_from_affine_no_const</code></td></tr>
+<tr><td>约束总数</td><td>$(\ell+1) \cdot n + G + 2$</td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="四总结对比"><a class="header" href="#四总结对比">四、总结对比</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>特征</th><th>环签名 (RS)</th><th>群签名 (GS)</th><th>FDABS</th></tr>
+</thead>
+<tbody>
+<tr><td>底层问题</td><td>2-RNSD + Merkle</td><td>2-RNSD + Merkle + McEliece</td><td>2-RNSD + Merkle + 电路可满足性</td></tr>
+<tr><td>矩阵数量</td><td>2 (B0, B1)</td><td>4 (B0, B1, G1, G2)</td><td>3 (B0, B1, B_leaf)</td></tr>
+<tr><td>Witness 组成</td><td>方向 + 路径 + 叶子</td><td>方向 + 路径 + 叶子 + 加密随机数 + 噪声</td><td>方向 + 路径 + 属性 + 随机化 + 门输出</td></tr>
+<tr><td>特殊约束</td><td>无</td><td>McEliece 加密 $c = G\cdot x \oplus \text{RE}(e’)$</td><td>NAND 门 $x_{\text{out}} = \neg(x_{\text{in1}} \land x_{\text{in2}})$ + 叶奇偶性</td></tr>
+<tr><td>约束数量</td><td>$(\ell+1)n$</td><td>$(\ell+1)n + 2n_e$</td><td>$(\ell+1)n + G + 2$</td></tr>
+<tr><td>签名额外数据</td><td>无</td><td>$c_1, c_2$（加密身份和消息）</td><td>无</td></tr>
+<tr><td>可追踪性</td><td>❌</td><td>✅（管理员解密 $c_1$）</td><td>❌</td></tr>
+<tr><td>策略控制</td><td>❌</td><td>❌</td><td>✅（布尔电路策略）</td></tr>
+</tbody>
+</table>
+</div>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="6_基础应用层签名.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="8_参数优化与基准测试.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="6_基础应用层签名.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="8_参数优化与基准测试.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr-ef4e11c1.min.js"></script>
+        <script src="mark-09e88c2c.min.js"></script>
+        <script src="searcher-09f2665d.js"></script>
+
+        <script src="clipboard-1626706a.min.js"></script>
+        <script src="highlight-abc7f01d.js"></script>
+        <script src="book-609e4cb8.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>
