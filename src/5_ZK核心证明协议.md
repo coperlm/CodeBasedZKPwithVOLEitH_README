@@ -301,25 +301,20 @@ pub struct Transcript {
 Transcript 遵循 海绵结构（Sponge Construction）的 absorb-squeeze 范式：
 
 ```mermaid
-graph TD
+graph LR
     subgraph Absorb [Absorb 吸收阶段]
-        direction TB
-        A1[domain_separator] --> A2[public_key]
-        A2 --> A3[commitment_hash]
-        A3 --> A4[consistency_c]
-        A4 --> A5[u_tilde / v_tilde]
-        A5 --> A6[correction bits]
-        A6 --> A7[proof coefficients]
-        A7 --> A8[grind_counter]
+        direction LR
+        A1[domain_sep] --> A2[pub_key] --> A3[com_hash] --> A4[cons_c]
+        A4 --> A5[u/v_tilde] --> A6[corr_bits] --> A7[proof_coeff] --> A8[grind_ctr]
     end
 
     A8 --> K((Keccak-256<br>Hash Engine))
 
     subgraph Squeeze [Squeeze 挤出阶段]
-        direction TB
+        direction LR
         K --> S[256-bit Seed]
-        S --> PRG{ChaCha20 PRG<br>流式展开}
-        PRG --> Out[F128b 挑战值序列]
+        S --> PRG{ChaCha20<br>流式展开}
+        PRG --> Out[F128b 挑战序列]
     end
 
     style Absorb fill:none,stroke:#61afef,stroke-width:2px,stroke-dasharray: 5 5
