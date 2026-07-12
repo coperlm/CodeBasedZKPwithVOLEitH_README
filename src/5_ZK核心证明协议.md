@@ -295,7 +295,7 @@ pub struct Transcript {
 Transcript 遵循 海绵结构（Sponge Construction）的 absorb-squeeze 范式：
 
 ```mermaid
-graph LR
+graph TD
     subgraph Absorb [Absorb 吸收阶段]
         direction LR
         A1[domain_sep] --> A2[pub_key] --> A3[com_hash] --> A4[cons_c]
