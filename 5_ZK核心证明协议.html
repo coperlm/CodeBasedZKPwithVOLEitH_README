@@ -7,14 +7,26 @@
 
 
         <!-- Custom HTML head -->
+        <!-- MathJax 2 配置（mdBook 默认版本） -->
+        <script type="text/x-mathjax-config">
+          MathJax.Hub.Config({
+            tex2jax: {
+              inlineMath: [['$','$'], ['\\(','\\)']],
+              displayMath: [['$$','$$'], ['\\[','\\]']],
+              processEscapes: true
+            }
+          });
+        </script>
+        
+        <!-- MathJax 3 配置（兼容未来升级） -->
         <script>
-        window.MathJax = {
-          tex: {
-            inlineMath: [['$', '$'], ['\\(', '\\)']],
-            displayMath: [['$$', '$$'], ['\\[', '\\]']],
-            processEscapes: true
-          }
-        };
+          window.MathJax = {
+            tex: {
+              inlineMath: [['$', '$'], ['\\(', '\\)']],
+              displayMath: [['$$', '$$'], ['\\[', '\\]']],
+              processEscapes: true
+            }
+          };
         </script>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
