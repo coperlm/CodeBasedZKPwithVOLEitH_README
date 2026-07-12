@@ -260,8 +260,10 @@ graph TD
     
     K --> L([finalize])
     L --> M[推导 opening_challenge]
-    M --> N{Grinding 满足零尾}
-    N -->|成功| O[调用 bavc_open C层]
+    
+    M --> N{Grinding<br/>满足零尾?}
+    N -->|否: counter ++| M
+    N -->|是| O[调用 bavc_open C层]
     O --> P(((返回 VoleitHTranscript)))
 
     style A fill:none,stroke:#61afef,stroke-width:2px
@@ -275,26 +277,32 @@ graph TD
 
 ```mermaid
 graph TD
-    A([reconstruct]) --> B[验证 profile 与参数一致性]
-    B --> C{验证 opening grinding 条件}
-    C -->|成功| D[faest_vole_reconstruct C层]
-    D --> E{验证 commitment_hash}
+    A([reconstruct]) --> B[验证 profile 与参数]
+    B --> C{Grinding<br/>有效?}
     
-    E -->|匹配| F[派生 challenge_1]
-    F --> G[计算 v_tilde 并用 u_tilde 修正]
+    C -->|否| Reject([验证失败/拒绝])
+    C -->|是| D[faest_vole_reconstruct C层]
+    
+    D --> E{Hash<br/>匹配?}
+    E -->|否| Reject
+    E -->|是| F[派生 challenge_1]
+    
+    F --> G[计算并修正 v_tilde]
     G --> H[派生 relation_seed]
-    H --> I{验证 opening_challenge 绑定}
     
-    I -->|匹配| J[提取 VerifierCorrelations]
+    H --> I{挑战<br/>绑定?}
+    I -->|否| Reject
+    I -->|是| J[提取 VerifierCorrelations]
     
     J --> K([challenges])
-    K --> L(((从 relation_seed 派生挑战序列)))
+    K --> L(((派生挑战序列)))
 
     style A fill:none,stroke:#c678dd,stroke-width:2px
     style K fill:none,stroke:#c678dd,stroke-width:2px
     style C fill:none,stroke:#e06c75,stroke-width:2px
     style E fill:none,stroke:#e06c75,stroke-width:2px
     style I fill:none,stroke:#e06c75,stroke-width:2px
+    style Reject fill:none,stroke:#ff0000,stroke-width:3px,stroke-dasharray: 5 5
 ```
 
 ### 4.4 核心数据结构
@@ -403,19 +411,19 @@ Payload 包含三个主要部分：
 ```mermaid
 graph TD
     subgraph Rust_App [Rust 应用层]
-        A[VoleitHProver / VoleitHVerifier<br><br>• Fiat-Shamir 挑战派生<br>• Prover/Verifier 相关性提取<br>• 列转置优化 BMI2<br>• Rayon 并行哈希]
+        A["VoleitHProver / VoleitHVerifier<br/><br/>• Fiat-Shamir 挑战派生<br/>• Prover/Verifier 相关性提取<br/>• 列转置优化 BMI2<br/>• Rayon 并行哈希"]
     end
 
     subgraph Rust_FFI [FFI 接口封装层]
-        B[FaestVoleCommitmentState<br>Drop 安全析构<br><br>• vole_commit<br>• bavc_open<br>• vole_reconstruct]
+        B["FaestVoleCommitmentState<br/>Drop 安全析构<br/><br/>• vole_commit<br/>• bavc_open<br/>• vole_reconstruct"]
     end
 
     subgraph C_Lib [C 语言层 faest-ref]
-        C[vole.c / bavc.c<br><br>• BAVC 树构建 τ × λ 深度<br>• GGM 伪随机展开<br>• 承诺哈希 SHA-3 聚合<br>• 选择性打开验证]
+        C["vole.c / bavc.c<br/><br/>• BAVC 树构建 τ × λ 深度<br/>• GGM 伪随机展开<br/>• 承诺哈希 SHA-3 聚合<br/>• 选择性打开验证"]
     end
 
-    Rust_App -->|FFI 调用| Rust_FFI
-    Rust_FFI -->|extern "C"| C_Lib
+    A -->|FFI 调用| B
+    B -->|extern C| C
 
     style Rust_App fill:none,stroke:#e5c07b,stroke-width:2px
     style Rust_FFI fill:none,stroke:#61afef,stroke-width:2px,stroke-dasharray: 5 5
