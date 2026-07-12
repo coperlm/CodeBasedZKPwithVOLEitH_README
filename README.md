@@ -1,4 +1,8 @@
-启动命令
+# CodeBasedZKPwithVOLEitH_README
+
+关于仓库 [coperlm/CodeBasedZKPwithVOLEitH](https://github.com/coperlm/CodeBasedZKPwithVOLEitH) 的说明
+
+本地启用
 
 ```
 mdbook serve --hostname 0.0.0.0 --port 3000
