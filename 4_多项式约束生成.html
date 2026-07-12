@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-6976efb2.js";
+            window.path_to_searchindex_js = "searchindex-22f38096.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61c3e6e9.js"></script>
@@ -311,7 +311,7 @@ $$</p>
 <h4 id="步骤-1χ-聚合求和交换"><a class="header" href="#步骤-1χ-聚合求和交换">步骤 1：χ’ 聚合（求和交换）</a></h4>
 <p>对于约束系统 $g_i(Y) = \sum_j b_{i,j} f_j(Y) + y_i$，交换求和顺序：</p>
 <p>$$
-\sum_{i=1}^t \chi_i \cdot g_i(Y) = \sum_{j=1}^m \underbrace{\left(\sum_{i=1}^t \chi_i \cdot b_{i,j}\right)}<em>{\chi’<em>j} \cdot f_j(Y) + \underbrace{\sum</em>{i=1}^t \chi_i \cdot y_i}</em>{\text{const_term}}
+\sum_{i=1}^t \chi_i \cdot g_i(Y) = \sum_{j=1}^m \underbrace{\left(\sum_{i=1}^t \chi_i \cdot b_{i,j}\right)}_{\chi’<em>j} \cdot f_j(Y) + \underbrace{\sum</em>{i=1}^t \chi_i \cdot y_i}_{\text{const_term}}
 $$</p>
 <p><code>compute_chi_prime</code> 的极简实现：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -366,9 +366,9 @@ $$</p>
 <p>最核心的算法创新。</p>
 <p>问题：对于每个大小为 $2^c$ 的分块，我们需要计算：</p>
 <p>$$
-\tilde{F}(p) = \sum_{j=0}^{\text{block_count}-1} \sum_{\text{idx}=0}^{2^c-1} \chi’<em>{j, \text{idx}} \cdot \tilde{f}</em>{\text{idx}}(p)
+\tilde{F}(p) = \sum_{j=0}^{\text{block_count}-1} \sum_{\text{idx}=0}^{2^c-1} \chi’_{j, \text{idx}} \cdot \tilde{f}_{\text{idx}}(p)
 $$</p>
-<p>其中 $\tilde{f}<em>{\text{idx}}(p)$ 是正则编码多项式 $f</em>{\text{idx}}$ 在仿射基 $\text{affine}_{j}$ 上的求值结果。直接展开需要 $\mathcal{O}(2^c)$ 次域乘法和加法。</p>
+<p>其中 $\tilde{f}_{\text{idx}}(p)$ 是正则编码多项式 $f_{\text{idx}}$ 在仿射基 $\text{affine}_{j}$ 上的求值结果。直接展开需要 $\mathcal{O}(2^c)$ 次域乘法和加法。</p>
 <p>蝴蝶算法将复杂度降至 $\mathcal{O}(c)$。它的灵感来自 FFT 的 Cooley-Tukey 蝶形结构：</p>
 <pre><code>Algorithm: evaluate_chunk_butterfly(chi_prime_chunk[0..2^c),
                                      x_vars[0..c), point)

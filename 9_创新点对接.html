@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-6976efb2.js";
+            window.path_to_searchindex_js = "searchindex-22f38096.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61c3e6e9.js"></script>
@@ -227,7 +227,7 @@
 <h2 id="二基于工程权衡的技术路线调整"><a class="header" href="#二基于工程权衡的技术路线调整">二、基于工程权衡的技术路线调整</a></h2>
 <h3 id="1-塔域加速大域乘法"><a class="header" href="#1-塔域加速大域乘法">1. 塔域加速大域乘法</a></h3>
 <ul>
-<li>理论初衷：计划将 $\mathbb{F}<em>{2^{128}}$ 运算同构分解到塔域 $\mathbb{F}</em>{2^8}$ 上以加速运算。</li>
+<li>理论初衷：计划将 $\mathbb{F}_{2^{128}}$ 运算同构分解到塔域 $\mathbb{F}_{2^8}$ 上以加速运算。</li>
 <li>工程实际：在 <code>finite_field.rs</code> 中，实际采用了直接调用 CPU 底层 <code>PCLMULQDQ</code> 和 <code>PMULL</code> 无进位乘法指令的方案。同构映射在工程上易引入查表开销与分支预测失败，而硬件指令原生支持使得单次乘法达到了亚纳秒级，以更小的代码复杂度达成了大域加速的初衷。</li>
 </ul>
 <h2 id="三未来工作与待验证优化"><a class="header" href="#三未来工作与待验证优化">三、未来工作与待验证优化</a></h2>

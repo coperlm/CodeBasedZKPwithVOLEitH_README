@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-6976efb2.js";
+            window.path_to_searchindex_js = "searchindex-22f38096.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61c3e6e9.js"></script>
@@ -207,7 +207,7 @@
 <h3 id="21-ggm-树形向量承诺bavc的密码学角色"><a class="header" href="#21-ggm-树形向量承诺bavc的密码学角色">2.1 GGM 树形向量承诺（BAVC）的密码学角色</a></h3>
 <p>在 VOLE-in-the-Head 范式中，Prover 需要承诺 $\tau$ 个伪随机种子 $K_1, \dots, K_\tau$，然后对每个种子应用 GGM 伪随机函数树（Goldreich-Goldwasser-Micali 树）展开出 $\lambda$ 层的叶子。这些叶子形成了 VOLE 关系中 Prover 的秘密向量：</p>
 <p>$$
-{(u_i, v_i)}_{i=1}^\tau \xrightarrow{\text{GGM 展开}} {(u, \mathbf{v})} \in \mathbb{F}<em>2^\ell \times \mathbb{F}</em>{2^{128}}^\ell
+{(u_i, v_i)}_{i=1}^\tau \xrightarrow{\text{GGM 展开}} {(u, \mathbf{v})} \in \mathbb{F}_2^\ell \times \mathbb{F}_{2^{128}}^\ell
 $$</p>
 <p>BAVC（Binary Auxiliary Vector Commitment）是 FAEST 使用的一种优化的 GGM 树承诺方案，它支持：</p>
 <ul>
@@ -393,10 +393,10 @@ low ^ high ^ (high &lt;&lt; 1) ^ (high &lt;&lt; 3) ^ (high &lt;&lt; 4)
 <h3 id="41-延迟-vole-功能delayed-vole"><a class="header" href="#41-延迟-vole-功能delayed-vole">4.1 延迟 VOLE 功能（Delayed VOLE）</a></h3>
 <p>在 VOLEitH 协议中，Prover 和 Verifier 需要建立以下 VOLE 关系：</p>
 <p>$$
-\text{Prover 持有: } (u, \mathbf{v}) \in \mathbb{F}<em>2^\ell \times \mathbb{F}</em>{2^{128}}^\ell
+\text{Prover 持有: } (u, \mathbf{v}) \in \mathbb{F}_2^\ell \times \mathbb{F}_{2^{128}}^\ell
 $$
 $$
-\text{Verifier 持有: } (\Delta, \mathbf{q}) \in \mathbb{F}<em>{2^{128}} \times \mathbb{F}</em>{2^{128}}^\ell
+\text{Verifier 持有: } (\Delta, \mathbf{q}) \in \mathbb{F}_{2^{128}} \times \mathbb{F}_{2^{128}}^\ell
 $$</p>
 <p>满足线性关系：</p>
 <p>$$

@@ -58,7 +58,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-6976efb2.js";
+            window.path_to_searchindex_js = "searchindex-22f38096.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61c3e6e9.js"></script>
@@ -819,7 +819,7 @@ $$</p>
 <h3 id="21-ggm-树形向量承诺bavc的密码学角色"><a class="header" href="#21-ggm-树形向量承诺bavc的密码学角色">2.1 GGM 树形向量承诺（BAVC）的密码学角色</a></h3>
 <p>在 VOLE-in-the-Head 范式中，Prover 需要承诺 $\tau$ 个伪随机种子 $K_1, \dots, K_\tau$，然后对每个种子应用 GGM 伪随机函数树（Goldreich-Goldwasser-Micali 树）展开出 $\lambda$ 层的叶子。这些叶子形成了 VOLE 关系中 Prover 的秘密向量：</p>
 <p>$$
-{(u_i, v_i)}_{i=1}^\tau \xrightarrow{\text{GGM 展开}} {(u, \mathbf{v})} \in \mathbb{F}<em>2^\ell \times \mathbb{F}</em>{2^{128}}^\ell
+{(u_i, v_i)}_{i=1}^\tau \xrightarrow{\text{GGM 展开}} {(u, \mathbf{v})} \in \mathbb{F}_2^\ell \times \mathbb{F}_{2^{128}}^\ell
 $$</p>
 <p>BAVC（Binary Auxiliary Vector Commitment）是 FAEST 使用的一种优化的 GGM 树承诺方案，它支持：</p>
 <ul>
@@ -1005,10 +1005,10 @@ low ^ high ^ (high &lt;&lt; 1) ^ (high &lt;&lt; 3) ^ (high &lt;&lt; 4)
 <h3 id="41-延迟-vole-功能delayed-vole"><a class="header" href="#41-延迟-vole-功能delayed-vole">4.1 延迟 VOLE 功能（Delayed VOLE）</a></h3>
 <p>在 VOLEitH 协议中，Prover 和 Verifier 需要建立以下 VOLE 关系：</p>
 <p>$$
-\text{Prover 持有: } (u, \mathbf{v}) \in \mathbb{F}<em>2^\ell \times \mathbb{F}</em>{2^{128}}^\ell
+\text{Prover 持有: } (u, \mathbf{v}) \in \mathbb{F}_2^\ell \times \mathbb{F}_{2^{128}}^\ell
 $$
 $$
-\text{Verifier 持有: } (\Delta, \mathbf{q}) \in \mathbb{F}<em>{2^{128}} \times \mathbb{F}</em>{2^{128}}^\ell
+\text{Verifier 持有: } (\Delta, \mathbf{q}) \in \mathbb{F}_{2^{128}} \times \mathbb{F}_{2^{128}}^\ell
 $$</p>
 <p>满足线性关系：</p>
 <p>$$
@@ -1330,7 +1330,7 @@ $$</p>
 <h4 id="步骤-1χ-聚合求和交换"><a class="header" href="#步骤-1χ-聚合求和交换">步骤 1：χ’ 聚合（求和交换）</a></h4>
 <p>对于约束系统 $g_i(Y) = \sum_j b_{i,j} f_j(Y) + y_i$，交换求和顺序：</p>
 <p>$$
-\sum_{i=1}^t \chi_i \cdot g_i(Y) = \sum_{j=1}^m \underbrace{\left(\sum_{i=1}^t \chi_i \cdot b_{i,j}\right)}<em>{\chi’<em>j} \cdot f_j(Y) + \underbrace{\sum</em>{i=1}^t \chi_i \cdot y_i}</em>{\text{const_term}}
+\sum_{i=1}^t \chi_i \cdot g_i(Y) = \sum_{j=1}^m \underbrace{\left(\sum_{i=1}^t \chi_i \cdot b_{i,j}\right)}_{\chi’<em>j} \cdot f_j(Y) + \underbrace{\sum</em>{i=1}^t \chi_i \cdot y_i}_{\text{const_term}}
 $$</p>
 <p><code>compute_chi_prime</code> 的极简实现：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -1385,9 +1385,9 @@ $$</p>
 <p>最核心的算法创新。</p>
 <p>问题：对于每个大小为 $2^c$ 的分块，我们需要计算：</p>
 <p>$$
-\tilde{F}(p) = \sum_{j=0}^{\text{block_count}-1} \sum_{\text{idx}=0}^{2^c-1} \chi’<em>{j, \text{idx}} \cdot \tilde{f}</em>{\text{idx}}(p)
+\tilde{F}(p) = \sum_{j=0}^{\text{block_count}-1} \sum_{\text{idx}=0}^{2^c-1} \chi’_{j, \text{idx}} \cdot \tilde{f}_{\text{idx}}(p)
 $$</p>
-<p>其中 $\tilde{f}<em>{\text{idx}}(p)$ 是正则编码多项式 $f</em>{\text{idx}}$ 在仿射基 $\text{affine}_{j}$ 上的求值结果。直接展开需要 $\mathcal{O}(2^c)$ 次域乘法和加法。</p>
+<p>其中 $\tilde{f}_{\text{idx}}(p)$ 是正则编码多项式 $f_{\text{idx}}$ 在仿射基 $\text{affine}_{j}$ 上的求值结果。直接展开需要 $\mathcal{O}(2^c)$ 次域乘法和加法。</p>
 <p>蝴蝶算法将复杂度降至 $\mathcal{O}(c)$。它的灵感来自 FFT 的 Cooley-Tukey 蝶形结构：</p>
 <pre><code>Algorithm: evaluate_chunk_butterfly(chi_prime_chunk[0..2^c),
                                      x_vars[0..c), point)
@@ -2955,7 +2955,7 @@ let (linear1, linear2) = if rayon::current_num_threads() &gt; 1 {
 <tr><th>指令</th><th>使用场景</th><th style="text-align: center">加速效果</th></tr>
 </thead>
 <tbody>
-<tr><td>PCLMULQDQ / PMULL</td><td>$\mathbb{F}<em>{2^{128}}$ 和 $\mathbb{F}</em>{2^{64}}$ 乘法</td><td style="text-align: center">硬件原生</td></tr>
+<tr><td>PCLMULQDQ / PMULL</td><td>$\mathbb{F}_{2^{128}}$ 和 $\mathbb{F}_{2^{64}}$ 乘法</td><td style="text-align: center">硬件原生</td></tr>
 <tr><td>AES-NI <code>_mm_aesenc_si128</code></td><td>AES-CTR 矩阵列 PRG</td><td style="text-align: center">单周期/AES 轮</td></tr>
 <tr><td>BMI2 <code>_pext_u64</code></td><td>列转置中的比特聚集取</td><td style="text-align: center">$8\times$ 软实现</td></tr>
 </tbody>
@@ -3092,7 +3092,7 @@ const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 <h2 id="二基于工程权衡的技术路线调整"><a class="header" href="#二基于工程权衡的技术路线调整">二、基于工程权衡的技术路线调整</a></h2>
 <h3 id="1-塔域加速大域乘法"><a class="header" href="#1-塔域加速大域乘法">1. 塔域加速大域乘法</a></h3>
 <ul>
-<li>理论初衷：计划将 $\mathbb{F}<em>{2^{128}}$ 运算同构分解到塔域 $\mathbb{F}</em>{2^8}$ 上以加速运算。</li>
+<li>理论初衷：计划将 $\mathbb{F}_{2^{128}}$ 运算同构分解到塔域 $\mathbb{F}_{2^8}$ 上以加速运算。</li>
 <li>工程实际：在 <code>finite_field.rs</code> 中，实际采用了直接调用 CPU 底层 <code>PCLMULQDQ</code> 和 <code>PMULL</code> 无进位乘法指令的方案。同构映射在工程上易引入查表开销与分支预测失败，而硬件指令原生支持使得单次乘法达到了亚纳秒级，以更小的代码复杂度达成了大域加速的初衷。</li>
 </ul>
 <h2 id="三未来工作与待验证优化"><a class="header" href="#三未来工作与待验证优化">三、未来工作与待验证优化</a></h2>

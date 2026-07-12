@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-6976efb2.js";
+            window.path_to_searchindex_js = "searchindex-22f38096.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61c3e6e9.js"></script>
@@ -437,7 +437,7 @@ let (linear1, linear2) = if rayon::current_num_threads() &gt; 1 {
 <tr><th>指令</th><th>使用场景</th><th style="text-align: center">加速效果</th></tr>
 </thead>
 <tbody>
-<tr><td>PCLMULQDQ / PMULL</td><td>$\mathbb{F}<em>{2^{128}}$ 和 $\mathbb{F}</em>{2^{64}}$ 乘法</td><td style="text-align: center">硬件原生</td></tr>
+<tr><td>PCLMULQDQ / PMULL</td><td>$\mathbb{F}_{2^{128}}$ 和 $\mathbb{F}_{2^{64}}$ 乘法</td><td style="text-align: center">硬件原生</td></tr>
 <tr><td>AES-NI <code>_mm_aesenc_si128</code></td><td>AES-CTR 矩阵列 PRG</td><td style="text-align: center">单周期/AES 轮</td></tr>
 <tr><td>BMI2 <code>_pext_u64</code></td><td>列转置中的比特聚集取</td><td style="text-align: center">$8\times$ 软实现</td></tr>
 </tbody>
