@@ -50,6 +50,8 @@ sequenceDiagram
     Note over V: 验证:<br/>Σ χ_i·g_i(q̃) + B^*掩码<br/>?= Σ ã_j·Δ^j
 ```
 
+
+
 ### 2.2 Step 1：Witness 承诺（`commit`）
 
 代数动机：Prover 不能直接发送 $w$（会泄露 witness），也不能发送 $u$（Verifier 已通过 $\mathcal{F}_{\text{sVOLE}}$ 部分知道 $u$）。解决方案是发送校正子（correction）：

@@ -244,11 +244,11 @@ $$
 
 
 ```mermaid
-graph TD
-    A([commit]) -->|生成 root_key, iv| B[faest_vole_commit C层]
+graph LR
+    A([commit]) -->|生成 key, iv| B[faest_vole_commit]
     B --> C[推导 challenge_1]
-    C --> D[计算 u_tilde, v_tilde]
-    D --> E[提取 ProverCorrelations]
+    C --> D[计算 u/v_tilde]
+    D --> E[提取 Correlations]
     
     E --> F([commitment_for_witness])
     F --> G[返回 CommitmentMessage]
@@ -262,9 +262,9 @@ graph TD
     L --> M[推导 opening_challenge]
     
     M --> N{Grinding<br/>满足零尾?}
-    N -->|否: counter ++| M
-    N -->|是| O[调用 bavc_open C层]
-    O --> P(((返回 VoleitHTranscript)))
+    N -->|否: counter++| M
+    N -->|是| O[调用 bavc_open]
+    O --> P(((返回 Transcript)))
 
     style A fill:none,stroke:#61afef,stroke-width:2px
     style F fill:none,stroke:#61afef,stroke-width:2px
