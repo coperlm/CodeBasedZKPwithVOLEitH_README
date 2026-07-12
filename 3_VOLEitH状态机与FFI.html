@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-c077466c.js";
+            window.path_to_searchindex_js = "searchindex-8d2bd1c6.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61c3e6e9.js"></script>
@@ -425,8 +425,10 @@ $$</p>
     
     K --&gt; L([finalize])
     L --&gt; M[推导 opening_challenge]
-    M --&gt; N{Grinding 满足零尾}
-    N --&gt;|成功| O[调用 bavc_open C层]
+    
+    M --&gt; N{Grinding&lt;br/&gt;满足零尾?}
+    N --&gt;|否: counter ++| M
+    N --&gt;|是| O[调用 bavc_open C层]
     O --&gt; P(((返回 VoleitHTranscript)))
 
     style A fill:none,stroke:#61afef,stroke-width:2px
@@ -438,26 +440,32 @@ $$</p>
 
 <h3 id="43-verifier-状态机voleithverifier"><a class="header" href="#43-verifier-状态机voleithverifier">4.3 Verifier 状态机：<code>VoleitHVerifier</code></a></h3>
 <pre class="mermaid">graph TD
-    A([reconstruct]) --&gt; B[验证 profile 与参数一致性]
-    B --&gt; C{验证 opening grinding 条件}
-    C --&gt;|成功| D[faest_vole_reconstruct C层]
-    D --&gt; E{验证 commitment_hash}
+    A([reconstruct]) --&gt; B[验证 profile 与参数]
+    B --&gt; C{Grinding&lt;br/&gt;有效?}
     
-    E --&gt;|匹配| F[派生 challenge_1]
-    F --&gt; G[计算 v_tilde 并用 u_tilde 修正]
+    C --&gt;|否| Reject([验证失败/拒绝])
+    C --&gt;|是| D[faest_vole_reconstruct C层]
+    
+    D --&gt; E{Hash&lt;br/&gt;匹配?}
+    E --&gt;|否| Reject
+    E --&gt;|是| F[派生 challenge_1]
+    
+    F --&gt; G[计算并修正 v_tilde]
     G --&gt; H[派生 relation_seed]
-    H --&gt; I{验证 opening_challenge 绑定}
     
-    I --&gt;|匹配| J[提取 VerifierCorrelations]
+    H --&gt; I{挑战&lt;br/&gt;绑定?}
+    I --&gt;|否| Reject
+    I --&gt;|是| J[提取 VerifierCorrelations]
     
     J --&gt; K([challenges])
-    K --&gt; L(((从 relation_seed 派生挑战序列)))
+    K --&gt; L(((派生挑战序列)))
 
     style A fill:none,stroke:#c678dd,stroke-width:2px
     style K fill:none,stroke:#c678dd,stroke-width:2px
     style C fill:none,stroke:#e06c75,stroke-width:2px
     style E fill:none,stroke:#e06c75,stroke-width:2px
     style I fill:none,stroke:#e06c75,stroke-width:2px
+    style Reject fill:none,stroke:#ff0000,stroke-width:3px,stroke-dasharray: 5 5
 </pre>
 
 <h3 id="44-核心数据结构"><a class="header" href="#44-核心数据结构">4.4 核心数据结构</a></h3>
@@ -566,19 +574,19 @@ squeeze() → opening_challenge
 <h2 id="六跨语言调用架构总结"><a class="header" href="#六跨语言调用架构总结">六、跨语言调用架构总结</a></h2>
 <pre class="mermaid">graph TD
     subgraph Rust_App [Rust 应用层]
-        A[VoleitHProver / VoleitHVerifier&lt;br&gt;&lt;br&gt;• Fiat-Shamir 挑战派生&lt;br&gt;• Prover/Verifier 相关性提取&lt;br&gt;• 列转置优化 BMI2&lt;br&gt;• Rayon 并行哈希]
+        A["VoleitHProver / VoleitHVerifier&lt;br/&gt;&lt;br/&gt;• Fiat-Shamir 挑战派生&lt;br/&gt;• Prover/Verifier 相关性提取&lt;br/&gt;• 列转置优化 BMI2&lt;br/&gt;• Rayon 并行哈希"]
     end
 
     subgraph Rust_FFI [FFI 接口封装层]
-        B[FaestVoleCommitmentState&lt;br&gt;Drop 安全析构&lt;br&gt;&lt;br&gt;• vole_commit&lt;br&gt;• bavc_open&lt;br&gt;• vole_reconstruct]
+        B["FaestVoleCommitmentState&lt;br/&gt;Drop 安全析构&lt;br/&gt;&lt;br/&gt;• vole_commit&lt;br/&gt;• bavc_open&lt;br/&gt;• vole_reconstruct"]
     end
 
     subgraph C_Lib [C 语言层 faest-ref]
-        C[vole.c / bavc.c&lt;br&gt;&lt;br&gt;• BAVC 树构建 τ × λ 深度&lt;br&gt;• GGM 伪随机展开&lt;br&gt;• 承诺哈希 SHA-3 聚合&lt;br&gt;• 选择性打开验证]
+        C["vole.c / bavc.c&lt;br/&gt;&lt;br/&gt;• BAVC 树构建 τ × λ 深度&lt;br/&gt;• GGM 伪随机展开&lt;br/&gt;• 承诺哈希 SHA-3 聚合&lt;br/&gt;• 选择性打开验证"]
     end
 
-    Rust_App --&gt;|FFI 调用| Rust_FFI
-    Rust_FFI --&gt;|extern "C"| C_Lib
+    A --&gt;|FFI 调用| B
+    B --&gt;|extern C| C
 
     style Rust_App fill:none,stroke:#e5c07b,stroke-width:2px
     style Rust_FFI fill:none,stroke:#61afef,stroke-width:2px,stroke-dasharray: 5 5
