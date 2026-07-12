@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-e32a1582.js";
+            window.path_to_searchindex_js = "searchindex-6976efb2.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61c3e6e9.js"></script>
@@ -197,7 +197,6 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="模块八参数配置工程优化与基准测试安全分析与性能报告"><a class="header" href="#模块八参数配置工程优化与基准测试安全分析与性能报告">模块八：参数配置、工程优化与基准测试——安全分析与性能报告</a></h1>
-<hr>
 <h2 id="一概述"><a class="header" href="#一概述">一、概述</a></h2>
 <p>本模块是整个系统的工程化结晶，涵盖三个核心维度：</p>
 <ol>
@@ -205,7 +204,6 @@
 <li><code>artifact_bundle.rs</code> — 极紧凑的签名序列化格式，将签名体积压缩到 KB 级别</li>
 <li><code>benches/paper_benchmarks.rs</code> + <code>scripts/</code> — 端到端基准测试框架和性能调优</li>
 </ol>
-<hr>
 <h2 id="二安全参数分析securityrs"><a class="header" href="#二安全参数分析securityrs">二、安全参数分析：<code>security.rs</code></a></h2>
 <h3 id="21-安全性理论基础"><a class="header" href="#21-安全性理论基础">2.1 安全性理论基础</a></h3>
 <p>$\Pi^t_{dD-Rep}$ 协议的安全性误差（soundness error）的上界为：</p>
@@ -264,7 +262,6 @@ degree=9, combination=128, delta=120 → bit_security ≈ 116.829
 </table>
 </div>
 <p>环签名等方案度数 $d = c+1 = 9$（因方向比特多一度），但安全分析仍适用相同的 bound 公式。</p>
-<hr>
 <h2 id="三极紧凑序列化artifact_bundlers"><a class="header" href="#三极紧凑序列化artifact_bundlers">三、极紧凑序列化：<code>artifact_bundle.rs</code></a></h2>
 <h3 id="31-签名体积的理论基础"><a class="header" href="#31-签名体积的理论基础">3.1 签名体积的理论基础</a></h3>
 <p>传统基于 Stern 协议的 ZKP 签名：每次 repetition 需要约 $k$ 比特的承诺 + 打开数据，重复 $\lambda$ 次（$\lambda = 128$），总签名体积通常在 兆字节（MB）级别。</p>
@@ -369,7 +366,6 @@ const VERSION: u16 = 1;
 </tbody>
 </table>
 </div>
-<hr>
 <h2 id="四并发性能调优"><a class="header" href="#四并发性能调优">四、并发性能调优</a></h2>
 <p>系统在多个层级利用 Rayon 数据并行 实现多核加速：</p>
 <h3 id="41-显式-rayonpar_iter-并行点"><a class="header" href="#41-显式-rayonpar_iter-并行点">4.1 显式 <code>rayon::par_iter</code> 并行点</a></h3>
@@ -528,7 +524,6 @@ const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 </table>
 </div>
 <p>（具体毫秒值可通过 <code>just bench-paper</code> 或 <code>just speed-table</code> 运行获取）</p>
-<hr>
 <h2 id="五工程优化总结"><a class="header" href="#五工程优化总结">五、工程优化总结</a></h2>
 <div class="table-wrapper">
 <table>

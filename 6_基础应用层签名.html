@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-e32a1582.js";
+            window.path_to_searchindex_js = "searchindex-6976efb2.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61c3e6e9.js"></script>
@@ -197,14 +197,12 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="模块六基础应用层resolved-与环签名"><a class="header" href="#模块六基础应用层resolved-与环签名">模块六：基础应用层——ReSolveD+ 与环签名</a></h1>
-<hr>
 <h2 id="一概述"><a class="header" href="#一概述">一、概述</a></h2>
 <p>本模块是将底层 $\Pi^t_{dD-Rep}$ 协议应用到具体密码学原语的第一层。包含两种签名方案：</p>
 <ol>
 <li>ReSolveD+：基于 RSD（Regular Syndrome Decoding） 困难问题的数字签名方案。公钥是一个随机矩阵 $B$ 和其对应的综合症 $y$；私钥是一个随机秘密 $x$，满足 $y = B \cdot \text{RE}(x)$。</li>
 <li>环签名（Ring Signature）：签名者可以从一个公钥集合（环）中匿名地签署消息，使验证者确信签名者属于该集合，但无法确定具体是哪一个。这里利用 Merkle 树累加器 + AFS 双矩阵哈希构造环。</li>
 </ol>
-<hr>
 <h2 id="二resolved-签名"><a class="header" href="#二resolved-签名">二、ReSolveD+ 签名</a></h2>
 <h3 id="21-数学基础rsd-问题"><a class="header" href="#21-数学基础rsd-问题">2.1 数学基础：RSD 问题</a></h3>
 <p>RSD（Regular Syndrome Decoding） 是编码理论中的一个 NP-hard 问题：给定矩阵 $B \in \mathbb{F}_2^{n \times m}$ 和综合症 $y \in \mathbb{F}_2^n$，寻找一个正则词 $x$（其汉明重量极低，结构上由 $c$ 比特块映射为独热向量）使得：</p>
@@ -356,7 +354,6 @@ Output: Signature σ
 </tbody>
 </table>
 </div>
-<hr>
 <h2 id="三环签名ring-signature"><a class="header" href="#三环签名ring-signature">三、环签名（Ring Signature）</a></h2>
 <h3 id="31-数学基础merkle-累加器的-zk-证明"><a class="header" href="#31-数学基础merkle-累加器的-zk-证明">3.1 数学基础：Merkle 累加器的 ZK 证明</a></h3>
 <p>环签名的核心思路是使用 Merkle 哈希树 累加环中所有公钥。签名者需要在零知识下证明自己知道一条从叶子（自己的密钥材料）到根（公开的 Merkle 根 $u_0$）的认证路径。</p>
@@ -580,7 +577,6 @@ Output: RingSignature σ
 </tbody>
 </table>
 </div>
-<hr>
 <h2 id="四总结对比"><a class="header" href="#四总结对比">四、总结对比</a></h2>
 <div class="table-wrapper">
 <table>

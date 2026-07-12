@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-e32a1582.js";
+            window.path_to_searchindex_js = "searchindex-6976efb2.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61c3e6e9.js"></script>
@@ -282,7 +282,7 @@ $$</p>
 <h4 id="策略三aes-ctr-作为向量-prg"><a class="header" href="#策略三aes-ctr-作为向量-prg">策略三：AES-CTR 作为向量 PRG</a></h4>
 <p>每一列 $B_{:,j}$ 通过 AES-128 在 CTR 模式下生成：</p>
 <p>$$
-B_{:,j} = \text{AES}<em>\sigma(\text{ctr}=j || \text{nonce}=0) ; | ; \text{AES}</em>\sigma(\text{ctr}=j || \text{nonce}=1) ; | ; \cdots
+B_{:,j} = \text{AES}_\sigma(\text{ctr}=j || \text{nonce}=0) ; | ; \text{AES}_\sigma(\text{ctr}=j || \text{nonce}=1) ; | ; \cdots
 $$</p>
 <p>其中 $\sigma$ 是 16 字节种子。每个 AES 块产生 128 位伪随机输出，因此生成 $n$ 位列向量需要 $\lceil n/128 \rceil$ 次 AES 加密调用。</p>
 <p>关键优化细节：</p>
@@ -303,7 +303,6 @@ const MATRIX_PRG_BACKEND: &amp;str = "aes-ni";
 const MATRIX_PRG_BACKEND: &amp;str = "faest-ffi";
 <span class="boring">}</span></code></pre>
 <p>当 CPU 支持 AES-NI 且启用 <code>hardware-accel</code> feature（默认开启）时，使用 Rust 内联汇编实现的 AES-CTR；否则通过 FFI 调用 <code>faest_ffi::faest_prg_128</code>（调用 C 版本的 PRG）。这种双后端设计确保了可移植性和性能最佳化。</p>
-<hr>
 <h2 id="四稀疏矩阵-向量乘法bitvec_opsrs"><a class="header" href="#四稀疏矩阵-向量乘法bitvec_opsrs">四、稀疏矩阵-向量乘法：<code>bitvec_ops.rs</code></a></h2>
 <h3 id="41-问题"><a class="header" href="#41-问题">4.1 问题</a></h3>
 <p>在基于编码的 ZK 中，$y = B \cdot x$ 中 $x$ 是一个正则编码词（Regular Encoded word），其汉明重量极低——即 $x$ 中只有 $c$ 个比特为 1，其余全为 0。这意味着全矩阵乘法可以退化为稀疏乘法：</p>
@@ -384,7 +383,6 @@ for table_idx in 0..domain_size {
 }
 <span class="boring">}</span></code></pre>
 <p>这三种模式互不矛盾——它们服务于不同的工程目的：行主序用于验证正确性，非 CT 列流式用于公开输入的快速求值，CT 列流式用于秘密输入的侧信道防御。</p>
-<hr>
 <h2 id="五工程化保障机制"><a class="header" href="#五工程化保障机制">五、工程化保障机制</a></h2>
 <h3 id="51-确定性验证"><a class="header" href="#51-确定性验证">5.1 确定性验证</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -409,7 +407,6 @@ fn test_streaming_matrix_is_deterministic() {
 <p>保证行为等价：无论底层使用 AES-NI 还是 FAEST-FFI，PRG 输出必须逐字节一致。</p>
 <h3 id="53-域公理验证"><a class="header" href="#53-域公理验证">5.3 域公理验证</a></h3>
 <p><code>test_gf128_axioms</code> 验证了加法交换律、结合律、分配律以及恒等元——确保 $F_{128b}$ 确实构成一个域，这是上层代数推理的正确性前提。</p>
-<hr>
 <h2 id="六性能总结"><a class="header" href="#六性能总结">六、性能总结</a></h2>
 <div class="table-wrapper">
 <table>

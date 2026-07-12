@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-e32a1582.js";
+            window.path_to_searchindex_js = "searchindex-6976efb2.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61c3e6e9.js"></script>
@@ -197,7 +197,6 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="模块五pit_dd-rep-核心协议与-nizk-变换"><a class="header" href="#模块五pit_dd-rep-核心协议与-nizk-变换">模块五：$\Pi^t_{dD-Rep}$ 核心协议与 NIZK 变换</a></h1>
-<hr>
 <h2 id="一概述"><a class="header" href="#一概述">一、概述</a></h2>
 <p>$\Pi^t_{dD-Rep}$（degree-$d$ Representation）协议是整个 ZK 系统的核心。它解决的核心问题是：</p>
 <blockquote>
@@ -208,17 +207,16 @@
 <li><code>protocol_dd_rep.rs</code> — $\Pi^t_{dD-Rep}$ 协议的三步实现（承诺 → 挑战 → 响应/验证）</li>
 <li><code>transcript.rs</code> — Fiat-Shamir 变换的 Random Oracle 实例化（SHA-3 Keccak-256）</li>
 </ol>
-<hr>
 <h2 id="二pit_dd-rep-协议三步曲"><a class="header" href="#二pit_dd-rep-协议三步曲">二、$\Pi^t_{dD-Rep}$ 协议三步曲</a></h2>
 <h3 id="21-协议概览"><a class="header" href="#21-协议概览">2.1 协议概览</a></h3>
 <p>$\Pi^t_{dD-Rep}$ 建立在 VOLE 相关性之上。回顾 Prover 和 Verifier 通过延迟 VOLE 功能 $\mathcal{F}_{\text{sVOLE}}$ 建立的关系：</p>
 <p>$$
 \begin{aligned}
-\text{Prover: } &amp;(u, \mathbf{v}) \in \mathbb{F}<em>2^k \times \mathbb{F}</em>{2^{128}}^k \
-\text{Verifier: } &amp;(\Delta, \mathbf{q}) \in \mathbb{F}<em>{2^{128}} \times \mathbb{F}</em>{2^{128}}^k
+\text{Prover: } &amp;(u, \mathbf{v}) \in \mathbb{F}_2^k \times \mathbb{F}_{2^{128}}^k \
+\text{Verifier: } &amp;(\Delta, \mathbf{q}) \in \mathbb{F}_{2^{128}} \times \mathbb{F}_{2^{128}}^k
 \end{aligned}
 $$</p>
-<p>满足 $\mathbf{v} = \mathbf{q} + \Delta \cdot u$。Prover 拥有 witness $w \in \mathbb{F}<em>2^k$，公开约束系统为 ${g_i(X)}</em>{i=1}^t$。</p>
+<p>满足 $\mathbf{v} = \mathbf{q} + \Delta \cdot u$。Prover 拥有 witness $w \in \mathbb{F}_2^k$，公开约束系统为 ${g_i(X)}_{i=1}^t$。</p>
 <pre class="mermaid">sequenceDiagram
     participant P as Prover&lt;br&gt;(w, u, v)
     participant V as Verifier&lt;br&gt;(Δ, q)
@@ -259,7 +257,7 @@ $$</p>
 <p>校正子的信息论安全性：由于 $u$ 是 Prover 私有的秘密向量（Verifier 只知道 $q$ 和 $\Delta$，但 $u$ 对 Verifier 具有 $-\log_2(\text{Pr}[u=0]) = k$ 比特的熵），$w \oplus u$ 完美隐藏了 $w$。</p>
 <p>Verifier 端的吸收：Verifier 利用校正子修正自己的 $q$：</p>
 <p>$$
-\tilde{q}_i = q_i + \text{corr}<em>i \cdot \Delta \in \mathbb{F}</em>{2^{128}}
+\tilde{q}_i = q_i + \text{corr}_i \cdot \Delta \in \mathbb{F}_{2^{128}}
 $$</p>
 <p>由于 $\mathbf{v} = \mathbf{q} + \Delta \cdot u$，且 $\text{corr} = w \oplus u$，验证：</p>
 <p>$$
@@ -321,7 +319,7 @@ ChallengeMessage { challenges: f128_challenges_from_seed(seed, challenge_count) 
 <span class="boring">}</span></code></pre>
 <p>这里的数学是：对于 ANF 单项式 $X_{i_1} X_{i_2} \cdots X_{i_d}$，其在仿射基下的求值为：</p>
 <p>$$
-\tilde{X}<em>i = v_i + w_i \cdot p \quad\Rightarrow\quad \prod</em>{j=1}^{\text{deg}} \tilde{X}_{i_j}
+\tilde{X}_i = v_i + w_i \cdot p \quad\Rightarrow\quad \prod_{j=1}^{\text{deg}} \tilde{X}_{i_j}
 $$</p>
 <p>然后乘以 $p^{d - \text{deg}}$ 补偿度数，使所有单项式对齐到同一度数 $d$。</p>
 <h4 id="模式-b隐式求值respond_resolved_plus_implicit"><a class="header" href="#模式-b隐式求值respond_resolved_plus_implicit">模式 B：隐式求值（<code>respond_resolved_plus_implicit</code>）</a></h4>
@@ -383,7 +381,7 @@ $$</p>
 <p>完整的正确性推导：</p>
 <p>Prover 计算盲化系数：
 $$
-\tilde{a}<em>j = a_j + \sum</em>{h: \text{组合}} (\text{来自线性因子乘积的 } Y^j \text{ 系数})
+\tilde{a}_j = a_j + \sum_{h: \text{组合}} (\text{来自线性因子乘积的 } Y^j \text{ 系数})
 $$</p>
 <p>Verifier 验证：
 $$
@@ -404,7 +402,6 @@ $$</p>
 <span class="boring">}</span></code></pre>
 <p>即 $P = {0, 1, g, g^2, \dots, g^{d-1}}$，其中 $g$ 是 $\mathbb{F}_{2^{128}}$ 的乘法生成元。这保证了所有插值点互不相同（因为 $g$ 的阶为 $2^{128}-1$）。</p>
 <p>当度数 $d \le 15$ 时（<code>STACK_POLY_COEFFS = 16</code>），插值工作缓冲区使用栈分配，避免堆分配的开销。</p>
-<hr>
 <h2 id="三完整的数据流公式-代码映射"><a class="header" href="#三完整的数据流公式-代码映射">三、完整的数据流公式-代码映射</a></h2>
 <div class="table-wrapper">
 <table>
@@ -420,14 +417,13 @@ $$</p>
 <tr><td>约束多项式</td><td>$g_i(X) = \sum b_{i,j} f_j(X) + y_i$</td><td><code>AnfConstraintSystem = Vec&lt;Vec&lt;Monomial&gt;&gt;</code></td></tr>
 <tr><td>约束求值</td><td>$\tilde{g}_i(p) = g_i({x_i(p)})$</td><td><code>evaluate_ck_at_point_precomputed()</code></td></tr>
 <tr><td>隐式约束求值</td><td>$\sum_i \chi_i \cdot \tilde{g}_i(p)$</td><td><code>implicit_evaluate_polynomials_from_affine()</code></td></tr>
-<tr><td>盲化系数</td><td>$\tilde{a}<em>0, \dots, \tilde{a}</em>{d-1}$</td><td><code>ProofMessage { blinded_coeffs }</code></td></tr>
+<tr><td>盲化系数</td><td>$\tilde{a}_0, \dots, \tilde{a}_{d-1}$</td><td><code>ProofMessage { blinded_coeffs }</code></td></tr>
 <tr><td>辅助 VOLE 盲化</td><td>$\tilde{a}_j = a_j + \text{product term}_j$</td><td><code>add_linear_factor_product_into()</code></td></tr>
 <tr><td>Verifier 验证</td><td>$\sum \chi_i g_i(\tilde{q}) + \Pi q_{\text{aux}} \stackrel{?}{=} \sum \tilde{a}_j \Delta^j$</td><td><code>verify()</code> / <code>verify_resolved_plus_implicit()</code></td></tr>
 <tr><td>单变量求值</td><td>$P(\Delta) = \sum \tilde{a}_j \Delta^j$</td><td><code>evaluate_univariate(coeffs, delta)</code></td></tr>
 </tbody>
 </table>
 </div>
-<hr>
 <h2 id="四fiat-shamir-变换transcriptrs"><a class="header" href="#四fiat-shamir-变换transcriptrs">四、Fiat-Shamir 变换：<code>transcript.rs</code></a></h2>
 <h3 id="41-random-oracle-实例化"><a class="header" href="#41-random-oracle-实例化">4.1 Random Oracle 实例化</a></h3>
 <p>Fiat-Shamir 启发式将交互式协议转换为非交互式零知识证明（NIZK），其核心是将 Verifier 的随机挑战替换为对协议 transcript 的 密码学哈希。</p>
@@ -558,7 +554,6 @@ const FS_DOMAIN_SEPARATOR: &amp;[u8] = b"RingSig_v1.0";
 <p>这确保了不同协议、不同阶段的挑战无法互换，防止域混淆攻击。</p>
 <h3 id="46-确定性验证"><a class="header" href="#46-确定性验证">4.6 确定性验证</a></h3>
 <p>单元测试 <code>transcript_is_deterministic</code> 验证相同 absorb 输入产生相同挑战，<code>transcript_is_order_sensitive</code> 验证 absorb 顺序影响输出——满足 Random Oracle 的 一致性 和 敏感性。</p>
-<hr>
 <h2 id="五完整非交互式协议流程"><a class="header" href="#五完整非交互式协议流程">五、完整非交互式协议流程</a></h2>
 <p>结合 VOLEitH 状态机（模块三）、隐式求值引擎（模块四）和 $\Pi^t_{dD-Rep}$（本模块），完整的非交互式签名流程为：</p>
 <pre><code>Prover:

@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-e32a1582.js";
+            window.path_to_searchindex_js = "searchindex-6976efb2.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61c3e6e9.js"></script>
@@ -197,14 +197,12 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="模块三voleith-状态机与跨语言-ffi"><a class="header" href="#模块三voleith-状态机与跨语言-ffi">模块三：VOLEitH 状态机与跨语言 FFI</a></h1>
-<hr>
 <h2 id="一概述"><a class="header" href="#一概述">一、概述</a></h2>
 <p>本模块是整个 ZKP 系统的核心引擎——它负责将密码学约束系统与底层的延迟 VOLE 功能（Delayed VOLE functionality, $\mathcal{F}_{\text{sVOLE}}$）衔接起来。架构上采用两层级联设计：</p>
 <ol>
 <li>C 层（FAEST）：提供高效的 GGM 树形向量承诺（BAVC - Binary Auxiliary Vector Commitment），处理 $\tau$ 棵 $\lambda$ 深度的 GGM 树的构建、打开和验证。这是密码学计算密集部分。</li>
 <li>Rust 层：通过 FFI 安全封装 C 层状态机，并在此基础上实现 Prover/Verifier 的协议状态机，负责挑战生成、相关性提取（correlation extraction）、约束绑定等高层协议逻辑。</li>
 </ol>
-<hr>
 <h2 id="二为什么需要-ffi-复用-faest-的-c-代码"><a class="header" href="#二为什么需要-ffi-复用-faest-的-c-代码">二、为什么需要 FFI 复用 FAEST 的 C 代码？</a></h2>
 <h3 id="21-ggm-树形向量承诺bavc的密码学角色"><a class="header" href="#21-ggm-树形向量承诺bavc的密码学角色">2.1 GGM 树形向量承诺（BAVC）的密码学角色</a></h3>
 <p>在 VOLE-in-the-Head 范式中，Prover 需要承诺 $\tau$ 个伪随机种子 $K_1, \dots, K_\tau$，然后对每个种子应用 GGM 伪随机函数树（Goldreich-Goldwasser-Micali 树）展开出 $\lambda$ 层的叶子。这些叶子形成了 VOLE 关系中 Prover 的秘密向量：</p>
@@ -236,7 +234,6 @@ src/
   ├── core/voleith.rs ← 高层 Prover/Verifier 状态机
   └── core/wire.rs    ← 序列化/反序列化
 </code></pre>
-<hr>
 <h2 id="三ffi-绑定的安全封装faest_ffirs"><a class="header" href="#三ffi-绑定的安全封装faest_ffirs">三、FFI 绑定的安全封装：<code>faest_ffi.rs</code></a></h2>
 <h3 id="31-c-侧数据结构的内存布局对齐"><a class="header" href="#31-c-侧数据结构的内存布局对齐">3.1 C 侧数据结构的内存布局对齐</a></h3>
 <p><code>faest_ffi.rs</code> 使用 <code>#[repr(C)]</code> 精确复刻了 C 侧的两个核心结构体：</p>
@@ -392,7 +389,6 @@ low ^ high ^ (high &lt;&lt; 1) ^ (high &lt;&lt; 3) ^ (high &lt;&lt; 4)
 <span class="boring">}</span></code></pre>
 <p>这约简多项式 $x^{64} + x^4 + x^3 + x + 1$。</p>
 <p>正确性保障：<code>test_rust_vole_hash_matches_faest_c_reference</code> 在多种输入长度（0 ~ 28176 比特）和多种随机种子下，逐字节比对 Rust 实现与 C 参考实现的输出，确保完全一致。</p>
-<hr>
 <h2 id="四状态机设计voleithrs"><a class="header" href="#四状态机设计voleithrs">四、状态机设计：<code>voleith.rs</code></a></h2>
 <h3 id="41-延迟-vole-功能delayed-vole"><a class="header" href="#41-延迟-vole-功能delayed-vole">4.1 延迟 VOLE 功能（Delayed VOLE）</a></h3>
 <p>在 VOLEitH 协议中，Prover 和 Verifier 需要建立以下 VOLE 关系：</p>
@@ -409,7 +405,7 @@ $$</p>
 <p>其中 $\Delta$ 是 Verifier 的全局挑战，$u$ 是 Prover 的秘密比特向量，$\mathbf{v}, \mathbf{q}$ 是对应的 $\mathbb{F}_{2^{128}}$ 域元素向量。</p>
 <p>“延迟“的含义是：在协议初始阶段（承诺阶段），Prover 和 Verifier 仅交换承诺，等到协议运行到特定步骤后才确定 $\Delta$ 和挑战。</p>
 <h3 id="42-prover-状态机voleithprover"><a class="header" href="#42-prover-状态机voleithprover">4.2 Prover 状态机：<code>VoleitHProver</code></a></h3>
-<pre class="mermaid">graph LR
+<pre class="mermaid">graph TD
     A([commit]) --&gt;|生成 key, iv| B[faest_vole_commit]
     B --&gt; C[推导 challenge_1]
     C --&gt; D[计算 u/v_tilde]
@@ -508,7 +504,6 @@ squeeze() → opening_challenge
 }
 <span class="boring">}</span></code></pre>
 <p>这要求 Prover 在最终确定签名前，平均需要进行 $2^{w_\text{grind}}$ 次尝试。对于 $w_\text{grind} = 8$（ReSolveD+ 的默认参数），Prover 需尝试约 256 次。这保证了 Verifier 对证明的非平凡性（non-triviality）有 $\lambda + w_\text{grind}$ 比特的置信度。</p>
-<hr>
 <h2 id="五线缆编码wirers"><a class="header" href="#五线缆编码wirers">五、线缆编码：<code>wire.rs</code></a></h2>
 <h3 id="51-版本化规范格式"><a class="header" href="#51-版本化规范格式">5.1 版本化规范格式</a></h3>
 <p><code>wire.rs</code> 实现了一个自描述、版本化、严格规范的序列化格式，用于所有签名类型的线缆传输。</p>
@@ -570,7 +565,6 @@ squeeze() → opening_challenge
 <li>F128 值的规范反序列化：使用 <code>F128b::from_bytes</code> 而非 <code>from_uniform_bytes</code>，拒绝非规范的域元素表示</li>
 <li>集合大小上限：<code>MAX_COLLECTION_ITEMS = 1,000,000</code> 防止拒绝服务攻击</li>
 </ol>
-<hr>
 <h2 id="六跨语言调用架构总结"><a class="header" href="#六跨语言调用架构总结">六、跨语言调用架构总结</a></h2>
 <pre class="mermaid">graph TD
     subgraph Rust_App [Rust 应用层]
