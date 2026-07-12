@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-be48b045.js";
+            window.path_to_searchindex_js = "searchindex-c077466c.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61c3e6e9.js"></script>
@@ -199,30 +199,30 @@
                         <h1 id="模块三voleith-状态机与跨语言-ffi"><a class="header" href="#模块三voleith-状态机与跨语言-ffi">模块三：VOLEitH 状态机与跨语言 FFI</a></h1>
 <hr>
 <h2 id="一概述"><a class="header" href="#一概述">一、概述</a></h2>
-<p>本模块是整个 ZKP 系统的<strong>核心引擎</strong>——它负责将密码学约束系统与底层的<strong>延迟 VOLE 功能</strong>（Delayed VOLE functionality, $\mathcal{F}_{\text{sVOLE}}$）衔接起来。架构上采用<strong>两层级联</strong>设计：</p>
+<p>本模块是整个 ZKP 系统的核心引擎——它负责将密码学约束系统与底层的延迟 VOLE 功能（Delayed VOLE functionality, $\mathcal{F}_{\text{sVOLE}}$）衔接起来。架构上采用两层级联设计：</p>
 <ol>
-<li><strong>C 层（FAEST）</strong>：提供高效的 <strong>GGM 树形向量承诺</strong>（BAVC - Binary Auxiliary Vector Commitment），处理 $\tau$ 棵 $\lambda$ 深度的 GGM 树的构建、打开和验证。这是密码学计算密集部分。</li>
-<li><strong>Rust 层</strong>：通过 FFI 安全封装 C 层状态机，并在此基础上实现 Prover/Verifier 的<strong>协议状态机</strong>，负责挑战生成、相关性提取（correlation extraction）、约束绑定等高层协议逻辑。</li>
+<li>C 层（FAEST）：提供高效的 GGM 树形向量承诺（BAVC - Binary Auxiliary Vector Commitment），处理 $\tau$ 棵 $\lambda$ 深度的 GGM 树的构建、打开和验证。这是密码学计算密集部分。</li>
+<li>Rust 层：通过 FFI 安全封装 C 层状态机，并在此基础上实现 Prover/Verifier 的协议状态机，负责挑战生成、相关性提取（correlation extraction）、约束绑定等高层协议逻辑。</li>
 </ol>
 <hr>
 <h2 id="二为什么需要-ffi-复用-faest-的-c-代码"><a class="header" href="#二为什么需要-ffi-复用-faest-的-c-代码">二、为什么需要 FFI 复用 FAEST 的 C 代码？</a></h2>
 <h3 id="21-ggm-树形向量承诺bavc的密码学角色"><a class="header" href="#21-ggm-树形向量承诺bavc的密码学角色">2.1 GGM 树形向量承诺（BAVC）的密码学角色</a></h3>
-<p>在 VOLE-in-the-Head 范式中，Prover 需要承诺 $\tau$ 个伪随机种子 $K_1, \dots, K_\tau$，然后对每个种子应用 <strong>GGM 伪随机函数树</strong>（Goldreich-Goldwasser-Micali 树）展开出 $\lambda$ 层的叶子。这些叶子形成了 VOLE 关系中 Prover 的秘密向量：</p>
+<p>在 VOLE-in-the-Head 范式中，Prover 需要承诺 $\tau$ 个伪随机种子 $K_1, \dots, K_\tau$，然后对每个种子应用 GGM 伪随机函数树（Goldreich-Goldwasser-Micali 树）展开出 $\lambda$ 层的叶子。这些叶子形成了 VOLE 关系中 Prover 的秘密向量：</p>
 <p>$$
 {(u_i, v_i)}_{i=1}^\tau \xrightarrow{\text{GGM 展开}} {(u, \mathbf{v})} \in \mathbb{F}<em>2^\ell \times \mathbb{F}</em>{2^{128}}^\ell
 $$</p>
 <p>BAVC（Binary Auxiliary Vector Commitment）是 FAEST 使用的一种优化的 GGM 树承诺方案，它支持：</p>
 <ul>
-<li><strong>批量承诺</strong>：一次承诺 $\tau$ 棵树的所有根密钥</li>
-<li><strong>选择性打开</strong>：根据 Verifier 挑战，仅打开挑战指定的叶子路径</li>
-<li><strong>一致性验证</strong>：Verifier 可通过承诺哈希验证打开的叶子是否正确</li>
+<li>批量承诺：一次承诺 $\tau$ 棵树的所有根密钥</li>
+<li>选择性打开：根据 Verifier 挑战，仅打开挑战指定的叶子路径</li>
+<li>一致性验证：Verifier 可通过承诺哈希验证打开的叶子是否正确</li>
 </ul>
 <h3 id="22-不复用的代价"><a class="header" href="#22-不复用的代价">2.2 不复用的代价</a></h3>
 <p>如果完全用 Rust 重新实现 BAVC：</p>
 <ul>
 <li>需要重新实现 $\tau$ 棵 GGM 树的构建、密钥扩展、Merkle 哈希聚合——这是数千行经过审计的 C 代码</li>
-<li>需要保证与 FAEST 规范的行为<strong>完全一致</strong>（包括常数时间执行、字节序、SHA-3 用法等）</li>
-<li>FAEST 的 C 代码经历了 NIST 后量子密码标准化过程的严格审查，复用它直接继承了其<strong>安全保证</strong></li>
+<li>需要保证与 FAEST 规范的行为完全一致（包括常数时间执行、字节序、SHA-3 用法等）</li>
+<li>FAEST 的 C 代码经历了 NIST 后量子密码标准化过程的严格审查，复用它直接继承了其安全保证</li>
 </ul>
 <h3 id="23-代码组织"><a class="header" href="#23-代码组织">2.3 代码组织</a></h3>
 <pre><code>faest-ref/           ← C 源码（子模块）
@@ -240,7 +240,7 @@ src/
 <h2 id="三ffi-绑定的安全封装faest_ffirs"><a class="header" href="#三ffi-绑定的安全封装faest_ffirs">三、FFI 绑定的安全封装：<code>faest_ffi.rs</code></a></h2>
 <h3 id="31-c-侧数据结构的内存布局对齐"><a class="header" href="#31-c-侧数据结构的内存布局对齐">3.1 C 侧数据结构的内存布局对齐</a></h3>
 <p><code>faest_ffi.rs</code> 使用 <code>#[repr(C)]</code> 精确复刻了 C 侧的两个核心结构体：</p>
-<p><strong><code>FaestParamset</code></strong> — FAEST 参数集（对应 C 的 <code>faest_paramset_t</code>）</p>
+<p><code>FaestParamset</code> — FAEST 参数集（对应 C 的 <code>faest_paramset_t</code>）</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -257,7 +257,7 @@ src/
 </tbody>
 </table>
 </div>
-<p><strong><code>Bavc</code></strong> — BAVC 承诺状态（对应 C 的 <code>bavc_t</code>）</p>
+<p><code>Bavc</code> — BAVC 承诺状态（对应 C 的 <code>bavc_t</code>）</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[repr(C)]
@@ -268,7 +268,7 @@ struct Bavc {
     sd: *mut u8,   // 种子指针
 }
 <span class="boring">}</span></code></pre>
-<p><strong>ABI 一致性验证</strong>：<code>test_rust_c_ffi_layouts_match_exactly</code> 测试通过调用 C 侧的 <code>cbzk_faest_paramset_layout</code> 和 <code>cbzk_bavc_layout</code> 获取 C 编译器的 <code>sizeof</code>、<code>alignof</code> 和 <code>offsetof</code>，与 Rust 侧的 <code>size_of</code>、<code>align_of</code>、<code>offset_of!</code> 精确比对。若 ABI 在未来的 faest-ref 版本中有变化，该测试会立即失败。</p>
+<p>ABI 一致性验证：<code>test_rust_c_ffi_layouts_match_exactly</code> 测试通过调用 C 侧的 <code>cbzk_faest_paramset_layout</code> 和 <code>cbzk_bavc_layout</code> 获取 C 编译器的 <code>sizeof</code>、<code>alignof</code> 和 <code>offsetof</code>，与 Rust 侧的 <code>size_of</code>、<code>align_of</code>、<code>offset_of!</code> 精确比对。若 ABI 在未来的 faest-ref 版本中有变化，该测试会立即失败。</p>
 <h3 id="32-外部函数接口声明"><a class="header" href="#32-外部函数接口声明">3.2 外部函数接口声明</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -310,7 +310,7 @@ struct Bavc {
     // ...
 }
 <span class="boring">}</span></code></pre>
-<p>这些函数构成了 Prover 和 Verifier 与 C 层的<strong>完整接口契约</strong>。</p>
+<p>这些函数构成了 Prover 和 Verifier 与 C 层的完整接口契约。</p>
 <h3 id="33-rust-侧的安全封装层"><a class="header" href="#33-rust-侧的安全封装层">3.3 Rust 侧的安全封装层</a></h3>
 <h4 id="331-生命周期管理faestvolecommitmentstate--drop"><a class="header" href="#331-生命周期管理faestvolecommitmentstate--drop">3.3.1 生命周期管理：<code>FaestVoleCommitmentState</code> + <code>Drop</code></a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -329,7 +329,7 @@ impl Drop for FaestVoleCommitmentState {
     }
 }
 <span class="boring">}</span></code></pre>
-<p><strong>安全性担保</strong>：</p>
+<p>安全性担保：</p>
 <ul>
 <li><code>params</code> 使用 <code>Box&lt;FaestParamset&gt;</code> 堆分配，确保 <code>vole_commit</code> 写入时指针稳定性</li>
 <li><code>Drop</code> trait 在对象销毁时自动调用 <code>bavc_clear</code> 释放 C 侧堆内存，防止内存泄漏</li>
@@ -344,7 +344,7 @@ let mut row_ptrs = (0..public_params.lambda_bits)
     .map(|row| unsafe { v_rows.as_mut_ptr().add(row * row_bytes) })
     .collect::&lt;Vec&lt;_&gt;&gt;();
 <span class="boring">}</span></code></pre>
-<p>C 函数写入 <code>v_rows</code> 后，Rust 侧通过 <code>row_ptrs</code> 重新解读为<strong>连续内存块</strong>中的 $\lambda$ 行 × <code>row_bytes</code> 列的矩阵。这样既满足了 C 接口的指针数组要求，又在 Rust 侧保持了连续内存的安全访问。</p>
+<p>C 函数写入 <code>v_rows</code> 后，Rust 侧通过 <code>row_ptrs</code> 重新解读为连续内存块中的 $\lambda$ 行 × <code>row_bytes</code> 列的矩阵。这样既满足了 C 接口的指针数组要求，又在 Rust 侧保持了连续内存的安全访问。</p>
 <h4 id="333-错误传播与状态验证"><a class="header" href="#333-错误传播与状态验证">3.3.3 错误传播与状态验证</a></h4>
 <p>每次外部函数调用后都进行状态验证：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -355,14 +355,14 @@ if bavc.h.is_null() || bavc.k.is_null() || bavc.com.is_null() || bavc.sd.is_null
     return Err("FAEST vole_commit returned an incomplete BAVC state".to_string());
 }
 <span class="boring">}</span></code></pre>
-<p>这种<strong>防御式编程</strong>模式确保即使 C 侧返回异常状态，Rust 侧也不会在空指针上继续操作。</p>
+<p>这种防御式编程模式确保即使 C 侧返回异常状态，Rust 侧也不会在空指针上继续操作。</p>
 <h3 id="34-不依赖-c-的-rust-原生实现vole-哈希"><a class="header" href="#34-不依赖-c-的-rust-原生实现vole-哈希">3.4 不依赖 C 的 Rust 原生实现：VOLE 哈希</a></h3>
-<p>为减少 C FFI 调用的性能开销和跨语言维护负担，FAEST 的 <strong>VOLE 哈希函数</strong>（<code>vole_hash</code>）在 Rust 中<strong>完整重新实现</strong>：</p>
+<p>为减少 C FFI 调用的性能开销和跨语言维护负担，FAEST 的 VOLE 哈希函数（<code>vole_hash</code>）在 Rust 中完整重新实现：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn vole_hash_128f_rust(seed, input, hash_ell_bits) -&gt; [u8; 18]
 <span class="boring">}</span></code></pre>
-<p>这实现了一个基于 <strong>F128b 域运算</strong>的密钥哈希（Keyed Hash），核心计算为：</p>
+<p>这实现了一个基于 F128b 域运算的密钥哈希（Keyed Hash），核心计算为：</p>
 <p>$$
 H = (h_2, h_3) = (r_0 \cdot h_0 + r_1 \cdot h_1,; r_2 \cdot h_0 + r_3 \cdot h_1)
 $$</p>
@@ -371,7 +371,7 @@ $$</p>
 <li>$h_0$ 通过 Horner 法在 $\mathbb{F}_{2^{128}}$ 上计算多项式求值</li>
 <li>$h_1$ 通过 Horner 法在 $\mathbb{F}_{2^{64}}$ 上计算多项式求值（使用 <code>gf64_mul</code>）</li>
 </ul>
-<p><strong><code>gf64_mul</code> 的双重加速策略</strong>：</p>
+<p><code>gf64_mul</code> 的双重加速策略：</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -391,7 +391,7 @@ low ^ high ^ (high &lt;&lt; 1) ^ (high &lt;&lt; 3) ^ (high &lt;&lt; 4)
     ^ overflow ^ (overflow &lt;&lt; 1) ^ (overflow &lt;&lt; 3) ^ (overflow &lt;&lt; 4)
 <span class="boring">}</span></code></pre>
 <p>这约简多项式 $x^{64} + x^4 + x^3 + x + 1$。</p>
-<p><strong>正确性保障</strong>：<code>test_rust_vole_hash_matches_faest_c_reference</code> 在多种输入长度（0 ~ 28176 比特）和多种随机种子下，逐字节比对 Rust 实现与 C 参考实现的输出，确保完全一致。</p>
+<p>正确性保障：<code>test_rust_vole_hash_matches_faest_c_reference</code> 在多种输入长度（0 ~ 28176 比特）和多种随机种子下，逐字节比对 Rust 实现与 C 参考实现的输出，确保完全一致。</p>
 <hr>
 <h2 id="四状态机设计voleithrs"><a class="header" href="#四状态机设计voleithrs">四、状态机设计：<code>voleith.rs</code></a></h2>
 <h3 id="41-延迟-vole-功能delayed-vole"><a class="header" href="#41-延迟-vole-功能delayed-vole">4.1 延迟 VOLE 功能（Delayed VOLE）</a></h3>
@@ -407,80 +407,59 @@ $$</p>
 \mathbf{v} = \mathbf{q} + \Delta \cdot u
 $$</p>
 <p>其中 $\Delta$ 是 Verifier 的全局挑战，$u$ 是 Prover 的秘密比特向量，$\mathbf{v}, \mathbf{q}$ 是对应的 $\mathbb{F}_{2^{128}}$ 域元素向量。</p>
-<p>“延迟“的含义是：在协议初始阶段（承诺阶段），Prover 和 Verifier 仅交换承诺，<strong>等到协议运行到特定步骤后才确定 $\Delta$ 和挑战</strong>。</p>
+<p>“延迟“的含义是：在协议初始阶段（承诺阶段），Prover 和 Verifier 仅交换承诺，等到协议运行到特定步骤后才确定 $\Delta$ 和挑战。</p>
 <h3 id="42-prover-状态机voleithprover"><a class="header" href="#42-prover-状态机voleithprover">4.2 Prover 状态机：<code>VoleitHProver</code></a></h3>
-<pre><code>┌──────────────────────────────────────────────────────────────────┐
-│                   VoleitHProver 状态机                            │
-│                                                                  │
-│  commit()                                                        │
-│    │                                                             │
-│    ├─ 生成 root_key, iv ──────► faest_vole_commit() ──► C 层     │
-│    │                               │                             │
-│    │                         返回 {u, v_rows,                    │
-│    │                          consistency_c,                     │
-│    │                          commitment_hash, bavc_state}       │
-│    │                                                             │
-│    ├─ 推导 challenge_1 (Fiat-Shamir消化上述输出)                  │
-│    ├─ 计算 u_tilde = H(challenge_1, u)                           │
-│    ├─ 计算 v_tilde = H(challenge_1, v_rows)                      │
-│    └─ 提取 ProverCorrelations {u, v, packed_aux_u, packed_aux_v} │
-│         │                                                        │
-│         ▼                                                        │
-│  commitment_for_witness(witness)                                 │
-│    │                                                             │
-│    ├─ 构建 ProverRef (使用 correlations)                          │
-│    └─ 返回 CommitmentMessage {correction}                        │
-│         │                                                        │
-│         ▼                                                        │
-│  bind_relation(commitment, challenge_count)                      │
-│    │                                                             │
-│    ├─ 推导 relation_seed (消化 commitment.correction)             │
-│    ├─ 生成挑战 χ[0..challenge_count]                             │
-│    └─ 返回 ChallengeMessage {challenges}                         │
-│         │                                                        │
-│         ▼                                                        │
-│  finalize(proof_message)                                         │
-│    │                                                             │
-│    ├─ 推导 opening_challenge_from(relation_seed, proof)          │
-│    ├─ Grinding: 递增 counter 直到满足 w_grind 个零尾比特          │
-│    ├─ 调用 bavc_open(challenge, bavc) ──► C 层                   │
-│    └─ 返回 VoleitHTranscript                                     │
-│                                                                  │
-└──────────────────────────────────────────────────────────────────┘
-</code></pre>
+<pre class="mermaid">graph TD
+    A([commit]) --&gt;|生成 root_key, iv| B[faest_vole_commit C层]
+    B --&gt; C[推导 challenge_1]
+    C --&gt; D[计算 u_tilde, v_tilde]
+    D --&gt; E[提取 ProverCorrelations]
+    
+    E --&gt; F([commitment_for_witness])
+    F --&gt; G[返回 CommitmentMessage]
+    
+    G --&gt; H([bind_relation])
+    H --&gt; I[推导 relation_seed]
+    I --&gt; J[生成挑战 χ]
+    J --&gt; K[返回 ChallengeMessage]
+    
+    K --&gt; L([finalize])
+    L --&gt; M[推导 opening_challenge]
+    M --&gt; N{Grinding 满足零尾}
+    N --&gt;|成功| O[调用 bavc_open C层]
+    O --&gt; P(((返回 VoleitHTranscript)))
+
+    style A fill:none,stroke:#61afef,stroke-width:2px
+    style F fill:none,stroke:#61afef,stroke-width:2px
+    style H fill:none,stroke:#61afef,stroke-width:2px
+    style L fill:none,stroke:#61afef,stroke-width:2px
+    style N fill:none,stroke:#e06c75,stroke-width:2px
+</pre>
+
 <h3 id="43-verifier-状态机voleithverifier"><a class="header" href="#43-verifier-状态机voleithverifier">4.3 Verifier 状态机：<code>VoleitHVerifier</code></a></h3>
-<pre><code>┌──────────────────────────────────────────────────────────────────┐
-│                   VoleitHVerifier 状态机                           │
-│                                                                  │
-│  reconstruct(statement_digest, commitment, proof, transcript)    │
-│    │                                                             │
-│    ├─ 验证 transcript.profile 与参数一致性                        │
-│    ├─ 验证 opening challenge 的 grinding 条件                    │
-│    ├─ faest_vole_reconstruct(iv, challenge, opening, c, ell_hat) │
-│    │       ──► C 层 vole_reconstruct                             │
-│    │       ──► 返回 q_rows + commitment_hash                     │
-│    │                                                             │
-│    ├─ 验证 reconstructed_commitment_hash == transcript.hash       │
-│    │                                                             │
-│    ├─ 派生 challenge_1 = 同 Prover 的 Fiat-Shamir 公式            │
-│    ├─ 计算 v_tilde = H(challenge_1, q_rows)                      │
-│    │                                                             │
-│    ├─ 修正 v_tilde: 对每个 row, 若 challenge_bit=1,              │
-│    │   v_tilde[row] ⊕= u_tilde                                   │
-│    │   (因为 v = q + Δ·u ⇒ H(v) ≠ H(q) 当 Δ 非零)               │
-│    │                                                             │
-│    ├─ 派生 relation_seed = 同 Prover 的 Fiat-Shamir 公式          │
-│    ├─ 验证 opening_challenge == transcript.challenge             │
-│    │   (确认 opening 与 relation proof 绑定)                     │
-│    │                                                             │
-│    └─ 提取 VerifierCorrelations {Δ, q, packed_aux_q}             │
-│         │                                                        │
-│         ▼                                                        │
-│  challenges(count)                                               │
-│    └─ 从 relation_seed 派生与 Prover 相同的挑战集合               │
-│                                                                  │
-└──────────────────────────────────────────────────────────────────┘
-</code></pre>
+<pre class="mermaid">graph TD
+    A([reconstruct]) --&gt; B[验证 profile 与参数一致性]
+    B --&gt; C{验证 opening grinding 条件}
+    C --&gt;|成功| D[faest_vole_reconstruct C层]
+    D --&gt; E{验证 commitment_hash}
+    
+    E --&gt;|匹配| F[派生 challenge_1]
+    F --&gt; G[计算 v_tilde 并用 u_tilde 修正]
+    G --&gt; H[派生 relation_seed]
+    H --&gt; I{验证 opening_challenge 绑定}
+    
+    I --&gt;|匹配| J[提取 VerifierCorrelations]
+    
+    J --&gt; K([challenges])
+    K --&gt; L(((从 relation_seed 派生挑战序列)))
+
+    style A fill:none,stroke:#c678dd,stroke-width:2px
+    style K fill:none,stroke:#c678dd,stroke-width:2px
+    style C fill:none,stroke:#e06c75,stroke-width:2px
+    style E fill:none,stroke:#e06c75,stroke-width:2px
+    style I fill:none,stroke:#e06c75,stroke-width:2px
+</pre>
+
 <h3 id="44-核心数据结构"><a class="header" href="#44-核心数据结构">4.4 核心数据结构</a></h3>
 <div class="table-wrapper">
 <table>
@@ -495,23 +474,23 @@ $$</p>
 </table>
 </div>
 <h3 id="45-fiat-shamir-挑战派生序列"><a class="header" href="#45-fiat-shamir-挑战派生序列">4.5 Fiat-Shamir 挑战派生序列</a></h3>
-<p>协议使用<strong>四轮 Fiat-Shamir 变换</strong>将交互式协议转化为 NIZK：</p>
-<p><strong>第 1 轮挑战</strong> <code>challenge_1</code>：源自 BAVC 承诺 + 一致性证明</p>
+<p>协议使用四轮 Fiat-Shamir 变换将交互式协议转化为 NIZK：</p>
+<p>第 1 轮挑战 <code>challenge_1</code>：源自 BAVC 承诺 + 一致性证明</p>
 <pre><code>absorb(profile, statement, witness_bits, degree, relation_bits,
        ell_hat_bits, commitment_hash, iv, consistency_c)
 squeeze() → challenge_1
 </code></pre>
-<p><strong>第 2 轮关系挑战</strong> <code>relation_seed</code>：源自承诺哈希 + VOLE 哈希值 + 校正子</p>
+<p>第 2 轮关系挑战 <code>relation_seed</code>：源自承诺哈希 + VOLE 哈希值 + 校正子</p>
 <pre><code>absorb(profile, statement, witness_bits, degree, relation_bits,
        ell_hat_bits, commitment_hash, iv, consistency_c,
        u_tilde, v_tilde[0..λ], correction)
 squeeze() → relation_seed
 </code></pre>
-<p><strong>第 3 轮打开挑战</strong> <code>opening_challenge</code>：源自 relation_seed + 证明系数</p>
+<p>第 3 轮打开挑战 <code>opening_challenge</code>：源自 relation_seed + 证明系数</p>
 <pre><code>absorb(relation_seed, proof.blinded_coeffs[0..d])
 squeeze() → opening_challenge
 </code></pre>
-<p>然后通过 <strong>Grinding</strong>（递增 counter 使挑战值的后 <code>w_grind</code> 位为零）增加协议的安全性。</p>
+<p>然后通过 Grinding（递增 counter 使挑战值的后 <code>w_grind</code> 位为零）增加协议的安全性。</p>
 <h3 id="46-grinding-证明工作量"><a class="header" href="#46-grinding-证明工作量">4.6 Grinding 证明工作量</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -524,17 +503,17 @@ squeeze() → opening_challenge
 <hr>
 <h2 id="五线缆编码wirers"><a class="header" href="#五线缆编码wirers">五、线缆编码：<code>wire.rs</code></a></h2>
 <h3 id="51-版本化规范格式"><a class="header" href="#51-版本化规范格式">5.1 版本化规范格式</a></h3>
-<p><code>wire.rs</code> 实现了一个<strong>自描述、版本化、严格规范的序列化格式</strong>，用于所有签名类型的线缆传输。</p>
-<p><strong>格式结构</strong>：</p>
+<p><code>wire.rs</code> 实现了一个自描述、版本化、严格规范的序列化格式，用于所有签名类型的线缆传输。</p>
+<p>格式结构：</p>
 <pre><code>┌─────────┬──────────┬────────┬──────────┬──────────────┬──────┐
 │  Magic  │ Version  │  Kind  │ Reserved │   Payload    │ Tail │
 │  8 字节 │  2 字节  │ 1 字节 │  1 字节  │ 变长        │ 检查 │
 └─────────┴──────────┴────────┴──────────┴──────────────┴──────┘
 </code></pre>
 <ul>
-<li><strong>Magic</strong>：<code>CBZKVSIG</code>（8 字节魔术数，用于快速识别和版本过滤）</li>
-<li><strong>Version</strong>：当前为 <code>1</code>（小端编码）</li>
-<li><strong>Kind</strong>：签名类型标识</li>
+<li>Magic：<code>CBZKVSIG</code>（8 字节魔术数，用于快速识别和版本过滤）</li>
+<li>Version：当前为 <code>1</code>（小端编码）</li>
+<li>Kind：签名类型标识</li>
 </ul>
 <div class="table-wrapper">
 <table>
@@ -550,19 +529,19 @@ squeeze() → opening_challenge
 </table>
 </div>
 <h3 id="52-序列化内容"><a class="header" href="#52-序列化内容">5.2 序列化内容</a></h3>
-<p><strong>Payload</strong> 包含三个主要部分：</p>
+<p>Payload 包含三个主要部分：</p>
 <ol>
-<li><strong><code>CommitmentMessage</code></strong>：校正子（correction）比特向量
+<li><code>CommitmentMessage</code>：校正子（correction）比特向量
 <ul>
 <li>编码方式：长度前缀（u64）+ 紧凑位编码（<code>extend_exact_bits_to_bytes</code>）</li>
 </ul>
 </li>
-<li><strong><code>ProofMessage&lt;F128b&gt;</code></strong>：盲化系数向量（blinded coefficients）
+<li><code>ProofMessage&lt;F128b&gt;</code>：盲化系数向量（blinded coefficients）
 <ul>
 <li>编码方式：长度前缀（u64）+ 每个系数 16 字节（<code>F128b::to_bytes()</code>）</li>
 </ul>
 </li>
-<li><strong><code>VoleitHTranscript</code></strong>：完整的 VOLE 协议通信轨迹
+<li><code>VoleitHTranscript</code>：完整的 VOLE 协议通信轨迹
 <ul>
 <li>profile（1 字节）</li>
 <li>commitment_hash（32 字节）</li>
@@ -578,42 +557,34 @@ squeeze() → opening_challenge
 <h3 id="53-解码验证"><a class="header" href="#53-解码验证">5.3 解码验证</a></h3>
 <p>解码器 <code>SignatureDecoder</code> 保证：</p>
 <ol>
-<li><strong>尾部零多余数据</strong>：<code>finish()</code> 检查 <code>offset == input.len()</code>，拒绝任何尾随字节</li>
-<li><strong>唯一定义性</strong>：所有变长字段使用精确长度前缀，任何非规范编码（如尾部未使用比特非零）被拒绝</li>
-<li><strong>F128 值的规范反序列化</strong>：使用 <code>F128b::from_bytes</code> 而非 <code>from_uniform_bytes</code>，拒绝非规范的域元素表示</li>
-<li><strong>集合大小上限</strong>：<code>MAX_COLLECTION_ITEMS = 1,000,000</code> 防止拒绝服务攻击</li>
+<li>尾部零多余数据：<code>finish()</code> 检查 <code>offset == input.len()</code>，拒绝任何尾随字节</li>
+<li>唯一定义性：所有变长字段使用精确长度前缀，任何非规范编码（如尾部未使用比特非零）被拒绝</li>
+<li>F128 值的规范反序列化：使用 <code>F128b::from_bytes</code> 而非 <code>from_uniform_bytes</code>，拒绝非规范的域元素表示</li>
+<li>集合大小上限：<code>MAX_COLLECTION_ITEMS = 1,000,000</code> 防止拒绝服务攻击</li>
 </ol>
 <hr>
 <h2 id="六跨语言调用架构总结"><a class="header" href="#六跨语言调用架构总结">六、跨语言调用架构总结</a></h2>
-<pre><code>┌──────────────────────────────────────────────────────────┐
-│                    Rust 应用层                            │
-│  ┌─────────────────────────────────────────────────────┐ │
-│  │  VoleitHProver / VoleitHVerifier                    │ │
-│  │  ├─ Fiat-Shamir 挑战派生                            │ │
-│  │  ├─ ProverCorrelations / VerifierCorrelations 提取  │ │
-│  │  ├─ 列转置优化 (BMI2 PEXT / 可移植回退)              │ │
-│  │  └─ Rayon 并行哈希（≥64KB 时自动激活）              │ │
-│  └──────────────┬──────────────────────────────────────┘ │
-│                 │ FFI 调用                                │
-│  ┌──────────────▼──────────────────────────────────────┐ │
-│  │  FaestVoleCommitmentState (Drop 安全析构)           │ │
-│  │  ├─ vole_commit()    → BAVC 树构建 + VOLE 展开     │ │
-│  │  ├─ bavc_open()      → 选择性打开 GGM 路径         │ │
-│  │  └─ vole_reconstruct → Verifier 重构 VOLE 关系     │ │
-│  └──────────────┬──────────────────────────────────────┘ │
-└─────────────────┼────────────────────────────────────────┘
-                  │ extern "C"
-┌─────────────────▼────────────────────────────────────────┐
-│                 C (faest-ref)                             │
-│  ┌─────────────────────────────────────────────────────┐ │
-│  │  vole.c / bavc.c                                    │ │
-│  │  ├─ BAVC 树构建 (τ × λ 深度)                        │ │
-│  │  ├─ GGM 伪随机函数展开                              │ │
-│  │  ├─ 承诺哈希聚合 (SHA-3)                             │ │
-│  │  └─ 选择性打开验证                                   │ │
-│  └─────────────────────────────────────────────────────┘ │
-└──────────────────────────────────────────────────────────┘
-</code></pre>
+<pre class="mermaid">graph TD
+    subgraph Rust_App [Rust 应用层]
+        A[VoleitHProver / VoleitHVerifier&lt;br&gt;&lt;br&gt;• Fiat-Shamir 挑战派生&lt;br&gt;• Prover/Verifier 相关性提取&lt;br&gt;• 列转置优化 BMI2&lt;br&gt;• Rayon 并行哈希]
+    end
+
+    subgraph Rust_FFI [FFI 接口封装层]
+        B[FaestVoleCommitmentState&lt;br&gt;Drop 安全析构&lt;br&gt;&lt;br&gt;• vole_commit&lt;br&gt;• bavc_open&lt;br&gt;• vole_reconstruct]
+    end
+
+    subgraph C_Lib [C 语言层 faest-ref]
+        C[vole.c / bavc.c&lt;br&gt;&lt;br&gt;• BAVC 树构建 τ × λ 深度&lt;br&gt;• GGM 伪随机展开&lt;br&gt;• 承诺哈希 SHA-3 聚合&lt;br&gt;• 选择性打开验证]
+    end
+
+    Rust_App --&gt;|FFI 调用| Rust_FFI
+    Rust_FFI --&gt;|extern "C"| C_Lib
+
+    style Rust_App fill:none,stroke:#e5c07b,stroke-width:2px
+    style Rust_FFI fill:none,stroke:#61afef,stroke-width:2px,stroke-dasharray: 5 5
+    style C_Lib fill:none,stroke:#98c379,stroke-width:2px
+</pre>
+
 <h3 id="关键设计决策"><a class="header" href="#关键设计决策">关键设计决策</a></h3>
 <div class="table-wrapper">
 <table>

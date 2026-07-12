@@ -58,7 +58,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-be48b045.js";
+            window.path_to_searchindex_js = "searchindex-c077466c.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61c3e6e9.js"></script>
@@ -200,10 +200,8 @@
                         <h1 id="code-based-zero-knowledge-from-vole-in-the-head-核心代码与架构解析报告"><a class="header" href="#code-based-zero-knowledge-from-vole-in-the-head-核心代码与架构解析报告">Code-Based Zero-Knowledge from VOLE-in-the-Head: 核心代码与架构解析报告</a></h1>
 <h2 id="报告导读"><a class="header" href="#报告导读">报告导读</a></h2>
 <p>本报告旨在详细解析本项目在代码工程层面对 “基于 VOLE-in-the-Head (VOLEitH) 范式的码基零知识证明及其高级隐私保护应用” 的完整实现。</p>
-<p>由于本项目采用 Rust 编写，包含约上万行代码，为便于您审查理论公式与代码逻辑的准确映射，本报告分为 5 个核心逻辑模块。</p>
+<p>由于本项目采用 Rust 编写，包含约上万行代码，为便于您审查理论公式与代码逻辑的准确映射，本报告分为 8 个核心逻辑模块。</p>
 <p>报告尽可能剥离了编程语言的繁文缛节，聚焦于密码学理论、代数约束的构建、以及底层数学公式的代码级映射，并全面阐述了为达到极优 Benchmark 数据所做出的硬件加速与并发工程优化。</p>
-<h2 id="系统架构与模块导航"><a class="header" href="#系统架构与模块导航">系统架构与模块导航</a></h2>
-<p>为了便于您审查理论公式与代码逻辑的准确映射，本报告以“自底向上，化整为零”的策略，将整个系统拆分为 8 个核心逻辑模块。</p>
 <h3 id="模块一底层数学与矩阵运算"><a class="header" href="#模块一底层数学与矩阵运算">模块一：底层数学与矩阵运算</a></h3>
 <p>模块概述：本模块是整个 ZKP 系统的数学基石与性能瓶颈突破口。实现了极其高效的底层有限域算术，以及防 OOM 的超大矩阵处理。</p>
 <p>核心亮点：</p>
@@ -275,7 +273,7 @@
 <p>本模块是整个 ZKP 系统的数学基石，也是性能瓶颈突破口。它解决两个根本问题：</p>
 <ol>
 <li>如何在 $\mathbb{F}_{2^{128}}$ 上尽可能快的做乘法运算，这一点同样也在原论文被提及到。</li>
-<li>如何在尽可能内存的前提下操作 $\mathbb{F}_2^{n \times m}$（$n \approx 10^4, m \approx 10^5$）量级的二元矩阵，这是基于编码的 ZK 协议需要大量的随机矩阵（如 $B \in \mathbb{F}_2^{n \times m}$），直接放进去会导致大量的内存占用。</li>
+<li>如何在内存占用较低的前提下操作 $\mathbb{F}_2^{n \times m}$（$n \approx 10^4, m \approx 10^5$）量级的二元矩阵，这是基于编码的 ZK 协议需要大量的随机矩阵（如 $B \in \mathbb{F}_2^{n \times m}$），直接放进去会导致大量的内存占用。</li>
 </ol>
 <h2 id="二gf2128-有限域运算finite_fieldrs"><a class="header" href="#二gf2128-有限域运算finite_fieldrs">二、GF(2^128) 有限域运算：<code>finite_field.rs</code></a></h2>
 <h3 id="21-数学背景"><a class="header" href="#21-数学背景">2.1 数学背景</a></h3>
@@ -334,7 +332,7 @@ $$</p>
 </div>
 <h3 id="33-核心流程图"><a class="header" href="#33-核心流程图">3.3 核心流程图</a></h3>
 <pre class="mermaid">graph TD
-    subgraph SMC [StreamingMatrixCols 核心逻辑]
+    subgraph SMC [StreamingMatrixCols&lt;br&gt;核心逻辑]
         direction TB
         A[seed: 16 Bytes] --&gt;|初始化 MatrixPrg| B(AES-128 密钥扩展)
         B --&gt; C[(round_keys 11轮子密钥)]
@@ -417,7 +415,7 @@ for each col_idx in x_indices:
 <p>该算法利用了矩阵的行主序存储（<code>Vec&lt;BitVec&lt;u8, Msb0&gt;&gt;</code>）与稀疏索引遍历的结合：</p>
 <ol>
 <li>空间局部性：对于同一个 <code>col_idx</code>，连续访问 <code>matrix_b[0..rows]</code> 的同一字节位置 <code>byte_pos</code>，这些字节在内存中紧密排列（每行相邻），因此 CPU 缓存命中率极高。</li>
-<li>稀疏性红利：若汉明重量 $w = 320$ 而列数 $m = 81920$，则避免了 $81920 - 320 \approx 81600$ 次全列扫描，加速比达到 $\mathcal{O}(m/w)$。</li>
+<li>稀疏矩阵的计算优势：若汉明重量 $w = 320$ 而列数 $m = 81920$，则避免了 $81920 - 320 \approx 81600$ 次全列扫描，加速比达到 $\mathcal{O}(m/w)$。</li>
 <li>字节级寻址：通过预计算 <code>byte_pos</code> 和位掩码，避免了逐位索引的间接开销。</li>
 </ol>
 <p>从测试代码 <code>test_matrix_vector_multiply_report</code> 的配置（1280 行 × 81920 列，汉明重量 320）看，平均一次乘法在数十毫秒量级（具体取决于 CPU 频率和缓存大小），这为上层协议的高效运行奠定了基础。</p>
@@ -503,10 +501,10 @@ fn test_streaming_matrix_is_deterministic() {
 <h1 id="模块二核心密码学原语afs-哈希与-mceliece-加密"><a class="header" href="#模块二核心密码学原语afs-哈希与-mceliece-加密">模块二：核心密码学原语——AFS 哈希与 McEliece 加密</a></h1>
 <hr>
 <h2 id="一概述-1"><a class="header" href="#一概述-1">一、概述</a></h2>
-<p>本模块提供两种基于编码的密码学原语，它们是整个 ZK 签名系统上层应用的<strong>代数骨架</strong>：</p>
+<p>本模块提供两种基于编码的密码学原语，它们是整个 ZK 签名系统上层应用的代数骨架：</p>
 <ol>
-<li><strong>AFS 哈希（AFC Hash）</strong>——一种基于 <strong>2-RNSD</strong> (2-Regular Null Syndrome Decoding) 困难问题的抗碰撞哈希函数。它的输出是一个二元向量，任何碰撞都等价于求解一个被公认为 <strong>NP-hard</strong> 的编码论问题。</li>
-<li><strong>McEliece 加密</strong>——基于 <strong>不可区分置换</strong> 和 <strong>Goppa 码</strong> 的公钥加密方案（这里用于群签名中的身份密文生成），其安全性可归约到经典 McEliece 难题。</li>
+<li>AFS 哈希（AFC Hash）——一种基于 2-RNSD (2-Regular Null Syndrome Decoding) 困难问题的抗碰撞哈希函数。它的输出是一个二元向量，任何碰撞都等价于求解一个被公认为 NP-hard 的编码论问题。</li>
+<li>McEliece 加密——基于 不可区分置换 和 Goppa 码 的公钥加密方案（这里用于群签名中的身份密文生成），其安全性可归约到经典 McEliece 难题。</li>
 </ol>
 <hr>
 <h2 id="二afs-哈希函数afs_hashrs"><a class="header" href="#二afs-哈希函数afs_hashrs">二、AFS 哈希函数：<code>afs_hash.rs</code></a></h2>
@@ -519,12 +517,12 @@ $$</p>
 <ul>
 <li>$B_0, B_1 \in \mathbb{F}_2^{n \times m}$ 是两个伪随机二元矩阵</li>
 <li>$u_0, u_1 \in \mathbb{F}_2^{n}$ 是 $n$ 比特的输入</li>
-<li>$\text{RE}: \mathbb{F}_2^{n} \to \mathbb{F}_2^{m}$ 是<strong>正则编码函数</strong>（Regular Encoding），将 $n$ 比特输入映射为 $m = \frac{n}{c} \cdot 2^c$ 比特的稀疏二元向量，其汉明重量恰为 $n/c$</li>
+<li>$\text{RE}: \mathbb{F}_2^{n} \to \mathbb{F}_2^{m}$ 是正则编码函数（Regular Encoding），将 $n$ 比特输入映射为 $m = \frac{n}{c} \cdot 2^c$ 比特的稀疏二元向量，其汉明重量恰为 $n/c$</li>
 </ul>
-<p><strong>抗碰撞安全性</strong>：寻找 $h_B(u_0, u_1) = h_B(u’_0, u’_1)$ 的碰撞等价于在 $\mathbb{F}_2$ 上求解带噪的线性方程组（即 2-RNSD 问题），这是<strong>码基密码学中公认的困难问题</strong>。</p>
+<p>抗碰撞安全性：寻找 $h_B(u_0, u_1) = h_B(u’_0, u’_1)$ 的碰撞等价于在 $\mathbb{F}_2$ 上求解带噪的线性方程组（即 2-RNSD 问题），这是码基密码学中公认的困难问题。</p>
 <h3 id="22-正则编码-regular-encoding-详解"><a class="header" href="#22-正则编码-regular-encoding-详解">2.2 正则编码 (Regular Encoding) 详解</a></h3>
 <h4 id="221-数学定义"><a class="header" href="#221-数学定义">2.2.1 数学定义</a></h4>
-<p>令 $c$ 为<strong>块大小</strong>（chunk size），$n$ 必须能被 $c$ 整除。正则编码将输入 $x$ 划分为 $\frac{n}{c}$ 个各长为 $c$ 比特的块。每个块 $x^{(i)} \in \mathbb{F}_2^{c}$ 被映射为一个<strong>独热向量</strong>（one-hot vector）：</p>
+<p>令 $c$ 为块大小（chunk size），$n$ 必须能被 $c$ 整除。正则编码将输入 $x$ 划分为 $\frac{n}{c}$ 个各长为 $c$ 比特的块。每个块 $x^{(i)} \in \mathbb{F}_2^{c}$ 被映射为一个独热向量（one-hot vector）：</p>
 <p>$$
 \text{RE}(x)<em>i = e</em>{\text{idx}(x^{(i)})} \in \mathbb{F}_2^{2^c}
 $$</p>
@@ -543,7 +541,7 @@ $$</p>
 <tr><td>$c$（块大小）</td><td><code>c: usize</code></td><td>每个块包含的比特数</td></tr>
 <tr><td>域大小 $2^c$</td><td><code>domain_size = 1 &lt;&lt; c</code></td><td>每个独热编码的维度</td></tr>
 <tr><td>块数 $n/c$</td><td><code>chunk_count = x.len() / c</code></td><td>输入分割的块数</td></tr>
-<tr><td>$\text{idx}(x^{(i)})$</td><td><code>bits_to_index_be(chunk)</code></td><td>将 $c$ 比特解释为<strong>大端无符号整数</strong></td></tr>
+<tr><td>$\text{idx}(x^{(i)})$</td><td><code>bits_to_index_be(chunk)</code></td><td>将 $c$ 比特解释为大端无符号整数</td></tr>
 <tr><td>$\text{RE}(x)$</td><td><code>regular_encode(x, c) -&gt; MainBitVec</code></td><td>拼接的独热向量</td></tr>
 </tbody>
 </table>
@@ -562,7 +560,7 @@ $$</p>
 $$</p>
 <p>其中 $x^{(i)}_t$ 是第 $i$ 个块的第 $t$ 个比特。采用大端顺序意味着第 0 个比特是最高有效位。</p>
 <h4 id="224-常数时间版本-regular_encode_ct"><a class="header" href="#224-常数时间版本-regular_encode_ct">2.2.4 常数时间版本 <code>regular_encode_ct</code></a></h4>
-<p>常规的 <code>regular_encode</code> 使用条件分支（<code>encoded.set(...)</code>），其内存访问模式依赖于秘密的块值，存在<strong>侧信道泄漏</strong>风险。常数时间版本 <code>regular_encode_ct</code> 采用以下对策：</p>
+<p>常规的 <code>regular_encode</code> 使用条件分支（<code>encoded.set(...)</code>），其内存访问模式依赖于秘密的块值，存在侧信道泄漏风险。常数时间版本 <code>regular_encode_ct</code> 采用以下对策：</p>
 <pre><code>for 每个块 i:
     one_hot_idx ← bits_to_index_be(块)
     for 每个表索引 table_idx ∈ [0, domain_size):
@@ -571,7 +569,7 @@ $$</p>
 </code></pre>
 <p>关键点：</p>
 <ul>
-<li><strong>扫描了所有 <code>domain_size</code> 个位置</strong>，无论结果如何</li>
+<li>扫描了所有 <code>domain_size</code> 个位置，无论结果如何</li>
 <li><code>ct_eq_usize</code> 使用纯位运算（无分支）实现安全相等判断：</li>
 </ul>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -589,7 +587,7 @@ $$</p>
 </span><span class="boring">fn main() {
 </span>pub fn afs_hash(b_cols: &amp;[MainBitVec], x: &amp;MainBitSlice, c: usize) -&gt; Result&lt;MainBitVec, String&gt;
 <span class="boring">}</span></code></pre>
-<p><strong>算法伪代码</strong>：</p>
+<p>算法伪代码：</p>
 <pre><code>Algorithm: afs_hash(B, x, c)
 Input:  B ∈ (F_2^n)^{m'}  — 列主序存储 (m' = (n/c)·2^c)
         x ∈ F_2^{n}       — 输入
@@ -602,11 +600,11 @@ Output: y ∈ F_2^{rows(B)} — 哈希输出
 4.      acc ← acc ⊕ B[:, col_idx]        // XOR 累加对应的列
 5.  return acc
 </code></pre>
-<p><strong>数学等价性</strong>：</p>
+<p>数学等价性：</p>
 <p>$$
 y = B \cdot \text{RE}(x) = \bigoplus_{i=0}^{n/c-1} B_{:, i \cdot 2^c + \text{idx}(x^{(i)})}
 $$</p>
-<p>由于 $\text{RE}(x)$ 的每个块中仅有一个比特为 1，矩阵-向量乘法退化到只需选取 $n/c$ 个列做 XOR——这是<strong>稀疏性红利</strong>的又一次体现。</p>
+<p>由于 $\text{RE}(x)$ 的每个块中仅有一个比特为 1，矩阵-向量乘法退化到只需选取 $n/c$ 个列做 XOR——这是稀疏矩阵的计算优势的又一次体现。</p>
 <h4 id="232-流式版本afs_hash_streaming"><a class="header" href="#232-流式版本afs_hash_streaming">2.3.2 流式版本：<code>afs_hash_streaming</code></a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -616,10 +614,10 @@ $$</p>
     c: usize,
 ) -&gt; Result&lt;MainBitVec, String&gt;
 <span class="boring">}</span></code></pre>
-<p>与 <code>afs_hash</code> 的区别：矩阵 $B$ 不预先物化，而是通过 <code>StreamingMatrixCols</code> 按需<strong>流式生成</strong>每一列。在累加循环内调用 <code>fill_column_bytes_prechecked</code>，生成的列数据写入临时缓冲区、与累加器 XOR 后即丢弃。内存占用从物化矩阵的 $\mathcal{O}(nm)$ 降至临时缓冲区的 $\mathcal{O}(n)$。</p>
+<p>与 <code>afs_hash</code> 的区别：矩阵 $B$ 不预先物化，而是通过 <code>StreamingMatrixCols</code> 按需流式生成每一列。在累加循环内调用 <code>fill_column_bytes_prechecked</code>，生成的列数据写入临时缓冲区、与累加器 XOR 后即丢弃。内存占用从物化矩阵的 $\mathcal{O}(nm)$ 降至临时缓冲区的 $\mathcal{O}(n)$。</p>
 <h4 id="233-常数时间流式版本afs_hash_streaming_ct"><a class="header" href="#233-常数时间流式版本afs_hash_streaming_ct">2.3.3 常数时间流式版本：<code>afs_hash_streaming_ct</code></a></h4>
-<p><strong>安全问题</strong>：<code>afs_hash_streaming</code> 的列选择直接依赖于秘密输入 $x$ 的块值——这通过控制流暴露了索引信息。</p>
-<p><strong>常数时间对策</strong>：扫描每个块对应的<strong>所有</strong> $2^c$ 个可能的列，但对每一列使用一个<strong>掩码</strong>来决定是否 XOR：</p>
+<p>安全问题：<code>afs_hash_streaming</code> 的列选择直接依赖于秘密输入 $x$ 的块值——这通过控制流暴露了索引信息。</p>
+<p>常数时间对策：扫描每个块对应的所有 $2^c$ 个可能的列，但对每一列使用一个掩码来决定是否 XOR：</p>
 <pre><code>Algorithm: afs_hash_streaming_ct(B, x, c)
 Input:  B ∈ StreamingMatrixCols
         x ∈ F_2^{n}
@@ -640,11 +638,11 @@ Output: y ∈ F_2^{rows(B)}
 \text{acc}[j] \leftarrow \text{acc}[j] \oplus (\text{column}[j] \land \text{mask})
 $$</p>
 <p>其中 <code>mask</code> 在 <code>table_idx == secret_idx</code> 时为 <code>0xFF</code>，否则为 <code>0x00</code>。因此内存访问模式（读取了所有列）和数据流（通过掩码进行条件 XOR）均不依赖秘密值。</p>
-<p><strong>并行加速</strong>：当矩阵规模超过阈值（<code>CT_AFS_PAR_COL_THRESHOLD = 4096</code> 列）且 Rayon 可用时，任务被分割为 <code>chunk_count / 4</code> 个并行子任务，每个子任务独立计算部分累加结果，最后通过 <code>reduce</code> 做 XOR 归并：</p>
+<p>并行加速：当矩阵规模超过阈值（<code>CT_AFS_PAR_COL_THRESHOLD = 4096</code> 列）且 Rayon 可用时，任务被分割为 <code>chunk_count / 4</code> 个并行子任务，每个子任务独立计算部分累加结果，最后通过 <code>reduce</code> 做 XOR 归并：</p>
 <pre><code>并行:  acc = acc_0 ⊕ acc_1 ⊕ ... ⊕ acc_{T-1}
 </code></pre>
 <h3 id="24-普通线性矩阵-向量乘法"><a class="header" href="#24-普通线性矩阵-向量乘法">2.4 普通线性矩阵-向量乘法</a></h3>
-<p><code>afs_hash</code> 是针对<strong>正则编码模式</strong>（每块恰好选一列）的优化。对于一般的 $\mathbb{F}_2$ 线性变换：</p>
+<p><code>afs_hash</code> 是针对正则编码模式（每块恰好选一列）的优化。对于一般的 $\mathbb{F}_2$ 线性变换：</p>
 <p>$$
 y = M \cdot v, \quad M \in \mathbb{F}_2^{n \times m}, v \in \mathbb{F}_2^{m}
 $$</p>
@@ -665,7 +663,7 @@ $$</p>
 <hr>
 <h2 id="三mceliece-加密与随机线性码mceliecers"><a class="header" href="#三mceliece-加密与随机线性码mceliecers">三、McEliece 加密与随机线性码：<code>mceliece.rs</code></a></h2>
 <h3 id="31-数学背景"><a class="header" href="#31-数学背景">3.1 数学背景</a></h3>
-<p>Classic McEliece 使用 <strong>不可约 Goppa 码</strong>。公钥是一个伪随机的 $k \times (n-k)$ 二元生成矩阵 $G$。加密公式为：</p>
+<p>Classic McEliece 使用 不可约 Goppa 码。公钥是一个伪随机的 $k \times (n-k)$ 二元生成矩阵 $G$。加密公式为：</p>
 <p>$$
 c = G \cdot \binom{u}{m} \oplus \text{RE}(e’)
 $$</p>
@@ -688,7 +686,8 @@ pub const PK_NCOLS: usize = 3360;   // 公钥列数 = k
 pub const PK_ROW_BYTES: usize = 420;// 每行的字节数
 pub const PK_BYTES: usize = 524160; // 公钥总字节数 (~512 KB)
 <span class="boring">}</span></code></pre>
-<p>这些参数对应 <strong>Classic McEliece-460896f</strong>（NIST 第三轮候选参数集），提供 <strong>128-bit 安全强度</strong>。</p>
+<p>这些参数对应 Classic McEliece-460896f（NIST 第三轮候选参数集），提供 128-bit 安全强度。</p>
+<p>注：虽然 <code>mceliece.rs</code> 封装了 NIST 标准参数以供提取公钥结构，但在本系统实际的群签名应用中，为了满足正则噪声输出维度与密文维度严格对齐的要求，实际实例化的参数调整为 $n_e = 4096, k_e = 3328, t_e = 64$。</p>
 <h3 id="33-公式-代码映射"><a class="header" href="#33-公式-代码映射">3.3 公式-代码映射</a></h3>
 <h4 id="331-生成矩阵提取"><a class="header" href="#331-生成矩阵提取">3.3.1 生成矩阵提取</a></h4>
 <p>在 <code>run_matrix_validation</code> 测试函数中，公钥的字节流被解析为 $G’$ 矩阵：</p>
@@ -732,7 +731,7 @@ for (row_idx, x_bit) in x.iter().enumerate() {
 </ul>
 <h4 id="333-在群签名中的完整加密应用"><a class="header" href="#333-在群签名中的完整加密应用">3.3.3 在群签名中的完整加密应用</a></h4>
 <p>群签名约束生成函数 <code>build_group_signature_constraints</code> 中将 McEliece 加密拆解为两个部分：</p>
-<p><strong>第一部分 —— 线性组合</strong>：$G \cdot \binom{r}{\text{bin}(j)}$</p>
+<p>第一部分 —— 线性组合：$G \cdot \binom{r}{\text{bin}(j)}$</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn append_linear_matrix_row_terms(
@@ -754,7 +753,7 @@ for (row_idx, x_bit) in x.iter().enumerate() {
 c_i = \bigoplus_{j: G_{i,j} = 1} x_j
 $$</p>
 <p>其中 $x = (r ;|; \text{bin}(j))$ 是随机数和用户索引的拼接。</p>
-<p><strong>第二部分 —— 正则噪声项</strong>：$\text{RE}(e’)$</p>
+<p>第二部分 —— 正则噪声项：$\text{RE}(e’)$</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn append_re_terms(
@@ -769,7 +768,7 @@ $$</p>
 }
 <span class="boring">}</span></code></pre>
 <p>这为密文的第 $i$ 位添加 $\text{RE}(e’)$ 贡献的噪声多项式。</p>
-<p><strong>完整密文约束</strong>：</p>
+<p>完整密文约束：</p>
 <p>$$
 c_{1,i} = \left(\bigoplus_{j: G_{1,i,j}=1} (r_1 ;|; \text{bin}(j))_j\right) \oplus \text{RE}(e’_1)_i
 $$</p>
@@ -788,7 +787,7 @@ $$</p>
 <p>矩阵密度接近 0.5 是 Goppa 码生成矩阵为伪随机矩阵的统计证据。</p>
 <hr>
 <h2 id="四afs-哈希在-merkle-树中的应用环签名上下文"><a class="header" href="#四afs-哈希在-merkle-树中的应用环签名上下文">四、AFS 哈希在 Merkle 树中的应用（环签名上下文）</a></h2>
-<p>为帮助导师理解这两个原语如何协作，这里简述其在上层协议中的使用方式：</p>
+<p>为阐明这两个密码学原语在系统中的协作关系，以下简述其在上层协议中的调用方式：</p>
 <p>环签名的 Merkle 树每一层使用 AFS 双矩阵哈希：</p>
 <p>$$
 v_\ell = h_B(v_{\ell+1}, w_{\ell+1}) = B_0 \cdot \text{RE}(v_{\ell+1}) \oplus B_1 \cdot \text{RE}(w_{\ell+1})
@@ -798,7 +797,7 @@ $$</p>
 <li>$B_0$ 编码左子节点的影响，$B_1$ 编码右子节点的影响</li>
 <li>最终根哈希 $u_0 = v_0$ 被公开作为哈希链承诺</li>
 </ul>
-<p>而 McEliece 加密则在群签名中提供<strong>追踪机制</strong>：管理方可利用私钥解密密文 $(c_1, c_2)$ 获取签名者的身份索引 $j$ 与消息 $m$，实现<strong>匿名性中的可控可追踪</strong>。</p>
+<p>而 McEliece 加密则在群签名中提供追踪机制：管理方可利用私钥解密密文 $(c_1, c_2)$ 获取签名者的身份索引 $j$ 与消息 $m$，实现匿名性中的可控可追踪。</p>
 <hr>
 <h2 id="五工程要点总结"><a class="header" href="#五工程要点总结">五、工程要点总结</a></h2>
 <div class="table-wrapper">
@@ -820,30 +819,30 @@ $$</p>
 <h1 id="模块三voleith-状态机与跨语言-ffi"><a class="header" href="#模块三voleith-状态机与跨语言-ffi">模块三：VOLEitH 状态机与跨语言 FFI</a></h1>
 <hr>
 <h2 id="一概述-2"><a class="header" href="#一概述-2">一、概述</a></h2>
-<p>本模块是整个 ZKP 系统的<strong>核心引擎</strong>——它负责将密码学约束系统与底层的<strong>延迟 VOLE 功能</strong>（Delayed VOLE functionality, $\mathcal{F}_{\text{sVOLE}}$）衔接起来。架构上采用<strong>两层级联</strong>设计：</p>
+<p>本模块是整个 ZKP 系统的核心引擎——它负责将密码学约束系统与底层的延迟 VOLE 功能（Delayed VOLE functionality, $\mathcal{F}_{\text{sVOLE}}$）衔接起来。架构上采用两层级联设计：</p>
 <ol>
-<li><strong>C 层（FAEST）</strong>：提供高效的 <strong>GGM 树形向量承诺</strong>（BAVC - Binary Auxiliary Vector Commitment），处理 $\tau$ 棵 $\lambda$ 深度的 GGM 树的构建、打开和验证。这是密码学计算密集部分。</li>
-<li><strong>Rust 层</strong>：通过 FFI 安全封装 C 层状态机，并在此基础上实现 Prover/Verifier 的<strong>协议状态机</strong>，负责挑战生成、相关性提取（correlation extraction）、约束绑定等高层协议逻辑。</li>
+<li>C 层（FAEST）：提供高效的 GGM 树形向量承诺（BAVC - Binary Auxiliary Vector Commitment），处理 $\tau$ 棵 $\lambda$ 深度的 GGM 树的构建、打开和验证。这是密码学计算密集部分。</li>
+<li>Rust 层：通过 FFI 安全封装 C 层状态机，并在此基础上实现 Prover/Verifier 的协议状态机，负责挑战生成、相关性提取（correlation extraction）、约束绑定等高层协议逻辑。</li>
 </ol>
 <hr>
 <h2 id="二为什么需要-ffi-复用-faest-的-c-代码"><a class="header" href="#二为什么需要-ffi-复用-faest-的-c-代码">二、为什么需要 FFI 复用 FAEST 的 C 代码？</a></h2>
 <h3 id="21-ggm-树形向量承诺bavc的密码学角色"><a class="header" href="#21-ggm-树形向量承诺bavc的密码学角色">2.1 GGM 树形向量承诺（BAVC）的密码学角色</a></h3>
-<p>在 VOLE-in-the-Head 范式中，Prover 需要承诺 $\tau$ 个伪随机种子 $K_1, \dots, K_\tau$，然后对每个种子应用 <strong>GGM 伪随机函数树</strong>（Goldreich-Goldwasser-Micali 树）展开出 $\lambda$ 层的叶子。这些叶子形成了 VOLE 关系中 Prover 的秘密向量：</p>
+<p>在 VOLE-in-the-Head 范式中，Prover 需要承诺 $\tau$ 个伪随机种子 $K_1, \dots, K_\tau$，然后对每个种子应用 GGM 伪随机函数树（Goldreich-Goldwasser-Micali 树）展开出 $\lambda$ 层的叶子。这些叶子形成了 VOLE 关系中 Prover 的秘密向量：</p>
 <p>$$
 {(u_i, v_i)}_{i=1}^\tau \xrightarrow{\text{GGM 展开}} {(u, \mathbf{v})} \in \mathbb{F}<em>2^\ell \times \mathbb{F}</em>{2^{128}}^\ell
 $$</p>
 <p>BAVC（Binary Auxiliary Vector Commitment）是 FAEST 使用的一种优化的 GGM 树承诺方案，它支持：</p>
 <ul>
-<li><strong>批量承诺</strong>：一次承诺 $\tau$ 棵树的所有根密钥</li>
-<li><strong>选择性打开</strong>：根据 Verifier 挑战，仅打开挑战指定的叶子路径</li>
-<li><strong>一致性验证</strong>：Verifier 可通过承诺哈希验证打开的叶子是否正确</li>
+<li>批量承诺：一次承诺 $\tau$ 棵树的所有根密钥</li>
+<li>选择性打开：根据 Verifier 挑战，仅打开挑战指定的叶子路径</li>
+<li>一致性验证：Verifier 可通过承诺哈希验证打开的叶子是否正确</li>
 </ul>
 <h3 id="22-不复用的代价"><a class="header" href="#22-不复用的代价">2.2 不复用的代价</a></h3>
 <p>如果完全用 Rust 重新实现 BAVC：</p>
 <ul>
 <li>需要重新实现 $\tau$ 棵 GGM 树的构建、密钥扩展、Merkle 哈希聚合——这是数千行经过审计的 C 代码</li>
-<li>需要保证与 FAEST 规范的行为<strong>完全一致</strong>（包括常数时间执行、字节序、SHA-3 用法等）</li>
-<li>FAEST 的 C 代码经历了 NIST 后量子密码标准化过程的严格审查，复用它直接继承了其<strong>安全保证</strong></li>
+<li>需要保证与 FAEST 规范的行为完全一致（包括常数时间执行、字节序、SHA-3 用法等）</li>
+<li>FAEST 的 C 代码经历了 NIST 后量子密码标准化过程的严格审查，复用它直接继承了其安全保证</li>
 </ul>
 <h3 id="23-代码组织"><a class="header" href="#23-代码组织">2.3 代码组织</a></h3>
 <pre><code>faest-ref/           ← C 源码（子模块）
@@ -861,7 +860,7 @@ src/
 <h2 id="三ffi-绑定的安全封装faest_ffirs"><a class="header" href="#三ffi-绑定的安全封装faest_ffirs">三、FFI 绑定的安全封装：<code>faest_ffi.rs</code></a></h2>
 <h3 id="31-c-侧数据结构的内存布局对齐"><a class="header" href="#31-c-侧数据结构的内存布局对齐">3.1 C 侧数据结构的内存布局对齐</a></h3>
 <p><code>faest_ffi.rs</code> 使用 <code>#[repr(C)]</code> 精确复刻了 C 侧的两个核心结构体：</p>
-<p><strong><code>FaestParamset</code></strong> — FAEST 参数集（对应 C 的 <code>faest_paramset_t</code>）</p>
+<p><code>FaestParamset</code> — FAEST 参数集（对应 C 的 <code>faest_paramset_t</code>）</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -878,7 +877,7 @@ src/
 </tbody>
 </table>
 </div>
-<p><strong><code>Bavc</code></strong> — BAVC 承诺状态（对应 C 的 <code>bavc_t</code>）</p>
+<p><code>Bavc</code> — BAVC 承诺状态（对应 C 的 <code>bavc_t</code>）</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[repr(C)]
@@ -889,7 +888,7 @@ struct Bavc {
     sd: *mut u8,   // 种子指针
 }
 <span class="boring">}</span></code></pre>
-<p><strong>ABI 一致性验证</strong>：<code>test_rust_c_ffi_layouts_match_exactly</code> 测试通过调用 C 侧的 <code>cbzk_faest_paramset_layout</code> 和 <code>cbzk_bavc_layout</code> 获取 C 编译器的 <code>sizeof</code>、<code>alignof</code> 和 <code>offsetof</code>，与 Rust 侧的 <code>size_of</code>、<code>align_of</code>、<code>offset_of!</code> 精确比对。若 ABI 在未来的 faest-ref 版本中有变化，该测试会立即失败。</p>
+<p>ABI 一致性验证：<code>test_rust_c_ffi_layouts_match_exactly</code> 测试通过调用 C 侧的 <code>cbzk_faest_paramset_layout</code> 和 <code>cbzk_bavc_layout</code> 获取 C 编译器的 <code>sizeof</code>、<code>alignof</code> 和 <code>offsetof</code>，与 Rust 侧的 <code>size_of</code>、<code>align_of</code>、<code>offset_of!</code> 精确比对。若 ABI 在未来的 faest-ref 版本中有变化，该测试会立即失败。</p>
 <h3 id="32-外部函数接口声明"><a class="header" href="#32-外部函数接口声明">3.2 外部函数接口声明</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -931,7 +930,7 @@ struct Bavc {
     // ...
 }
 <span class="boring">}</span></code></pre>
-<p>这些函数构成了 Prover 和 Verifier 与 C 层的<strong>完整接口契约</strong>。</p>
+<p>这些函数构成了 Prover 和 Verifier 与 C 层的完整接口契约。</p>
 <h3 id="33-rust-侧的安全封装层"><a class="header" href="#33-rust-侧的安全封装层">3.3 Rust 侧的安全封装层</a></h3>
 <h4 id="331-生命周期管理faestvolecommitmentstate--drop"><a class="header" href="#331-生命周期管理faestvolecommitmentstate--drop">3.3.1 生命周期管理：<code>FaestVoleCommitmentState</code> + <code>Drop</code></a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -950,7 +949,7 @@ impl Drop for FaestVoleCommitmentState {
     }
 }
 <span class="boring">}</span></code></pre>
-<p><strong>安全性担保</strong>：</p>
+<p>安全性担保：</p>
 <ul>
 <li><code>params</code> 使用 <code>Box&lt;FaestParamset&gt;</code> 堆分配，确保 <code>vole_commit</code> 写入时指针稳定性</li>
 <li><code>Drop</code> trait 在对象销毁时自动调用 <code>bavc_clear</code> 释放 C 侧堆内存，防止内存泄漏</li>
@@ -965,7 +964,7 @@ let mut row_ptrs = (0..public_params.lambda_bits)
     .map(|row| unsafe { v_rows.as_mut_ptr().add(row * row_bytes) })
     .collect::&lt;Vec&lt;_&gt;&gt;();
 <span class="boring">}</span></code></pre>
-<p>C 函数写入 <code>v_rows</code> 后，Rust 侧通过 <code>row_ptrs</code> 重新解读为<strong>连续内存块</strong>中的 $\lambda$ 行 × <code>row_bytes</code> 列的矩阵。这样既满足了 C 接口的指针数组要求，又在 Rust 侧保持了连续内存的安全访问。</p>
+<p>C 函数写入 <code>v_rows</code> 后，Rust 侧通过 <code>row_ptrs</code> 重新解读为连续内存块中的 $\lambda$ 行 × <code>row_bytes</code> 列的矩阵。这样既满足了 C 接口的指针数组要求，又在 Rust 侧保持了连续内存的安全访问。</p>
 <h4 id="333-错误传播与状态验证"><a class="header" href="#333-错误传播与状态验证">3.3.3 错误传播与状态验证</a></h4>
 <p>每次外部函数调用后都进行状态验证：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -976,14 +975,14 @@ if bavc.h.is_null() || bavc.k.is_null() || bavc.com.is_null() || bavc.sd.is_null
     return Err("FAEST vole_commit returned an incomplete BAVC state".to_string());
 }
 <span class="boring">}</span></code></pre>
-<p>这种<strong>防御式编程</strong>模式确保即使 C 侧返回异常状态，Rust 侧也不会在空指针上继续操作。</p>
+<p>这种防御式编程模式确保即使 C 侧返回异常状态，Rust 侧也不会在空指针上继续操作。</p>
 <h3 id="34-不依赖-c-的-rust-原生实现vole-哈希"><a class="header" href="#34-不依赖-c-的-rust-原生实现vole-哈希">3.4 不依赖 C 的 Rust 原生实现：VOLE 哈希</a></h3>
-<p>为减少 C FFI 调用的性能开销和跨语言维护负担，FAEST 的 <strong>VOLE 哈希函数</strong>（<code>vole_hash</code>）在 Rust 中<strong>完整重新实现</strong>：</p>
+<p>为减少 C FFI 调用的性能开销和跨语言维护负担，FAEST 的 VOLE 哈希函数（<code>vole_hash</code>）在 Rust 中完整重新实现：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn vole_hash_128f_rust(seed, input, hash_ell_bits) -&gt; [u8; 18]
 <span class="boring">}</span></code></pre>
-<p>这实现了一个基于 <strong>F128b 域运算</strong>的密钥哈希（Keyed Hash），核心计算为：</p>
+<p>这实现了一个基于 F128b 域运算的密钥哈希（Keyed Hash），核心计算为：</p>
 <p>$$
 H = (h_2, h_3) = (r_0 \cdot h_0 + r_1 \cdot h_1,; r_2 \cdot h_0 + r_3 \cdot h_1)
 $$</p>
@@ -992,7 +991,7 @@ $$</p>
 <li>$h_0$ 通过 Horner 法在 $\mathbb{F}_{2^{128}}$ 上计算多项式求值</li>
 <li>$h_1$ 通过 Horner 法在 $\mathbb{F}_{2^{64}}$ 上计算多项式求值（使用 <code>gf64_mul</code>）</li>
 </ul>
-<p><strong><code>gf64_mul</code> 的双重加速策略</strong>：</p>
+<p><code>gf64_mul</code> 的双重加速策略：</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -1012,7 +1011,7 @@ low ^ high ^ (high &lt;&lt; 1) ^ (high &lt;&lt; 3) ^ (high &lt;&lt; 4)
     ^ overflow ^ (overflow &lt;&lt; 1) ^ (overflow &lt;&lt; 3) ^ (overflow &lt;&lt; 4)
 <span class="boring">}</span></code></pre>
 <p>这约简多项式 $x^{64} + x^4 + x^3 + x + 1$。</p>
-<p><strong>正确性保障</strong>：<code>test_rust_vole_hash_matches_faest_c_reference</code> 在多种输入长度（0 ~ 28176 比特）和多种随机种子下，逐字节比对 Rust 实现与 C 参考实现的输出，确保完全一致。</p>
+<p>正确性保障：<code>test_rust_vole_hash_matches_faest_c_reference</code> 在多种输入长度（0 ~ 28176 比特）和多种随机种子下，逐字节比对 Rust 实现与 C 参考实现的输出，确保完全一致。</p>
 <hr>
 <h2 id="四状态机设计voleithrs"><a class="header" href="#四状态机设计voleithrs">四、状态机设计：<code>voleith.rs</code></a></h2>
 <h3 id="41-延迟-vole-功能delayed-vole"><a class="header" href="#41-延迟-vole-功能delayed-vole">4.1 延迟 VOLE 功能（Delayed VOLE）</a></h3>
@@ -1028,80 +1027,59 @@ $$</p>
 \mathbf{v} = \mathbf{q} + \Delta \cdot u
 $$</p>
 <p>其中 $\Delta$ 是 Verifier 的全局挑战，$u$ 是 Prover 的秘密比特向量，$\mathbf{v}, \mathbf{q}$ 是对应的 $\mathbb{F}_{2^{128}}$ 域元素向量。</p>
-<p>“延迟“的含义是：在协议初始阶段（承诺阶段），Prover 和 Verifier 仅交换承诺，<strong>等到协议运行到特定步骤后才确定 $\Delta$ 和挑战</strong>。</p>
+<p>“延迟“的含义是：在协议初始阶段（承诺阶段），Prover 和 Verifier 仅交换承诺，等到协议运行到特定步骤后才确定 $\Delta$ 和挑战。</p>
 <h3 id="42-prover-状态机voleithprover"><a class="header" href="#42-prover-状态机voleithprover">4.2 Prover 状态机：<code>VoleitHProver</code></a></h3>
-<pre><code>┌──────────────────────────────────────────────────────────────────┐
-│                   VoleitHProver 状态机                            │
-│                                                                  │
-│  commit()                                                        │
-│    │                                                             │
-│    ├─ 生成 root_key, iv ──────► faest_vole_commit() ──► C 层     │
-│    │                               │                             │
-│    │                         返回 {u, v_rows,                    │
-│    │                          consistency_c,                     │
-│    │                          commitment_hash, bavc_state}       │
-│    │                                                             │
-│    ├─ 推导 challenge_1 (Fiat-Shamir消化上述输出)                  │
-│    ├─ 计算 u_tilde = H(challenge_1, u)                           │
-│    ├─ 计算 v_tilde = H(challenge_1, v_rows)                      │
-│    └─ 提取 ProverCorrelations {u, v, packed_aux_u, packed_aux_v} │
-│         │                                                        │
-│         ▼                                                        │
-│  commitment_for_witness(witness)                                 │
-│    │                                                             │
-│    ├─ 构建 ProverRef (使用 correlations)                          │
-│    └─ 返回 CommitmentMessage {correction}                        │
-│         │                                                        │
-│         ▼                                                        │
-│  bind_relation(commitment, challenge_count)                      │
-│    │                                                             │
-│    ├─ 推导 relation_seed (消化 commitment.correction)             │
-│    ├─ 生成挑战 χ[0..challenge_count]                             │
-│    └─ 返回 ChallengeMessage {challenges}                         │
-│         │                                                        │
-│         ▼                                                        │
-│  finalize(proof_message)                                         │
-│    │                                                             │
-│    ├─ 推导 opening_challenge_from(relation_seed, proof)          │
-│    ├─ Grinding: 递增 counter 直到满足 w_grind 个零尾比特          │
-│    ├─ 调用 bavc_open(challenge, bavc) ──► C 层                   │
-│    └─ 返回 VoleitHTranscript                                     │
-│                                                                  │
-└──────────────────────────────────────────────────────────────────┘
-</code></pre>
+<pre class="mermaid">graph TD
+    A([commit]) --&gt;|生成 root_key, iv| B[faest_vole_commit C层]
+    B --&gt; C[推导 challenge_1]
+    C --&gt; D[计算 u_tilde, v_tilde]
+    D --&gt; E[提取 ProverCorrelations]
+    
+    E --&gt; F([commitment_for_witness])
+    F --&gt; G[返回 CommitmentMessage]
+    
+    G --&gt; H([bind_relation])
+    H --&gt; I[推导 relation_seed]
+    I --&gt; J[生成挑战 χ]
+    J --&gt; K[返回 ChallengeMessage]
+    
+    K --&gt; L([finalize])
+    L --&gt; M[推导 opening_challenge]
+    M --&gt; N{Grinding 满足零尾}
+    N --&gt;|成功| O[调用 bavc_open C层]
+    O --&gt; P(((返回 VoleitHTranscript)))
+
+    style A fill:none,stroke:#61afef,stroke-width:2px
+    style F fill:none,stroke:#61afef,stroke-width:2px
+    style H fill:none,stroke:#61afef,stroke-width:2px
+    style L fill:none,stroke:#61afef,stroke-width:2px
+    style N fill:none,stroke:#e06c75,stroke-width:2px
+</pre>
+
 <h3 id="43-verifier-状态机voleithverifier"><a class="header" href="#43-verifier-状态机voleithverifier">4.3 Verifier 状态机：<code>VoleitHVerifier</code></a></h3>
-<pre><code>┌──────────────────────────────────────────────────────────────────┐
-│                   VoleitHVerifier 状态机                           │
-│                                                                  │
-│  reconstruct(statement_digest, commitment, proof, transcript)    │
-│    │                                                             │
-│    ├─ 验证 transcript.profile 与参数一致性                        │
-│    ├─ 验证 opening challenge 的 grinding 条件                    │
-│    ├─ faest_vole_reconstruct(iv, challenge, opening, c, ell_hat) │
-│    │       ──► C 层 vole_reconstruct                             │
-│    │       ──► 返回 q_rows + commitment_hash                     │
-│    │                                                             │
-│    ├─ 验证 reconstructed_commitment_hash == transcript.hash       │
-│    │                                                             │
-│    ├─ 派生 challenge_1 = 同 Prover 的 Fiat-Shamir 公式            │
-│    ├─ 计算 v_tilde = H(challenge_1, q_rows)                      │
-│    │                                                             │
-│    ├─ 修正 v_tilde: 对每个 row, 若 challenge_bit=1,              │
-│    │   v_tilde[row] ⊕= u_tilde                                   │
-│    │   (因为 v = q + Δ·u ⇒ H(v) ≠ H(q) 当 Δ 非零)               │
-│    │                                                             │
-│    ├─ 派生 relation_seed = 同 Prover 的 Fiat-Shamir 公式          │
-│    ├─ 验证 opening_challenge == transcript.challenge             │
-│    │   (确认 opening 与 relation proof 绑定)                     │
-│    │                                                             │
-│    └─ 提取 VerifierCorrelations {Δ, q, packed_aux_q}             │
-│         │                                                        │
-│         ▼                                                        │
-│  challenges(count)                                               │
-│    └─ 从 relation_seed 派生与 Prover 相同的挑战集合               │
-│                                                                  │
-└──────────────────────────────────────────────────────────────────┘
-</code></pre>
+<pre class="mermaid">graph TD
+    A([reconstruct]) --&gt; B[验证 profile 与参数一致性]
+    B --&gt; C{验证 opening grinding 条件}
+    C --&gt;|成功| D[faest_vole_reconstruct C层]
+    D --&gt; E{验证 commitment_hash}
+    
+    E --&gt;|匹配| F[派生 challenge_1]
+    F --&gt; G[计算 v_tilde 并用 u_tilde 修正]
+    G --&gt; H[派生 relation_seed]
+    H --&gt; I{验证 opening_challenge 绑定}
+    
+    I --&gt;|匹配| J[提取 VerifierCorrelations]
+    
+    J --&gt; K([challenges])
+    K --&gt; L(((从 relation_seed 派生挑战序列)))
+
+    style A fill:none,stroke:#c678dd,stroke-width:2px
+    style K fill:none,stroke:#c678dd,stroke-width:2px
+    style C fill:none,stroke:#e06c75,stroke-width:2px
+    style E fill:none,stroke:#e06c75,stroke-width:2px
+    style I fill:none,stroke:#e06c75,stroke-width:2px
+</pre>
+
 <h3 id="44-核心数据结构"><a class="header" href="#44-核心数据结构">4.4 核心数据结构</a></h3>
 <div class="table-wrapper">
 <table>
@@ -1116,23 +1094,23 @@ $$</p>
 </table>
 </div>
 <h3 id="45-fiat-shamir-挑战派生序列"><a class="header" href="#45-fiat-shamir-挑战派生序列">4.5 Fiat-Shamir 挑战派生序列</a></h3>
-<p>协议使用<strong>四轮 Fiat-Shamir 变换</strong>将交互式协议转化为 NIZK：</p>
-<p><strong>第 1 轮挑战</strong> <code>challenge_1</code>：源自 BAVC 承诺 + 一致性证明</p>
+<p>协议使用四轮 Fiat-Shamir 变换将交互式协议转化为 NIZK：</p>
+<p>第 1 轮挑战 <code>challenge_1</code>：源自 BAVC 承诺 + 一致性证明</p>
 <pre><code>absorb(profile, statement, witness_bits, degree, relation_bits,
        ell_hat_bits, commitment_hash, iv, consistency_c)
 squeeze() → challenge_1
 </code></pre>
-<p><strong>第 2 轮关系挑战</strong> <code>relation_seed</code>：源自承诺哈希 + VOLE 哈希值 + 校正子</p>
+<p>第 2 轮关系挑战 <code>relation_seed</code>：源自承诺哈希 + VOLE 哈希值 + 校正子</p>
 <pre><code>absorb(profile, statement, witness_bits, degree, relation_bits,
        ell_hat_bits, commitment_hash, iv, consistency_c,
        u_tilde, v_tilde[0..λ], correction)
 squeeze() → relation_seed
 </code></pre>
-<p><strong>第 3 轮打开挑战</strong> <code>opening_challenge</code>：源自 relation_seed + 证明系数</p>
+<p>第 3 轮打开挑战 <code>opening_challenge</code>：源自 relation_seed + 证明系数</p>
 <pre><code>absorb(relation_seed, proof.blinded_coeffs[0..d])
 squeeze() → opening_challenge
 </code></pre>
-<p>然后通过 <strong>Grinding</strong>（递增 counter 使挑战值的后 <code>w_grind</code> 位为零）增加协议的安全性。</p>
+<p>然后通过 Grinding（递增 counter 使挑战值的后 <code>w_grind</code> 位为零）增加协议的安全性。</p>
 <h3 id="46-grinding-证明工作量"><a class="header" href="#46-grinding-证明工作量">4.6 Grinding 证明工作量</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -1145,17 +1123,17 @@ squeeze() → opening_challenge
 <hr>
 <h2 id="五线缆编码wirers"><a class="header" href="#五线缆编码wirers">五、线缆编码：<code>wire.rs</code></a></h2>
 <h3 id="51-版本化规范格式"><a class="header" href="#51-版本化规范格式">5.1 版本化规范格式</a></h3>
-<p><code>wire.rs</code> 实现了一个<strong>自描述、版本化、严格规范的序列化格式</strong>，用于所有签名类型的线缆传输。</p>
-<p><strong>格式结构</strong>：</p>
+<p><code>wire.rs</code> 实现了一个自描述、版本化、严格规范的序列化格式，用于所有签名类型的线缆传输。</p>
+<p>格式结构：</p>
 <pre><code>┌─────────┬──────────┬────────┬──────────┬──────────────┬──────┐
 │  Magic  │ Version  │  Kind  │ Reserved │   Payload    │ Tail │
 │  8 字节 │  2 字节  │ 1 字节 │  1 字节  │ 变长        │ 检查 │
 └─────────┴──────────┴────────┴──────────┴──────────────┴──────┘
 </code></pre>
 <ul>
-<li><strong>Magic</strong>：<code>CBZKVSIG</code>（8 字节魔术数，用于快速识别和版本过滤）</li>
-<li><strong>Version</strong>：当前为 <code>1</code>（小端编码）</li>
-<li><strong>Kind</strong>：签名类型标识</li>
+<li>Magic：<code>CBZKVSIG</code>（8 字节魔术数，用于快速识别和版本过滤）</li>
+<li>Version：当前为 <code>1</code>（小端编码）</li>
+<li>Kind：签名类型标识</li>
 </ul>
 <div class="table-wrapper">
 <table>
@@ -1171,19 +1149,19 @@ squeeze() → opening_challenge
 </table>
 </div>
 <h3 id="52-序列化内容"><a class="header" href="#52-序列化内容">5.2 序列化内容</a></h3>
-<p><strong>Payload</strong> 包含三个主要部分：</p>
+<p>Payload 包含三个主要部分：</p>
 <ol>
-<li><strong><code>CommitmentMessage</code></strong>：校正子（correction）比特向量
+<li><code>CommitmentMessage</code>：校正子（correction）比特向量
 <ul>
 <li>编码方式：长度前缀（u64）+ 紧凑位编码（<code>extend_exact_bits_to_bytes</code>）</li>
 </ul>
 </li>
-<li><strong><code>ProofMessage&lt;F128b&gt;</code></strong>：盲化系数向量（blinded coefficients）
+<li><code>ProofMessage&lt;F128b&gt;</code>：盲化系数向量（blinded coefficients）
 <ul>
 <li>编码方式：长度前缀（u64）+ 每个系数 16 字节（<code>F128b::to_bytes()</code>）</li>
 </ul>
 </li>
-<li><strong><code>VoleitHTranscript</code></strong>：完整的 VOLE 协议通信轨迹
+<li><code>VoleitHTranscript</code>：完整的 VOLE 协议通信轨迹
 <ul>
 <li>profile（1 字节）</li>
 <li>commitment_hash（32 字节）</li>
@@ -1199,42 +1177,34 @@ squeeze() → opening_challenge
 <h3 id="53-解码验证"><a class="header" href="#53-解码验证">5.3 解码验证</a></h3>
 <p>解码器 <code>SignatureDecoder</code> 保证：</p>
 <ol>
-<li><strong>尾部零多余数据</strong>：<code>finish()</code> 检查 <code>offset == input.len()</code>，拒绝任何尾随字节</li>
-<li><strong>唯一定义性</strong>：所有变长字段使用精确长度前缀，任何非规范编码（如尾部未使用比特非零）被拒绝</li>
-<li><strong>F128 值的规范反序列化</strong>：使用 <code>F128b::from_bytes</code> 而非 <code>from_uniform_bytes</code>，拒绝非规范的域元素表示</li>
-<li><strong>集合大小上限</strong>：<code>MAX_COLLECTION_ITEMS = 1,000,000</code> 防止拒绝服务攻击</li>
+<li>尾部零多余数据：<code>finish()</code> 检查 <code>offset == input.len()</code>，拒绝任何尾随字节</li>
+<li>唯一定义性：所有变长字段使用精确长度前缀，任何非规范编码（如尾部未使用比特非零）被拒绝</li>
+<li>F128 值的规范反序列化：使用 <code>F128b::from_bytes</code> 而非 <code>from_uniform_bytes</code>，拒绝非规范的域元素表示</li>
+<li>集合大小上限：<code>MAX_COLLECTION_ITEMS = 1,000,000</code> 防止拒绝服务攻击</li>
 </ol>
 <hr>
 <h2 id="六跨语言调用架构总结"><a class="header" href="#六跨语言调用架构总结">六、跨语言调用架构总结</a></h2>
-<pre><code>┌──────────────────────────────────────────────────────────┐
-│                    Rust 应用层                            │
-│  ┌─────────────────────────────────────────────────────┐ │
-│  │  VoleitHProver / VoleitHVerifier                    │ │
-│  │  ├─ Fiat-Shamir 挑战派生                            │ │
-│  │  ├─ ProverCorrelations / VerifierCorrelations 提取  │ │
-│  │  ├─ 列转置优化 (BMI2 PEXT / 可移植回退)              │ │
-│  │  └─ Rayon 并行哈希（≥64KB 时自动激活）              │ │
-│  └──────────────┬──────────────────────────────────────┘ │
-│                 │ FFI 调用                                │
-│  ┌──────────────▼──────────────────────────────────────┐ │
-│  │  FaestVoleCommitmentState (Drop 安全析构)           │ │
-│  │  ├─ vole_commit()    → BAVC 树构建 + VOLE 展开     │ │
-│  │  ├─ bavc_open()      → 选择性打开 GGM 路径         │ │
-│  │  └─ vole_reconstruct → Verifier 重构 VOLE 关系     │ │
-│  └──────────────┬──────────────────────────────────────┘ │
-└─────────────────┼────────────────────────────────────────┘
-                  │ extern "C"
-┌─────────────────▼────────────────────────────────────────┐
-│                 C (faest-ref)                             │
-│  ┌─────────────────────────────────────────────────────┐ │
-│  │  vole.c / bavc.c                                    │ │
-│  │  ├─ BAVC 树构建 (τ × λ 深度)                        │ │
-│  │  ├─ GGM 伪随机函数展开                              │ │
-│  │  ├─ 承诺哈希聚合 (SHA-3)                             │ │
-│  │  └─ 选择性打开验证                                   │ │
-│  └─────────────────────────────────────────────────────┘ │
-└──────────────────────────────────────────────────────────┘
-</code></pre>
+<pre class="mermaid">graph TD
+    subgraph Rust_App [Rust 应用层]
+        A[VoleitHProver / VoleitHVerifier&lt;br&gt;&lt;br&gt;• Fiat-Shamir 挑战派生&lt;br&gt;• Prover/Verifier 相关性提取&lt;br&gt;• 列转置优化 BMI2&lt;br&gt;• Rayon 并行哈希]
+    end
+
+    subgraph Rust_FFI [FFI 接口封装层]
+        B[FaestVoleCommitmentState&lt;br&gt;Drop 安全析构&lt;br&gt;&lt;br&gt;• vole_commit&lt;br&gt;• bavc_open&lt;br&gt;• vole_reconstruct]
+    end
+
+    subgraph C_Lib [C 语言层 faest-ref]
+        C[vole.c / bavc.c&lt;br&gt;&lt;br&gt;• BAVC 树构建 τ × λ 深度&lt;br&gt;• GGM 伪随机展开&lt;br&gt;• 承诺哈希 SHA-3 聚合&lt;br&gt;• 选择性打开验证]
+    end
+
+    Rust_App --&gt;|FFI 调用| Rust_FFI
+    Rust_FFI --&gt;|extern "C"| C_Lib
+
+    style Rust_App fill:none,stroke:#e5c07b,stroke-width:2px
+    style Rust_FFI fill:none,stroke:#61afef,stroke-width:2px,stroke-dasharray: 5 5
+    style C_Lib fill:none,stroke:#98c379,stroke-width:2px
+</pre>
+
 <h3 id="关键设计决策"><a class="header" href="#关键设计决策">关键设计决策</a></h3>
 <div class="table-wrapper">
 <table>
@@ -1256,12 +1226,12 @@ squeeze() → opening_challenge
 <h2 id="一概述-3"><a class="header" href="#一概述-3">一、概述</a></h2>
 <p>本模块是系统中最具理论创新性的部分。它解决的核心问题是：</p>
 <blockquote>
-<p><strong>如何将正则编码函数（Regular Encoding）——一个看似非线性的、基于查表的操作——转化为 degree-$c$ 的布尔多项式（ANF），然后在 ZK 协议的“隐式空间“中高效地安全求值？</strong></p>
+<p>如何将正则编码函数（Regular Encoding）——一个看似非线性的、基于查表的操作——转化为 degree-$c$ 的布尔多项式（ANF），然后在 ZK 协议的“隐式空间“中高效地安全求值？</p>
 </blockquote>
 <p>这分为两个阶段：</p>
 <ol>
-<li><strong><code>constraint_gen.rs</code></strong> — 编译阶段：离线预计算正则编码的 ANF 系数表</li>
-<li><strong><code>implicit_eval.rs</code></strong> — 求值阶段：在线安全计算 χ-加权隐式多项式，使用<strong>蝴蝶折叠算法</strong>（Butterfly Evaluation）将复杂度从 $\mathcal{O}(m \cdot 2^c)$ 降至 $\mathcal{O}(m \cdot c)$</li>
+<li><code>constraint_gen.rs</code> — 编译阶段：离线预计算正则编码的 ANF 系数表</li>
+<li><code>implicit_eval.rs</code> — 求值阶段：在线安全计算 χ-加权隐式多项式，使用蝴蝶折叠算法（Butterfly Evaluation）将复杂度从 $\mathcal{O}(m \cdot 2^c)$ 降至 $\mathcal{O}(m \cdot c)$</li>
 </ol>
 <hr>
 <h2 id="二正则编码的代数化从独热向量到-anf-多项式"><a class="header" href="#二正则编码的代数化从独热向量到-anf-多项式">二、正则编码的代数化——从独热向量到 ANF 多项式</a></h2>
@@ -1272,7 +1242,7 @@ squeeze() → opening_challenge
 $$</p>
 <p>其中 $f_{\text{idx}}(X) = 1$ 当且仅当 $\text{idx} = \sum_{t=0}^{c-1} X_t \cdot 2^{c-1-t}$（大端序整数解释）。</p>
 <h3 id="22-封闭形式的布尔多项式"><a class="header" href="#22-封闭形式的布尔多项式">2.2 封闭形式的布尔多项式</a></h3>
-<p>每个输出位 $f_{\text{idx}}(X)$ 可以写为一个标准的 <strong>ANF（代数正规型）</strong> 多项式。其构造基于拉格朗日插值思想：</p>
+<p>每个输出位 $f_{\text{idx}}(X)$ 可以写为一个标准的 ANF（代数正规型） 多项式。其构造基于拉格朗日插值思想：</p>
 <p>对于索引 <code>idx</code>，其大端二进制表示为 $j_0 j_1 \dots j_{c-1}$。定义：</p>
 <p>$$
 f_{\text{idx}}(X_0, \dots, X_{c-1}) = \prod_{t=0}^{c-1} (j_t + X_t + 1) \pmod{2}
@@ -1282,14 +1252,14 @@ $$</p>
 <li>当 $j_t = 1$（索引的该比特为 1）：因子为 $X_t$（要求 $X_t = 1$）</li>
 <li>当 $j_t = 0$（索引的该比特为 0）：因子为 $1 + X_t$（要求 $X_t = 0$）</li>
 </ul>
-<p>展开后得到一个 degree-$c$ 的 <strong>ANF 多项式</strong>——即布尔变量的乘积之和（XOR of ANDs），每个单项的度数 $\le c$。</p>
-<p><strong>示例</strong>（$c=3$, idx=5, 即二进制 <code>101</code>）：
+<p>展开后得到一个 degree-$c$ 的 ANF 多项式——即布尔变量的乘积之和（XOR of ANDs），每个单项的度数 $\le c$。</p>
+<p>示例（$c=3$, idx=5, 即二进制 <code>101</code>）：
 $$
 f_5(X_0, X_1, X_2) = X_0(1+X_1)X_2 = X_0X_2 + X_0X_1X_2
 $$</p>
 <p>这是一个度数为 3 的多项式，包含 2 个单项式。</p>
 <h3 id="23-编译方法子集包含möbius-变换"><a class="header" href="#23-编译方法子集包含möbius-变换">2.3 编译方法：子集包含（Möbius 变换）</a></h3>
-<p>代码中的 <code>compile_re_constraints</code> 没有直接展开上述乘积形式，而是使用更优雅的<strong>子集包含条件</strong>：</p>
+<p>代码中的 <code>compile_re_constraints</code> 没有直接展开上述乘积形式，而是使用更优雅的子集包含条件：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>for idx in 0..domain_size {
@@ -1316,7 +1286,7 @@ $$</p>
 </tbody>
 </table>
 </div>
-<p><strong>为什么子集包含条件成立？</strong></p>
+<p>为什么子集包含条件成立？</p>
 <p>这是 Mobius 变换在布尔立方体上的应用。对于布尔函数 $f: \mathbb{F}_2^c \to \mathbb{F}_2$，其 ANF 系数由下式给出：</p>
 <p>$$
 a_u = \bigoplus_{x: \text{supp}(x) \subseteq u} f(x)
@@ -1334,41 +1304,44 @@ $$</p>
 <h2 id="三隐式求值引擎implicit_evalrs"><a class="header" href="#三隐式求值引擎implicit_evalrs">三、隐式求值引擎：<code>implicit_eval.rs</code></a></h2>
 <h3 id="31-为什么需要隐式求值"><a class="header" href="#31-为什么需要隐式求值">3.1 为什么需要“隐式“求值？</a></h3>
 <p>完整的 ZK 协议需要 Prover 证明约束系统 ${g_i(Y) = 0}_{i=1}^t$ 成立。如果不做优化，Prover 需要对 $t$ 个独立的约束多项式逐个求值、插值——这是 $\mathcal{O}(t \cdot 2^c)$ 的复杂度，对于 $t \approx 1280$、$c \approx 8 \sim 16$ 是不可接受的。</p>
-<p><strong>核心洞察</strong>：在协议中，Verifier 实际上只验证一个 χ-加权的总多项式：</p>
+<p>核心洞察：在协议中，Verifier 实际上只验证一个 χ-加权的总多项式：</p>
 <p>$$
 \tilde{G}(Y) = \sum_{i=1}^t \chi_i \cdot \tilde{g}_i(Y)
 $$</p>
 <p>利用这个交换律，可以将求值复杂度从 $\mathcal{O}(t \cdot 2^c)$ 降低到 $\mathcal{O}(m \cdot c)$。</p>
 <h3 id="32-三步求值流水线"><a class="header" href="#32-三步求值流水线">3.2 三步求值流水线</a></h3>
-<pre><code>                    ┌─────────────────┐
-                    │  challenges χ   │
-                    │  (t 个 F_{2^128}) │
-                    └────────┬────────┘
-                             ▼
-              ┌──────────────────────────────┐
-     Step 1   │  compute_chi_prime(χ, B)     │
-              │  χ'_j = Σ_i χ_i · b_{i,j}    │
-              │  (m 个 F_{2^128} 域元素)     │
-              └──────────────┬───────────────┘
-                             ▼
-              ┌──────────────────────────────┐
-     Step 2   │  仿射基变换                   │
-              │  affine[i] = v_i + w_i · p   │
-              │  (k 个 F_{2^128} 域元素)     │
-              └──────────────┬───────────────┘
-                             ▼
-              ┌──────────────────────────────┐
-     Step 3   │  蝴蝶折叠 Butterfly Eval     │
-              │  Σ_j χ'_j · f̃_j(p)          │
-              │  → 总求值结果 (1 个域元素)   │
-              └──────────────────────────────┘
-</code></pre>
+<pre class="mermaid">graph TD
+    Input[challenges χ&lt;br&gt;t 个 F_128] --&gt; Step1
+
+    subgraph Step1 [Step 1: χ' 聚合求和交换]
+        A["χ'_j = Σ_i χ_i · b_{i,j}"]
+    end
+
+    Step1 --&gt;|m 个 F_128 域元素| Step2
+
+    subgraph Step2 [Step 2: 仿射基变换]
+        B["affine[i] = v_i + w_i · p"]
+    end
+
+    Step2 --&gt;|k 个 F_128 域元素| Step3
+
+    subgraph Step3 [Step 3: 蝴蝶折叠 Butterfly Eval]
+        C["Σ_j χ'_j · f̃_j(p)"]
+    end
+
+    Step3 --&gt; Output[总求值结果&lt;br&gt;1 个域元素]
+
+    style Step1 fill:none,stroke:#d19a66,stroke-width:2px
+    style Step2 fill:none,stroke:#c678dd,stroke-width:2px
+    style Step3 fill:none,stroke:#56b6c2,stroke-width:2px
+</pre>
+
 <h4 id="步骤-1χ-聚合求和交换"><a class="header" href="#步骤-1χ-聚合求和交换">步骤 1：χ’ 聚合（求和交换）</a></h4>
 <p>对于约束系统 $g_i(Y) = \sum_j b_{i,j} f_j(Y) + y_i$，交换求和顺序：</p>
 <p>$$
 \sum_{i=1}^t \chi_i \cdot g_i(Y) = \sum_{j=1}^m \underbrace{\left(\sum_{i=1}^t \chi_i \cdot b_{i,j}\right)}<em>{\chi’<em>j} \cdot f_j(Y) + \underbrace{\sum</em>{i=1}^t \chi_i \cdot y_i}</em>{\text{const_term}}
 $$</p>
-<p><strong><code>compute_chi_prime</code> 的极简实现</strong>：</p>
+<p><code>compute_chi_prime</code> 的极简实现：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn compute_chi_prime(challenges, b_cols) -&gt; Vec&lt;F&gt; {
@@ -1377,8 +1350,8 @@ $$</p>
 }
 <span class="boring">}</span></code></pre>
 <p>对于 $\mathbb{F}_{2^{128}}$ 域，求和即 XOR。利用 <code>BitVec::iter_ones()</code> 快速扫描列为 1 的行索引。</p>
-<p><strong><code>compute_chi_prime_streaming_f128</code> 的超高优化实现</strong>：</p>
-<p>对于流式矩阵（<code>StreamingMatrixCols</code>），关键在于<strong>预计算字节子集 XOR 表</strong>以避免逐位扫描：</p>
+<p><code>compute_chi_prime_streaming_f128</code> 的常数时间与流式优化实现：</p>
+<p>对于流式矩阵（<code>StreamingMatrixCols</code>），关键在于预计算字节子集 XOR 表以避免逐位扫描：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn build_byte_subset_xor_table(challenges, byte_len) -&gt; Vec&lt;[u128; 256]&gt; {
@@ -1388,7 +1361,7 @@ $$</p>
             subset_table[mask] = subset_table[mask &amp; (mask-1)] ^ challenge[bit]
 }
 <span class="boring">}</span></code></pre>
-<p>这利用了 <strong>Gray 码 / DP 递推</strong>：<code>subset_table[mask]</code> 表示对挑战值集合 <code>challenge[byte_idx*8 + trailing_zeroes(mask)]</code> 的 XOR 累加。一旦预计算完成，任何列的求值退化为 $n/8$ 次查表 + XOR：</p>
+<p>这利用了 Gray 码 / DP 递推：<code>subset_table[mask]</code> 表示对挑战值集合 <code>challenge[byte_idx*8 + trailing_zeroes(mask)]</code> 的 XOR 累加。一旦预计算完成，任何列的求值退化为 $n/8$ 次查表 + XOR：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn subset_xor_from_bytes(column_bytes, table, byte_len) -&gt; u128 {
@@ -1397,10 +1370,10 @@ $$</p>
         acc ^= table[byte_idx][byte as usize]
 }
 <span class="boring">}</span></code></pre>
-<p>更进一步，代码对手工展开的 $160$ 字节场景（$n=1280$ 的典型字节长度）做了 <strong>SIMD 风格的手动循环展开</strong>（<code>xor_32!</code> 宏同时处理 32 个字节，每次迭代处理 5 块共 160 字节），将循环开销降至最低。</p>
-<p><strong>并行化</strong>：当列数 $\ge 8192$ 时，自动启用 <code>rayon</code> 并行，每 256 列为一个 chunk，每个 worker 拥有独立的 <code>column_bytes</code> 缓冲区。</p>
+<p>更进一步，代码对手工展开的 $160$ 字节场景（$n=1280$ 的典型字节长度）做了 SIMD 风格的手动循环展开（<code>xor_32!</code> 宏同时处理 32 个字节，每次迭代处理 5 块共 160 字节），将循环开销降至最低。</p>
+<p>并行化：当列数 $\ge 8192$ 时，自动启用 <code>rayon</code> 并行，每 256 列为一个 chunk，每个 worker 拥有独立的 <code>column_bytes</code> 缓冲区。</p>
 <h4 id="步骤-2仿射基变换"><a class="header" href="#步骤-2仿射基变换">步骤 2：仿射基变换</a></h4>
-<p>将 witness 的每个比特 $w_i$ 和 VOLE 相关性 $v_i$ 组合成<strong>仿射基</strong>：</p>
+<p>将 witness 的每个比特 $w_i$ 和 VOLE 相关性 $v_i$ 组合成仿射基：</p>
 <p>$$
 \text{affine}_i(p) = v_i + w_i \cdot p
 $$</p>
@@ -1419,12 +1392,12 @@ $$</p>
 <span class="boring">}</span></code></pre>
 <h4 id="步骤-3蝴蝶折叠butterfly-evaluation"><a class="header" href="#步骤-3蝴蝶折叠butterfly-evaluation">步骤 3：蝴蝶折叠（Butterfly Evaluation）</a></h4>
 <p>最核心的算法创新。</p>
-<p><strong>问题</strong>：对于每个大小为 $2^c$ 的分块，我们需要计算：</p>
+<p>问题：对于每个大小为 $2^c$ 的分块，我们需要计算：</p>
 <p>$$
 \tilde{F}(p) = \sum_{j=0}^{\text{block_count}-1} \sum_{\text{idx}=0}^{2^c-1} \chi’<em>{j, \text{idx}} \cdot \tilde{f}</em>{\text{idx}}(p)
 $$</p>
 <p>其中 $\tilde{f}<em>{\text{idx}}(p)$ 是正则编码多项式 $f</em>{\text{idx}}$ 在仿射基 $\text{affine}_{j}$ 上的求值结果。直接展开需要 $\mathcal{O}(2^c)$ 次域乘法和加法。</p>
-<p><strong>蝴蝶算法</strong>将复杂度降至 $\mathcal{O}(c)$。它的灵感来自 FFT 的 Cooley-Tukey 蝶形结构：</p>
+<p>蝴蝶算法将复杂度降至 $\mathcal{O}(c)$。它的灵感来自 FFT 的 Cooley-Tukey 蝶形结构：</p>
 <pre><code>Algorithm: evaluate_chunk_butterfly(chi_prime_chunk[0..2^c),
                                      x_vars[0..c), point)
 
@@ -1449,7 +1422,7 @@ for k in 1..c:
 
 返回 work[0]     // 最后只剩一个元素
 </code></pre>
-<p><strong>数学原理</strong>：</p>
+<p>数学原理：</p>
 <p>对于 $c=2$ 的可视化示例：</p>
 <pre><code>        层 0 (LSB: x_0)          层 1 (x_1)
                                       
@@ -1466,12 +1439,12 @@ work[0] = (χ'_0(p+x_0) ⊕ χ'_1 x_0)(p+x_1) ⊕ (χ'_2(p+x_0) ⊕ χ'_3 x_0) x
          = Σ_{idx=0}^{3} χ'_{idx} · f_idx(x_0, x_1)
 </code></pre>
 <p>这精确地计算了 χ-加权的正则编码多项式在点 $(x_0, x_1)$ 的求值。</p>
-<p><strong>为什么按 LSB→MSB 顺序？</strong> 代码的注释解释了原因：</p>
+<p>为什么按 LSB→MSB 顺序？ 代码的注释解释了原因：</p>
 <blockquote>
 <p>Butterfly 从 LSB 到 MSB 处理（与 <code>(2*i, 2*i+1)</code> 配对一致），因此遍历 <code>x_vars</code> 时需要反向：<code>x_vars[c-1-k]</code> 即对应 LSB 优先顺序。</p>
 </blockquote>
 <p>这确保了 <code>monomial_from_table_index(table_idx, block_start, c)</code> 中的大端序变量索引与蝴蝶配对的正确对齐。</p>
-<p><strong>栈优化</strong>：当 $2^c \le 256$ 时，使用<strong>栈分配的定长数组</strong><code>[F; 256]</code> 代替堆分配的 <code>Vec</code>，避免热路径上的内存分配。</p>
+<p>栈优化：当 $2^c \le 256$ 时，使用栈分配的定长数组<code>[F; 256]</code> 代替堆分配的 <code>Vec</code>，避免热路径上的内存分配。</p>
 <h4 id="完整流水线集成"><a class="header" href="#完整流水线集成">完整流水线集成</a></h4>
 <p><code>implicit_evaluate_polynomials</code> 函数组合了上述三个步骤：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -1496,10 +1469,10 @@ work[0] = (χ'_0(p+x_0) ⊕ χ'_1 x_0)(p+x_1) ⊕ (χ'_2(p+x_0) ⊕ χ'_3 x_0) x
 }
 <span class="boring">}</span></code></pre>
 <h3 id="33-双矩阵配对蝴蝶求值环签名群签名场景"><a class="header" href="#33-双矩阵配对蝴蝶求值环签名群签名场景">3.3 双矩阵配对蝴蝶求值（环签名/群签名场景）</a></h3>
-<p>对于需要同时处理 $B_0$ 和 $B_1$ 两个矩阵的 Merkle 哈希约束（环签名），代码实现了<strong>配对蝴蝶求值</strong>：</p>
+<p>对于需要同时处理 $B_0$ 和 $B_1$ 两个矩阵的 Merkle 哈希约束（环签名），代码实现了配对蝴蝶求值：</p>
 <ul>
 <li><code>implicit_evaluate_pair_direct_from_affine_no_const</code>：计算两个独立矩阵的 χ-加权和</li>
-<li><code>implicit_evaluate_pair_swapped_from_affine_no_const</code>：计算<strong>交叉交换</strong>后的两个分量——这是 Merkle 路径方向比特约束的关键</li>
+<li><code>implicit_evaluate_pair_swapped_from_affine_no_const</code>：计算交叉交换后的两个分量——这是 Merkle 路径方向比特约束的关键</li>
 </ul>
 <p>在 <code>evaluate_pair_swapped_chunk_butterfly_reuse_slice</code> 中，左右两个仿射基 $(x_0^{\text{left}}, x_0^{\text{right}})$ 在第一层就分为四个工作缓冲区（direct left, swapped left, direct right, swapped right），后续层次分别用基向量做折叠。最终返回 $(\text{direct}, \text{swapped})$ 两个结果。</p>
 <h3 id="34-完整协议中的集成"><a class="header" href="#34-完整协议中的集成">3.4 完整协议中的集成</a></h3>
@@ -1558,19 +1531,19 @@ Input: challenge (χ[0..t]), chi_prime, const_term, c
 <h1 id="模块五pit_dd-rep-核心协议与-nizk-变换"><a class="header" href="#模块五pit_dd-rep-核心协议与-nizk-变换">模块五：$\Pi^t_{dD-Rep}$ 核心协议与 NIZK 变换</a></h1>
 <hr>
 <h2 id="一概述-4"><a class="header" href="#一概述-4">一、概述</a></h2>
-<p>$\Pi^t_{dD-Rep}$（degree-$d$ Representation）协议是整个 ZK 系统的<strong>灵魂</strong>。它解决的核心问题是：</p>
+<p>$\Pi^t_{dD-Rep}$（degree-$d$ Representation）协议是整个 ZK 系统的核心。它解决的核心问题是：</p>
 <blockquote>
 <p>给定一个由 $t$ 个 degree-$d$ 布尔多项式组成的约束系统 ${g_i(X) = 0}_{i=1}^t$，Prover 如何在不泄露 witness $w \in \mathbb{F}_2^k$ 的前提下，让 Verifier 确信 $w$ 满足所有约束？</p>
 </blockquote>
 <p>本模块包含两个层面：</p>
 <ol>
-<li><strong><code>protocol_dd_rep.rs</code></strong> — $\Pi^t_{dD-Rep}$ 协议的三步实现（承诺 → 挑战 → 响应/验证）</li>
-<li><strong><code>transcript.rs</code></strong> — Fiat-Shamir 变换的 Random Oracle 实例化（SHA-3 Keccak-256）</li>
+<li><code>protocol_dd_rep.rs</code> — $\Pi^t_{dD-Rep}$ 协议的三步实现（承诺 → 挑战 → 响应/验证）</li>
+<li><code>transcript.rs</code> — Fiat-Shamir 变换的 Random Oracle 实例化（SHA-3 Keccak-256）</li>
 </ol>
 <hr>
 <h2 id="二pit_dd-rep-协议三步曲"><a class="header" href="#二pit_dd-rep-协议三步曲">二、$\Pi^t_{dD-Rep}$ 协议三步曲</a></h2>
 <h3 id="21-协议概览"><a class="header" href="#21-协议概览">2.1 协议概览</a></h3>
-<p>$\Pi^t_{dD-Rep}$ 建立在 <strong>VOLE 相关性</strong>之上。回顾 Prover 和 Verifier 通过延迟 VOLE 功能 $\mathcal{F}_{\text{sVOLE}}$ 建立的关系：</p>
+<p>$\Pi^t_{dD-Rep}$ 建立在 VOLE 相关性之上。回顾 Prover 和 Verifier 通过延迟 VOLE 功能 $\mathcal{F}_{\text{sVOLE}}$ 建立的关系：</p>
 <p>$$
 \begin{aligned}
 \text{Prover: } &amp;(u, \mathbf{v}) \in \mathbb{F}<em>2^k \times \mathbb{F}</em>{2^{128}}^k \
@@ -1578,43 +1551,28 @@ Input: challenge (χ[0..t]), chi_prime, const_term, c
 \end{aligned}
 $$</p>
 <p>满足 $\mathbf{v} = \mathbf{q} + \Delta \cdot u$。Prover 拥有 witness $w \in \mathbb{F}<em>2^k$，公开约束系统为 ${g_i(X)}</em>{i=1}^t$。</p>
-<pre><code>┌─────────────────┐                 ┌─────────────────┐
-│    Prover       │                 │    Verifier     │
-│  (w, u, v)     │                 │  (Δ, q)         │
-└────────┬────────┘                 └────────┬────────┘
-         │                                   │
-         │  Step 1: 承诺 (Commit)             │
-         │  ─────────────────────            │
-         │  corr ← w ⊕ u                     │
-         │                                   │
-         │  ── corr ────────────────────────► │
-         │                     ┌──────────────┴──────┐
-         │                     │ 吸收承诺:             │
-         │                     │  q̃_i ← q_i + corr_i·Δ│
-         │                     │  (即 q̃ = v)          │
-         │                     └──────────────────────┘
-         │                                   │
-         │  Step 2: 挑战 (Challenge)          │
-         │  ◄── χ_1, ..., χ_t ─────────────── │
-         │                     │  χ_i ← Random / Fiat-Shamir
-         │                     │
-         │  Step 3: 响应 (Respond)            │
-         │  ─────────────────────            │
-         │  对每个插值点 p_k：                 │
-         │    affine[i] ← v[i] + w[i]·p_k    │
-         │    val_k ← Σ_i χ_i · g̃_i(p_k)     │
-         │  插值恢复多项式系数 a_0..a_{d-1}   │
-         │  盲化: ã_j ← a_j + r_j            │
-         │                                   │
-         │  ── {ã_0, ..., ã_{d-1}} ────────► │
-         │                     ┌──────────────┴──────┐
-         │                     │ 验证:                 │
-         │                     │  Σχ_i·g_i(q̃) + Πqq   │
-         │                     │  ?= Σã_j·Δ^j        │
-         │                     └──────────────────────┘
-</code></pre>
+<pre class="mermaid">sequenceDiagram
+    participant P as Prover&lt;br&gt;(w, u, v)
+    participant V as Verifier&lt;br&gt;(Δ, q)
+
+    Note over P, V: Step 1: 承诺 (Commit)
+    Note over P: corr ← w ⊕ u
+    P-&gt;&gt;V: corr
+    Note over V: 吸收承诺:&lt;br/&gt;q̃_i ← q_i + corr_i·Δ&lt;br/&gt;(即 q̃ = v)
+
+    Note over P, V: Step 2: 挑战 (Challenge)
+    Note over V: χ_i ← Random / Fiat-Shamir
+    V-&gt;&gt;P: χ_1, ..., χ_t
+
+    Note over P, V: Step 3: 响应 (Respond)
+    Note over P: 对每个插值点 p_k：&lt;br/&gt;affine[i] ← v[i] + w[i]·p_k&lt;br/&gt;val_k ← Σ_i χ_i · g̃_i(p_k)&lt;br/&gt;插值恢复系数 a_0..a_{d-1}&lt;br/&gt;盲化: ã_j ← a_j + B^*掩码
+    P-&gt;&gt;V: {ã_0, ..., ã_{d-1}}
+    
+    Note over V: 验证:&lt;br/&gt;Σ χ_i·g_i(q̃) + B^*掩码&lt;br/&gt;?= Σ ã_j·Δ^j
+</pre>
+
 <h3 id="22-step-1witness-承诺commit"><a class="header" href="#22-step-1witness-承诺commit">2.2 Step 1：Witness 承诺（<code>commit</code>）</a></h3>
-<p><strong>代数动机</strong>：Prover 不能直接发送 $w$（会泄露 witness），也不能发送 $u$（Verifier 已通过 $\mathcal{F}_{\text{sVOLE}}$ 部分知道 $u$）。解决方案是发送<strong>校正子</strong>（correction）：</p>
+<p>代数动机：Prover 不能直接发送 $w$（会泄露 witness），也不能发送 $u$（Verifier 已通过 $\mathcal{F}_{\text{sVOLE}}$ 部分知道 $u$）。解决方案是发送校正子（correction）：</p>
 <p>$$
 \text{corr} = w \oplus u \in \mathbb{F}_2^k
 $$</p>
@@ -1630,8 +1588,8 @@ $$</p>
     CommitmentMessage { correction }
 }
 <span class="boring">}</span></code></pre>
-<p><strong>校正子的信息论安全性</strong>：由于 $u$ 是 Prover 私有的秘密向量（Verifier 只知道 $q$ 和 $\Delta$，但 $u$ 对 Verifier 具有 $-\log_2(\text{Pr}[u=0]) = k$ 比特的熵），$w \oplus u$ 完美隐藏了 $w$。</p>
-<p><strong>Verifier 端的吸收</strong>：Verifier 利用校正子修正自己的 $q$：</p>
+<p>校正子的信息论安全性：由于 $u$ 是 Prover 私有的秘密向量（Verifier 只知道 $q$ 和 $\Delta$，但 $u$ 对 Verifier 具有 $-\log_2(\text{Pr}[u=0]) = k$ 比特的熵），$w \oplus u$ 完美隐藏了 $w$。</p>
+<p>Verifier 端的吸收：Verifier 利用校正子修正自己的 $q$：</p>
 <p>$$
 \tilde{q}_i = q_i + \text{corr}<em>i \cdot \Delta \in \mathbb{F}</em>{2^{128}}
 $$</p>
@@ -1641,8 +1599,8 @@ $$</p>
 $$</p>
 <p>当 $w_i = u_i$ 时，$\text{corr}_i = 0$，$\tilde{q}_i = q_i = v_i$
 当 $w_i \neq u_i$ 时，$\text{corr}_i = 1$，$\tilde{q}_i = q_i + \Delta = v_i$</p>
-<p>因此 $\tilde{q} = \mathbf{v}$ 当且仅当校正子正确。Verifier 在<strong>不知道 $u$ 和 $v$</strong> 的情况下，获得了正确 witness 所对应的 VOLE 关系。</p>
-<p><strong>常数时间实现</strong>：<code>corrected_q_from_bitvec</code> 使用 <code>conditional_select</code>（来自 <code>subtle</code> crate）逐字节展开校正子位，避免秘密依赖的分支。</p>
+<p>因此 $\tilde{q} = \mathbf{v}$ 当且仅当校正子正确。Verifier 在不知道 $u$ 和 $v$ 的情况下，获得了正确 witness 所对应的 VOLE 关系。</p>
+<p>常数时间实现：<code>corrected_q_from_bitvec</code> 使用 <code>conditional_select</code>（来自 <code>subtle</code> crate）逐字节展开校正子位，避免秘密依赖的分支。</p>
 <h3 id="23-step-2挑战生成challengemessage"><a class="header" href="#23-step-2挑战生成challengemessage">2.3 Step 2：挑战生成（<code>ChallengeMessage</code>）</a></h3>
 <p>在交互式版本中，Verifier 采样随机域元素：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -1660,7 +1618,7 @@ ChallengeMessage { challenges: f128_challenges_from_seed(seed, challenge_count) 
 <span class="boring">}</span></code></pre>
 <h3 id="24-step-3prover-响应respond--respond_resolved_plus_implicit"><a class="header" href="#24-step-3prover-响应respond--respond_resolved_plus_implicit">2.4 Step 3：Prover 响应（<code>respond</code> / <code>respond_resolved_plus_implicit</code>）</a></h3>
 <p>Prover 面对的核心任务是：计算 $\tilde{G}(Y) = \sum_{i=1}^t \chi_i \cdot \tilde{g}_i(Y)$ 在 $c+1$ 个插值点上的值，然后插值恢复多项式系数，最后用辅助 VOLE 进行盲化。</p>
-<p>代码提供<strong>三种响应模式</strong>：</p>
+<p>代码提供三种响应模式：</p>
 <h4 id="模式-a通用-anf-求值respond"><a class="header" href="#模式-a通用-anf-求值respond">模式 A：通用 ANF 求值（<code>respond</code>）</a></h4>
 <p>直接对约束系统 ${g_i}$ 的每个多项式在每个插值点逐项求值：</p>
 <pre><code>Algorithm: respond(system, challenge)
@@ -1677,7 +1635,7 @@ ChallengeMessage { challenges: f128_challenges_from_seed(seed, challenge_count) 
 5. 加上辅助 VOLE 的线性因子乘积 → 盲化系数
 6. 返回 ProofMessage { blinded_coeffs }
 </code></pre>
-<p><strong>关键子函数</strong> <code>evaluate_ck_at_point_precomputed</code>：</p>
+<p>关键子函数 <code>evaluate_ck_at_point_precomputed</code>：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub(crate) fn evaluate_ck_at_point_precomputed&lt;F: FiniteRing&gt;(
@@ -1714,7 +1672,7 @@ $$</p>
 <h4 id="模式-c自定义求值器respond_advanced_implicit"><a class="header" href="#模式-c自定义求值器respond_advanced_implicit">模式 C：自定义求值器（<code>respond_advanced_implicit</code>）</a></h4>
 <p>允许应用层提供自定义求值函数 <code>evaluator: Fn(&amp;[F], F) -&gt; F</code>，用于环签名中需要同时求值两个矩阵的复杂场景。</p>
 <h3 id="25-verifier-验证verify--verify_resolved_plus_implicit"><a class="header" href="#25-verifier-验证verify--verify_resolved_plus_implicit">2.5 Verifier 验证（<code>verify</code> / <code>verify_resolved_plus_implicit</code>）</a></h3>
-<p><strong>核心验证等式</strong>：</p>
+<p>核心验证等式：</p>
 <p>$$
 \sum_{i=1}^t \chi_i \cdot g_i(\tilde{q}) + \prod_{h=1}^{d-1} q_{\text{aux}, h} \stackrel{?}{=} \sum_{j=0}^{d-1} \tilde{a}_j \cdot \Delta^j
 $$</p>
@@ -1731,7 +1689,7 @@ $$</p>
     Ok(lhs == rhs)
 }
 <span class="boring">}</span></code></pre>
-<p><strong>逐项解析</strong>：</p>
+<p>逐项解析：</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -1744,7 +1702,7 @@ $$</p>
 </tbody>
 </table>
 </div>
-<p><strong><code>evaluate_univariate</code> 使用 Horner 法则</strong>：</p>
+<p><code>evaluate_univariate</code> 使用 Horner 法则：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn evaluate_univariate&lt;F&gt;(coeffs: &amp;[F], point: F) -&gt; F {
@@ -1752,20 +1710,20 @@ $$</p>
 }
 <span class="boring">}</span></code></pre>
 <p>等价于 $\tilde{a}_0 + \tilde{a}_1 \cdot \Delta + \tilde{a}_2 \cdot \Delta^2 + \cdots$，使用 Horner 法需要 $d$ 次乘法和 $d$ 次加法。</p>
-<p><strong>为什么 $\prod_h q_{\text{aux}, h}$ 会出现？</strong></p>
-<p>因为有 $d-1$ 个辅助 VOLE 相关性用于<strong>盲化</strong>（masking）。Prover 在响应中加入了 $\prod_h (v_{\text{aux},h} + u_{\text{aux},h} \cdot Y)$，Verifier 相应地在验证时加入 $\prod_h q_{\text{aux},h}$。</p>
+<p>为什么 $\prod_h q_{\text{aux}, h}$ 会出现？</p>
+<p>因为有 $d-1$ 个辅助 VOLE 相关性用于盲化（masking）。Prover 在响应中加入了 $\prod_h (v_{\text{aux},h} + u_{\text{aux},h} \cdot Y)$，Verifier 相应地在验证时加入 $\prod_h q_{\text{aux},h}$。</p>
 <p>完整的正确性推导：</p>
-<p><strong>Prover</strong> 计算盲化系数：
+<p>Prover 计算盲化系数：
 $$
 \tilde{a}<em>j = a_j + \sum</em>{h: \text{组合}} (\text{来自线性因子乘积的 } Y^j \text{ 系数})
 $$</p>
-<p><strong>Verifier</strong> 验证：
+<p>Verifier 验证：
 $$
 \sum_i \chi_i g_i(\tilde{q}) + \prod_h q_{\text{aux},h} = \sum_j \tilde{a}_j \cdot \Delta^j
 $$</p>
-<p>当 $\tilde{q} = \mathbf{v}$ 且 witness 正确时，$\sum_i \chi_i g_i(\tilde{q}) = \sum_j a_j \cdot \Delta^j$，而线性因子乘积的盲化在两侧恰好抵消。</p>
+<p>当 $\tilde{q} = \mathbf{v}$ 且 witness 正确时，$\sum_i \chi_i g_i(\tilde{q}) = \sum_j a_j \cdot \Delta^j$，而线性因子乘积的盲化在两侧相等，从而在不泄露原多项式系数 $a_j$ 的情况下完成了等式的代数校验。。</p>
 <h3 id="26-插值细节"><a class="header" href="#26-插值细节">2.6 插值细节</a></h3>
-<p><code>interpolate_polynomial_prefix_into</code> 实现标准<strong>拉格朗日插值</strong>。插值点选择：</p>
+<p><code>interpolate_polynomial_prefix_into</code> 实现标准拉格朗日插值。插值点选择：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn fill_interpolation_points&lt;F: FiniteField&gt;(points: &amp;mut [F]) {
@@ -1777,7 +1735,7 @@ $$</p>
 }
 <span class="boring">}</span></code></pre>
 <p>即 $P = {0, 1, g, g^2, \dots, g^{d-1}}$，其中 $g$ 是 $\mathbb{F}_{2^{128}}$ 的乘法生成元。这保证了所有插值点互不相同（因为 $g$ 的阶为 $2^{128}-1$）。</p>
-<p>当度数 $d \le 15$ 时（<code>STACK_POLY_COEFFS = 16</code>），插值工作缓冲区使用<strong>栈分配</strong>，避免堆分配的开销。</p>
+<p>当度数 $d \le 15$ 时（<code>STACK_POLY_COEFFS = 16</code>），插值工作缓冲区使用栈分配，避免堆分配的开销。</p>
 <hr>
 <h2 id="三完整的数据流公式-代码映射"><a class="header" href="#三完整的数据流公式-代码映射">三、完整的数据流公式-代码映射</a></h2>
 <div class="table-wrapper">
@@ -1804,8 +1762,8 @@ $$</p>
 <hr>
 <h2 id="四fiat-shamir-变换transcriptrs"><a class="header" href="#四fiat-shamir-变换transcriptrs">四、Fiat-Shamir 变换：<code>transcript.rs</code></a></h2>
 <h3 id="41-random-oracle-实例化"><a class="header" href="#41-random-oracle-实例化">4.1 Random Oracle 实例化</a></h3>
-<p>Fiat-Shamir 启发式将交互式协议转换为非交互式零知识证明（NIZK），其核心是将 Verifier 的随机挑战替换为对协议 transcript 的 <strong>密码学哈希</strong>。</p>
-<p><code>Transcript</code> 使用 <strong>SHA-3 Keccak-256</strong> 作为底层哈希函数实例化 Random Oracle：</p>
+<p>Fiat-Shamir 启发式将交互式协议转换为非交互式零知识证明（NIZK），其核心是将 Verifier 的随机挑战替换为对协议 transcript 的 密码学哈希。</p>
+<p><code>Transcript</code> 使用 SHA-3 Keccak-256 作为底层哈希函数实例化 Random Oracle：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use sha3::{Digest, Keccak256};
@@ -1815,22 +1773,35 @@ pub struct Transcript {
 }
 <span class="boring">}</span></code></pre>
 <h3 id="42-absorb-squeeze-模式"><a class="header" href="#42-absorb-squeeze-模式">4.2 Absorb-Squeeze 模式</a></h3>
-<p>Transcript 遵循 <strong>海绵结构</strong>（Sponge Construction）的 absorb-squeeze 范式：</p>
-<pre><code>         Absorb (吸收)                    Squeeze (挤出)
-  ┌──────────────────────────────┐    ┌─────────────────────────┐
-  │  domain_separator            │    │                         │
-  │  + public_key (B, y, n, c)  │    │                         │
-  │  + commitment_hash           │    │  Keccak-256 Hash        │
-  │  + consistency_c             │    │      ↓                  │
-  │  + u_tilde / v_tilde         │    │  256-bit Seed           │
-  │  + correction bits           │    │      ↓                  │
-  │  + proof coefficients        │    │  ChaCha20 PRG 展开      │
-  │  + grind_counter             │    │      ↓                  │
-  │                              │    │  F128b 挑战值序列       │
-  └──────────────────────────────┘    └─────────────────────────┘
-</code></pre>
+<p>Transcript 遵循 海绵结构（Sponge Construction）的 absorb-squeeze 范式：</p>
+<pre class="mermaid">graph TD
+    subgraph Absorb [Absorb 吸收阶段]
+        direction TB
+        A1[domain_separator] --&gt; A2[public_key]
+        A2 --&gt; A3[commitment_hash]
+        A3 --&gt; A4[consistency_c]
+        A4 --&gt; A5[u_tilde / v_tilde]
+        A5 --&gt; A6[correction bits]
+        A6 --&gt; A7[proof coefficients]
+        A7 --&gt; A8[grind_counter]
+    end
+
+    A8 --&gt; K((Keccak-256&lt;br&gt;Hash Engine))
+
+    subgraph Squeeze [Squeeze 挤出阶段]
+        direction TB
+        K --&gt; S[256-bit Seed]
+        S --&gt; PRG{ChaCha20 PRG&lt;br&gt;流式展开}
+        PRG --&gt; Out[F128b 挑战值序列]
+    end
+
+    style Absorb fill:none,stroke:#61afef,stroke-width:2px,stroke-dasharray: 5 5
+    style Squeeze fill:none,stroke:#e06c75,stroke-width:2px,stroke-dasharray: 5 5
+    style K fill:none,stroke:#98c379,stroke-width:3px
+</pre>
+
 <h3 id="43-absorb-方法"><a class="header" href="#43-absorb-方法">4.3 Absorb 方法</a></h3>
-<p><strong><code>absorb_labelled_bytes(label, bytes)</code></strong> — 通用字节吸收：</p>
+<p><code>absorb_labelled_bytes(label, bytes)</code> — 通用字节吸收：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn absorb_frame(hasher: &amp;mut Keccak256, label: &amp;[u8], bytes: &amp;[u8]) {
@@ -1840,15 +1811,15 @@ pub struct Transcript {
     hasher.update(bytes);                               // 数据
 }
 <span class="boring">}</span></code></pre>
-<p><strong>帧编码确保域分离</strong>：每个字段前有标签长度 + 标签 + 数据长度，保证 $(L_1, D_1)$ 和 $(L_2, D_2)$ 的拼接不会与 $(L_1 | D_1 | L_2, D_2)$ 混淆。</p>
-<p><strong><code>absorb_usize(label, value)</code></strong> — 吸收整数（转为小端 u64）：</p>
+<p>帧编码确保域分离：每个字段前有标签长度 + 标签 + 数据长度，保证 $(L_1, D_1)$ 和 $(L_2, D_2)$ 的拼接不会与 $(L_1 | D_1 | L_2, D_2)$ 混淆。</p>
+<p><code>absorb_usize(label, value)</code> — 吸收整数（转为小端 u64）：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub fn absorb_usize(&amp;mut self, label: &amp;[u8], value: usize) {
     self.absorb_labelled_bytes(label, &amp;(value as u64).to_le_bytes());
 }
 <span class="boring">}</span></code></pre>
-<p><strong><code>absorb_bits(label, bits)</code></strong> — 吸收精确比特数（使用 <code>update_digest_with_exact_bits</code> 避免尾部位填充混淆）：</p>
+<p><code>absorb_bits(label, bits)</code> — 吸收精确比特数（使用 <code>update_digest_with_exact_bits</code> 避免尾部位填充混淆）：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub fn absorb_bits(&amp;mut self, label: &amp;[u8], bits: &amp;MainBitSlice) {
@@ -1858,7 +1829,7 @@ pub struct Transcript {
     update_digest_with_exact_bits(&amp;mut self.hasher, bits);
 }
 <span class="boring">}</span></code></pre>
-<p><strong><code>absorb_matrix(label, matrix)</code></strong> — 吸收流式矩阵（只吸收种子，不吸收整个矩阵）：</p>
+<p><code>absorb_matrix(label, matrix)</code> — 吸收流式矩阵（只吸收种子，不吸收整个矩阵）：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub fn absorb_matrix(&amp;mut self, label: &amp;[u8], matrix: &amp;StreamingMatrixCols) {
@@ -1867,16 +1838,16 @@ pub struct Transcript {
     self.absorb_labelled_bytes(label, &amp;matrix.seed());
 }
 <span class="boring">}</span></code></pre>
-<p>这利用了矩阵的<strong>伪随机性质</strong>——矩阵由种子 $\sigma$ 确定，吸收 $\sigma$ 就等价于吸收了整个矩阵。</p>
+<p>这利用了矩阵的伪随机性质——矩阵由种子 $\sigma$ 确定，吸收 $\sigma$ 就等价于吸收了整个矩阵。</p>
 <h3 id="44-squeeze-方法"><a class="header" href="#44-squeeze-方法">4.4 Squeeze 方法</a></h3>
-<p><strong><code>finalize_seed()</code></strong> — 完成 Keccak-256 哈希，输出 256-bit 种子：</p>
+<p><code>finalize_seed()</code> — 完成 Keccak-256 哈希，输出 256-bit 种子：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub fn finalize_seed(self) -&gt; [u8; 32] {
     self.hasher.finalize().into()
 }
 <span class="boring">}</span></code></pre>
-<p><strong><code>challenge_f128_vec(count)</code></strong> — 从种子展开 $\mathbb{F}_{2^{128}}$ 挑战值序列：</p>
+<p><code>challenge_f128_vec(count)</code> — 从种子展开 $\mathbb{F}_{2^{128}}$ 挑战值序列：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub fn challenge_f128_vec(self, count: usize) -&gt; Vec&lt;F128b&gt; {
@@ -1891,13 +1862,13 @@ pub fn f128_challenges_from_seed(seed: [u8; 32], count: usize) -&gt; Vec&lt;F128
     }).collect()
 }
 <span class="boring">}</span></code></pre>
-<p><strong>双层展开设计</strong>：</p>
+<p>双层展开设计：</p>
 <ol>
-<li>Keccak-256 从 absorb 数据中<strong>压缩</strong>出 256-bit 种子</li>
-<li>ChaCha20 PRG 将种子<strong>扩展</strong>为任意长度的挑战值序列</li>
+<li>Keccak-256 从 absorb 数据中压缩出 256-bit 种子</li>
+<li>ChaCha20 PRG 将种子扩展为任意长度的挑战值序列</li>
 </ol>
 <p>这样设计的原因是：如果直接使用 Keccak-256 的 XOF 模式（如 SHAKE256），每次 squeeze 都需要重新处理 absorb 数据。而 ChaCha20 的 keyed PRG 模式可以在固定时间内的任意长度展开，更适合大量挑战值的生成。</p>
-<p><strong><code>challenge_bytes(count)</code></strong> — 通用字节挑战：</p>
+<p><code>challenge_bytes(count)</code> — 通用字节挑战：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub fn challenge_bytes(self, count: usize) -&gt; Vec&lt;u8&gt; {
@@ -1921,9 +1892,9 @@ const OPENING_CHALLENGE_DOMAIN: &amp;[u8] = b"CodeBasedZK/FAEST-sVOLE/opening-ch
 </span>const FS_DOMAIN_SEPARATOR: &amp;[u8] = b"ReSolveD+_v1.0_Sigma_Challenge";
 const FS_DOMAIN_SEPARATOR: &amp;[u8] = b"RingSig_v1.0";
 <span class="boring">}</span></code></pre>
-<p>这确保了不同协议、不同阶段的挑战无法互换，防止<strong>域混淆攻击</strong>。</p>
+<p>这确保了不同协议、不同阶段的挑战无法互换，防止域混淆攻击。</p>
 <h3 id="46-确定性验证"><a class="header" href="#46-确定性验证">4.6 确定性验证</a></h3>
-<p>单元测试 <code>transcript_is_deterministic</code> 验证相同 absorb 输入产生相同挑战，<code>transcript_is_order_sensitive</code> 验证 absorb 顺序影响输出——满足 Random Oracle 的 <strong>一致性</strong> 和 <strong>敏感性</strong>。</p>
+<p>单元测试 <code>transcript_is_deterministic</code> 验证相同 absorb 输入产生相同挑战，<code>transcript_is_order_sensitive</code> 验证 absorb 顺序影响输出——满足 Random Oracle 的 一致性 和 敏感性。</p>
 <hr>
 <h2 id="五完整非交互式协议流程"><a class="header" href="#五完整非交互式协议流程">五、完整非交互式协议流程</a></h2>
 <p>结合 VOLEitH 状态机（模块三）、隐式求值引擎（模块四）和 $\Pi^t_{dD-Rep}$（本模块），完整的非交互式签名流程为：</p>
@@ -1969,10 +1940,10 @@ Verifier:
 <tr><th>安全属性</th><th>实现机制</th></tr>
 </thead>
 <tbody>
-<tr><td><strong>零知识性</strong></td><td>VOLE 校正子 $w \oplus u$ 隐藏 witness；盲化系数 $\tilde{a}_j$ 隐藏多项式系数</td></tr>
-<tr><td><strong>可靠性</strong></td><td>验证等式 $\sum \chi_i g_i(\tilde{q}) + \Pi q_{\text{aux}} = \sum \tilde{a}_j \Delta^j$ 在违规 witness 下成立的概率 $\le 2^{-\lambda}$</td></tr>
-<tr><td><strong>非交互性</strong></td><td>Fiat-Shamir 变换将 Verifier 的随机挑战替换为 SHA-3 哈希输出</td></tr>
-<tr><td><strong>抗碰撞</strong></td><td>Fiat-Shamir 挑战域分离 + Keccak-256 抗碰撞保证</td></tr>
+<tr><td>零知识性</td><td>VOLE 校正子 $w \oplus u$ 隐藏 witness；盲化系数 $\tilde{a}_j$ 隐藏多项式系数</td></tr>
+<tr><td>可靠性</td><td>验证等式 $\sum \chi_i g_i(\tilde{q}) + \Pi q_{\text{aux}} = \sum \tilde{a}_j \Delta^j$ 在违规 witness 下成立的概率 $\le 2^{-\lambda}$</td></tr>
+<tr><td>非交互性</td><td>Fiat-Shamir 变换将 Verifier 的随机挑战替换为 SHA-3 哈希输出</td></tr>
+<tr><td>抗碰撞</td><td>Fiat-Shamir 挑战域分离 + Keccak-256 抗碰撞保证</td></tr>
 </tbody>
 </table>
 </div>
@@ -1980,15 +1951,15 @@ Verifier:
 <h1 id="模块六基础应用层resolved-与环签名"><a class="header" href="#模块六基础应用层resolved-与环签名">模块六：基础应用层——ReSolveD+ 与环签名</a></h1>
 <hr>
 <h2 id="一概述-5"><a class="header" href="#一概述-5">一、概述</a></h2>
-<p>本模块是将底层 $\Pi^t_{dD-Rep}$ 协议应用到<strong>具体密码学原语</strong>的第一层。包含两种签名方案：</p>
+<p>本模块是将底层 $\Pi^t_{dD-Rep}$ 协议应用到具体密码学原语的第一层。包含两种签名方案：</p>
 <ol>
-<li><strong>ReSolveD+</strong>：基于 <strong>RSD（Regular Syndrome Decoding）</strong> 困难问题的数字签名方案。公钥是一个随机矩阵 $B$ 和其对应的综合症 $y$；私钥是一个随机秘密 $x$，满足 $y = B \cdot \text{RE}(x)$。</li>
-<li><strong>环签名（Ring Signature）</strong>：签名者可以从一个公钥集合（环）中匿名地签署消息，使验证者确信签名者属于该集合，但<strong>无法确定具体是哪一个</strong>。这里利用 Merkle 树累加器 + AFS 双矩阵哈希构造环。</li>
+<li>ReSolveD+：基于 RSD（Regular Syndrome Decoding） 困难问题的数字签名方案。公钥是一个随机矩阵 $B$ 和其对应的综合症 $y$；私钥是一个随机秘密 $x$，满足 $y = B \cdot \text{RE}(x)$。</li>
+<li>环签名（Ring Signature）：签名者可以从一个公钥集合（环）中匿名地签署消息，使验证者确信签名者属于该集合，但无法确定具体是哪一个。这里利用 Merkle 树累加器 + AFS 双矩阵哈希构造环。</li>
 </ol>
 <hr>
 <h2 id="二resolved-签名"><a class="header" href="#二resolved-签名">二、ReSolveD+ 签名</a></h2>
 <h3 id="21-数学基础rsd-问题"><a class="header" href="#21-数学基础rsd-问题">2.1 数学基础：RSD 问题</a></h3>
-<p><strong>RSD（Regular Syndrome Decoding）</strong> 是编码理论中的一个 NP-hard 问题：给定矩阵 $B \in \mathbb{F}_2^{n \times m}$ 和综合症 $y \in \mathbb{F}_2^n$，寻找一个<strong>正则词</strong> $x$（其汉明重量极低，结构上由 $c$ 比特块映射为独热向量）使得：</p>
+<p>RSD（Regular Syndrome Decoding） 是编码理论中的一个 NP-hard 问题：给定矩阵 $B \in \mathbb{F}_2^{n \times m}$ 和综合症 $y \in \mathbb{F}_2^n$，寻找一个正则词 $x$（其汉明重量极低，结构上由 $c$ 比特块映射为独热向量）使得：</p>
 <p>$$
 y = B \cdot \text{RE}(x) \quad (\text{在 } \mathbb{F}_2 \text{ 上})
 $$</p>
@@ -2007,7 +1978,7 @@ pub struct SecretKey {
     pub x: MainBitVec,                 // 秘密 x（witness）
 }
 <span class="boring">}</span></code></pre>
-<p><strong>密钥生成</strong>：</p>
+<p>密钥生成：</p>
 <ol>
 <li>随机选择种子 $\sigma$ → 生成 $B = \text{PRG}(\sigma) \in \mathbb{F}_2^{n \times m}$</li>
 <li>随机选择 $x \in \mathbb{F}_2^k$</li>
@@ -2023,9 +1994,9 @@ $$</p>
 <p>其中 $f_j(x)$ 是 $x$ 的正则编码 $\text{RE}(x)$ 的第 $j$ 个输出位，可以表示为 degree-$c$ 的 ANF 多项式（参见模块四）。</p>
 <h3 id="24-约束构建build_resolved_plus_constraints"><a class="header" href="#24-约束构建build_resolved_plus_constraints">2.4 约束构建：<code>build_resolved_plus_constraints</code></a></h3>
 <p>对于每个约束方程 $g_i(x) = 0$，代码使用三步流程构建 ANF 约束系统：</p>
-<p><strong>第一步</strong>：获取每个正则编码索引的本地单项式（<code>local_monomials</code>）</p>
+<p>第一步：获取每个正则编码索引的本地单项式（<code>local_monomials</code>）</p>
 <p>对于正则编码输出索引 $\text{idx}$（0 到 $2^c-1$），其 ANF 展开包含一组单项式（来自 <code>re_table[idx]</code> 中为 1 的列）。</p>
-<p><strong>第二步</strong>：反向映射 + BitVec 批量 XOR</p>
+<p>第二步：反向映射 + BitVec 批量 XOR</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// table_idx -&gt; 包含它的 re_idx 列表
@@ -2049,7 +2020,7 @@ for block_idx in 0..block_count {
 }
 <span class="boring">}</span></code></pre>
 <p>这里的关键洞察：ANF 单项式 $X_{j_1} X_{j_2} \cdots X_{j_d}$ 在约束 $g_i$ 中的系数由 $B_{i, \cdot}$ 与 ANF 系数表的组合决定。通过位向量批量 XOR，避免了逐行逐列的 $\mathcal{O}(n \cdot m \cdot 2^c)$ 暴力循环。</p>
-<p><strong>第三步</strong>：构建最终方程</p>
+<p>第三步：构建最终方程</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>for (global_idx, presence) in global_monomial_presence.into_iter().enumerate() {
@@ -2066,7 +2037,7 @@ for (row_idx, bit) in y.iter().by_vals().enumerate() {
     if bit { equations[row_idx] ^= 1（常数项）}
 }
 <span class="boring">}</span></code></pre>
-<p><strong>最终输出的 ANF 约束系统</strong>：<code>Vec&lt;Vec&lt;Monomial&gt;&gt;</code>，共 $n$ 个多项式（对应 $y$ 的 $n$ 个比特），每个多项式的度数为 $c$，变量范围为 $k$。</p>
+<p>最终输出的 ANF 约束系统：<code>Vec&lt;Vec&lt;Monomial&gt;&gt;</code>，共 $n$ 个多项式（对应 $y$ 的 $n$ 个比特），每个多项式的度数为 $c$，变量范围为 $k$。</p>
 <h3 id="25-签名流程sign_with_rng"><a class="header" href="#25-签名流程sign_with_rng">2.5 签名流程（<code>sign_with_rng</code>）</a></h3>
 <pre><code>Algorithm: ReSolveD+ Sign(pk, sk, msg)
 Input:  pk = (B, y, k, c), sk = x, msg
@@ -2140,13 +2111,13 @@ Output: Signature σ
 <hr>
 <h2 id="三环签名ring-signature"><a class="header" href="#三环签名ring-signature">三、环签名（Ring Signature）</a></h2>
 <h3 id="31-数学基础merkle-累加器的-zk-证明"><a class="header" href="#31-数学基础merkle-累加器的-zk-证明">3.1 数学基础：Merkle 累加器的 ZK 证明</a></h3>
-<p>环签名的核心思路是使用 <strong>Merkle 哈希树</strong> 累加环中所有公钥。签名者需要在零知识下证明自己知道一条从叶子（自己的密钥材料）到根（公开的 Merkle 根 $u_0$）的认证路径。</p>
-<p><strong>AFS 双矩阵哈希</strong> 用于 Merkle 树的每一层。对于层 $\theta$，给定左子节点 $v_\theta$ 和右子节点 $w_\theta$，双亲节点由下式算出：</p>
+<p>环签名的核心思路是使用 Merkle 哈希树 累加环中所有公钥。签名者需要在零知识下证明自己知道一条从叶子（自己的密钥材料）到根（公开的 Merkle 根 $u_0$）的认证路径。</p>
+<p>AFS 双矩阵哈希 用于 Merkle 树的每一层。对于层 $\theta$，给定左子节点 $v_\theta$ 和右子节点 $w_\theta$，双亲节点由下式算出：</p>
 <p>$$
 v_{\theta-1} = h_B(v_\theta, w_\theta) = B_0 \cdot \text{RE}(v_\theta) \oplus B_1 \cdot \text{RE}(w_\theta)
 $$</p>
 <p>其中 $B_0, B_1 \in \mathbb{F}_2^{n \times m}$ 是两个独立的伪随机矩阵。</p>
-<p><strong>关键点</strong>：在每一层，签名者还需要证明路径的方向——即当前节点是左子还是右子。这通过一个<strong>方向比特</strong> $j_\theta \in {0,1}$ 编码在约束中。</p>
+<p>关键点：在每一层，签名者还需要证明路径的方向——即当前节点是左子还是右子。这通过一个方向比特 $j_\theta \in {0,1}$ 编码在约束中。</p>
 <h3 id="32-密钥结构"><a class="header" href="#32-密钥结构">3.2 密钥结构</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -2245,7 +2216,7 @@ for (row_idx, mut equation) in leaf_terms.into_iter().enumerate() {
 }
 <span class="boring">}</span></code></pre>
 <h3 id="35-隐式求值引擎针对环签名的配对蝴蝶"><a class="header" href="#35-隐式求值引擎针对环签名的配对蝴蝶">3.5 隐式求值引擎（针对环签名的配对蝴蝶）</a></h3>
-<p>由于环签名需要同时处理两个矩阵 $B_0$ 和 $B_1$，代码构建了专用的 <strong>配对 χ’ 数据结构</strong>：</p>
+<p>由于环签名需要同时处理两个矩阵 $B_0$ 和 $B_1$，代码构建了专用的 配对 χ’ 数据结构：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub(crate) struct RingImplicitData&lt;F&gt; {
@@ -2263,7 +2234,7 @@ for (row_idx, mut equation) in leaf_terms.into_iter().enumerate() {
 }
 <span class="boring">}</span></code></pre>
 <p>这里的 <code>compute_chi_prime_pair_streaming_f128</code> 是模块四中配对 χ’ 聚合的实现——它同时计算 $B_0$ 和 $B_1$ 的 χ’ 向量，并在可能的情况下使用配对蝴蝶（<code>xor_pair_32!</code>）同时处理左右矩阵。</p>
-<p><strong>核心求值函数</strong> <code>evaluate_ring_implicit_from_affine</code> 实现：</p>
+<p>核心求值函数 <code>evaluate_ring_implicit_from_affine</code> 实现：</p>
 <pre><code>Algorithm: evaluate_ring_implicit_from_affine(challenges, data, affine, point, ell, n, c)
 Input:  affine (仿射基), point (p)
 Output: Σ_i χ_i · g̃_i(p)
@@ -2296,7 +2267,7 @@ Output: Σ_i χ_i · g̃_i(p)
    
 4. return total
 </code></pre>
-<p>注意这里约束的度数比 ReSolveD+ 高 1（$c+1$ 而非 $c$），因为<strong>方向比特 $j_\theta$ 额外贡献了一度</strong>。</p>
+<p>注意这里约束的度数比 ReSolveD+ 高 1（$c+1$ 而非 $c$），因为方向比特 $j_\theta$ 额外贡献了一度。</p>
 <h3 id="36-环签名完整签名流程"><a class="header" href="#36-环签名完整签名流程">3.6 环签名完整签名流程</a></h3>
 <pre><code>Algorithm: Ring Sign(pk, sk, msg)
 Input:  pk = (B0, B1, root_u, ell, n, c), sk = witness, msg
@@ -2331,9 +2302,9 @@ Output: RingSignature σ
 <h3 id="37-witness-正确性验证"><a class="header" href="#37-witness-正确性验证">3.7 Witness 正确性验证</a></h3>
 <p>测试 <code>test_ring_signature_rejects_witness_mutations_in_implicit_path</code> 验证了三种违反情况的检测：</p>
 <ol>
-<li><strong>叶子秘密篡改</strong>（修改 $x_0$）：破坏 $v_{\ell-1} = h_B(x_0, x_1)$</li>
-<li><strong>路径选择比特篡改</strong>（修改 $j_\theta$）：破坏路径方向</li>
-<li><strong>内部节点篡改</strong>（修改 $v_\theta$）：破坏 $u_{\theta-1} = h_B(v_\theta, w_\theta)$</li>
+<li>叶子秘密篡改（修改 $x_0$）：破坏 $v_{\ell-1} = h_B(x_0, x_1)$</li>
+<li>路径选择比特篡改（修改 $j_\theta$）：破坏路径方向</li>
+<li>内部节点篡改（修改 $v_\theta$）：破坏 $u_{\theta-1} = h_B(v_\theta, w_\theta)$</li>
 </ol>
 <p>三种情况均被验证拒绝，证明了约束系统的完备覆盖。</p>
 <h3 id="38-公式-代码映射"><a class="header" href="#38-公式-代码映射">3.8 公式-代码映射</a></h3>
@@ -2388,10 +2359,10 @@ Output: RingSignature σ
 <p>本模块构建在环签名（模块六）的基础上，增加了两个重要的密码学功能：</p>
 <ol>
 <li>
-<p><strong>群签名（Group Signature, GS）</strong>：除了环签名的匿名性外，群签名允许一个<strong>群管理员</strong>在必要时<strong>撤销匿名性</strong>，追踪出签名者的身份。这通过 McEliece 加密将身份信息 $j$ 和消息 $m$ 嵌入密文 $(c_1, c_2)$ 实现。</p>
+<p>群签名（Group Signature, GS）：除了环签名的匿名性外，群签名允许一个群管理员在必要时撤销匿名性，追踪出签名者的身份。这通过 McEliece 加密将身份信息 $j$ 和消息 $m$ 嵌入密文 $(c_1, c_2)$ 实现。</p>
 </li>
 <li>
-<p><strong>全动态属性基签名（Fully Dynamic Attribute-Based Signature, FDABS）</strong>：签名者拥有一个属性向量，只有当<strong>属性满足某个布尔电路策略（Policy）</strong> 时才能生成有效签名。代码将布尔电路编码为 AND 门约束，并利用 Merkle 树累加器证明属性集的有效性。</p>
+<p>全动态属性基签名（Fully Dynamic Attribute-Based Signature, FDABS）：签名者拥有一个属性向量，只有当属性满足某个布尔电路策略（Policy） 时才能生成有效签名。代码将布尔电路编码为 AND 门约束，并利用 Merkle 树累加器证明属性集的有效性。</p>
 </li>
 </ol>
 <hr>
@@ -2404,9 +2375,9 @@ Output: RingSignature σ
 <tr><th>断言</th><th>安全目标</th><th>实现机制</th></tr>
 </thead>
 <tbody>
-<tr><td>签名者属于群</td><td><strong>匿名性</strong></td><td>Merkle 树累加器（同环签名）</td></tr>
-<tr><td>签名者的身份是 $j$</td><td><strong>可追踪性</strong></td><td>McEliece 加密 $c_1 = G_1 \cdot \binom{r_1}{\text{bin}(j)} \oplus \text{RE}(e’_1)$</td></tr>
-<tr><td>消息绑定</td><td><strong>不可伪造性</strong></td><td>$c_2 = G_2 \cdot \binom{r_2}{\text{bin}(m)} \oplus \text{RE}(e’_2)$</td></tr>
+<tr><td>签名者属于群</td><td>匿名性</td><td>Merkle 树累加器（同环签名）</td></tr>
+<tr><td>签名者的身份是 $j$</td><td>可追踪性</td><td>McEliece 加密 $c_1 = G_1 \cdot \binom{r_1}{\text{bin}(j)} \oplus \text{RE}(e’_1)$</td></tr>
+<tr><td>消息绑定</td><td>不可伪造性</td><td>$c_2 = G_2 \cdot \binom{r_2}{\text{bin}(m)} \oplus \text{RE}(e’_2)$</td></tr>
 </tbody>
 </table>
 </div>
@@ -2432,7 +2403,7 @@ Output: RingSignature σ
 }
 <span class="boring">}</span></code></pre>
 <h3 id="23-加密约束的构建"><a class="header" href="#23-加密约束的构建">2.3 加密约束的构建</a></h3>
-<p>群签名约束系统 = <strong>环签名约束 + 两个 McEliece 加密约束</strong>。</p>
+<p>群签名约束系统 = 环签名约束 + 两个 McEliece 加密约束。</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// 1. 复用环签名的 Merkle 路径约束
@@ -2457,18 +2428,18 @@ for row_idx in 0..ne {
 
 // 3. 相同的结构用于 c2
 <span class="boring">}</span></code></pre>
-<p><strong>加密约束的 ANF 形式</strong>：</p>
+<p>加密约束的 ANF 形式：</p>
 <p>对于密文 $c_1$ 的第 $i$ 个比特，约束为：</p>
 <p>$$
 c_{1,i} + \sum_{j: G_{1,i,j}=1} (r_1 | \text{bin}(j))_j + \text{RE}(e’_1)_i = 0
 $$</p>
 <p>其中：</p>
 <ul>
-<li><code>append_linear_matrix_row_terms</code> 处理 <strong>线性部分</strong> $G \cdot \binom{r}{\text{bin}(j)}$：遍历 $G$ 矩阵的第 $i$ 行、涉及的列范围，每一列为 1 的位置对应一个线性变量</li>
-<li><code>append_re_terms</code> 处理<strong>正则噪声</strong> $\text{RE}(e’)$：$\text{RE}(e’)_i$ 在约束层面被展开为多个 degree-$c_e$ 的 ANF 单项式的 XOR 求和（通过 <code>append_re_terms</code> 注入每个单项式）</li>
+<li><code>append_linear_matrix_row_terms</code> 处理 线性部分 $G \cdot \binom{r}{\text{bin}(j)}$：遍历 $G$ 矩阵的第 $i$ 行、涉及的列范围，每一列为 1 的位置对应一个线性变量</li>
+<li><code>append_re_terms</code> 处理正则噪声 $\text{RE}(e’)$：$\text{RE}(e’)_i$ 在约束层面被展开为多个 degree-$c_e$ 的 ANF 单项式的 XOR 求和（通过 <code>append_re_terms</code> 注入每个单项式）</li>
 <li>最后翻转常数项使方程等于 0</li>
 </ul>
-<p>这与公式 $c = G \cdot \binom{u}{m} \oplus \text{RE}(e’)$ 完美对应——只不过这个关系被编码在<strong>约束方程 $g_i(\cdot) = 0$</strong> 中，而不是直接计算。</p>
+<p>这与公式 $c = G \cdot \binom{u}{m} \oplus \text{RE}(e’)$ 完美对应——只不过这个关系被编码在约束方程 $g_i(\cdot) = 0$ 中，而不是直接计算。</p>
 <h3 id="24-签名流程"><a class="header" href="#24-签名流程">2.4 签名流程</a></h3>
 <pre><code>Algorithm: Group Sign(pk, sk, msg)
 Input:  pk = (B0, B1, G1, G2, root_u, ...), sk = membership_witness, msg
@@ -2481,7 +2452,7 @@ Output: GroupSignature
      absorb(pk.ell, pk.n, pk.ke, pk.ne, pk.k, pk.te,
             pk.c_hash, pk.c_e, B0.seed, B1.seed, G1.seed, G2.seed, root_u, msg)
 
-4.  **加密并行计算**:
+4.  加密并行计算:
      g_input1 = (r1 || bin(j)), g_input2 = (r2 || bin(j))
      linear1 = linear_matrix_vector_mul_streaming_ct(G1, g_input1)
      linear2 = linear_matrix_vector_mul_streaming_ct(G2, g_input2)
@@ -2536,7 +2507,7 @@ Output: GroupSignature
 </thead>
 <tbody>
 <tr><td>属性向量 $a$ 已被群管理员认证</td><td>Merkle 叶哈希 $v_\ell = B_\text{leaf} \cdot \text{RE}(a | \text{rand})$</td></tr>
-<tr><td>叶哈希的汉明重量为奇数</td><td>$\text{wt}(v_\ell) \equiv 1 \pmod{2}$（<strong>奇偶性约束</strong>）</td></tr>
+<tr><td>叶哈希的汉明重量为奇数</td><td>$\text{wt}(v_\ell) \equiv 1 \pmod{2}$（奇偶性约束）</td></tr>
 <tr><td>属性 $a$ 满足布尔电路策略</td><td>AND 门约束和最终输出约束</td></tr>
 <tr><td>属性属于已认证集合</td><td>Merkle 累加器路径（同环签名）</td></tr>
 </tbody>
@@ -2591,7 +2562,7 @@ pub struct AndGate {
 }
 <span class="boring">}</span></code></pre>
 <h3 id="34-与环签名的关键区别单矩阵叶哈希"><a class="header" href="#34-与环签名的关键区别单矩阵叶哈希">3.4 与环签名的关键区别：单矩阵叶哈希</a></h3>
-<p>FDABS 中，叶节点由<strong>单个矩阵</strong> $B_\text{leaf}$ 计算，而非环签名的双矩阵配对：</p>
+<p>FDABS 中，叶节点由单个矩阵 $B_\text{leaf}$ 计算，而非环签名的双矩阵配对：</p>
 <p>$$
 v_\ell = B_\text{leaf} \cdot \text{RE}(a | \text{rand})
 $$</p>
@@ -2608,7 +2579,7 @@ let leaf_terms = build_hash_terms(
 )?;
 <span class="boring">}</span></code></pre>
 <h3 id="35-叶奇偶性约束"><a class="header" href="#35-叶奇偶性约束">3.5 叶奇偶性约束</a></h3>
-<p>FDABS 要求叶哈希的汉明重量为奇数。这是一个重要的<strong>合法性标记</strong>——它防止攻击者使用一个无效的（但 ANF 上满足的）叶节点替代真正的认证叶节点。</p>
+<p>FDABS 要求叶哈希的汉明重量为奇数。这是一个重要的合法性标记——它防止攻击者使用一个无效的（但 ANF 上满足的）叶节点替代真正的认证叶节点。</p>
 <p>实现为单个方程：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -2625,7 +2596,7 @@ constraints.push(leaf_parity.into_iter().collect());
 $$</p>
 <p>测试 <code>test_fdabs_constraints_reject_even_leaf_weight</code> 验证了当叶哈希的汉明重量为偶数时约束被违反。</p>
 <h3 id="36-nand-门二次约束名为-andgate实际上实现-nand"><a class="header" href="#36-nand-门二次约束名为-andgate实际上实现-nand">3.6 NAND 门二次约束（名为 <code>AndGate</code>，实际上实现 NAND）</a></h3>
-<p>代码中的门使用结构体名 <code>AndGate</code>，但约束实际实现的是 <strong>NAND（与非）门</strong>。对于每个门，要求 $x_{\text{out}} = \neg(x_{\text{in1}} \land x_{\text{in2}})$，在 $\mathbb{F}_2$ 上的 ANF 约束为：</p>
+<p>代码中的门使用结构体名 <code>AndGate</code>，但约束实际实现的是 NAND（与非）门。对于每个门，要求 $x_{\text{out}} = \neg(x_{\text{in1}} \land x_{\text{in2}})$，在 $\mathbb{F}_2$ 上的 ANF 约束为：</p>
 <p>$$
 x_{\text{out}} + x_{\text{in1}} \cdot x_{\text{in2}} + 1 = 0
 $$</p>
@@ -2651,7 +2622,7 @@ for gate in &amp;circuit.and_gates {
     ]);
 }
 <span class="boring">}</span></code></pre>
-<p>这对应于多项式的三个单项式：$X_{\text{in1}}X_{\text{in2}} + X_{\text{out}} + 1 = 0$。这是<strong>NAND 门</strong>（与非门）的 ANF 约束：当 $X_{\text{in1}} = 1, X_{\text{in2}} = 1$ 时，方程要求 $X_{\text{out}} = 0$；其他情况要求 $X_{\text{out}} = 1$。</p>
+<p>这对应于多项式的三个单项式：$X_{\text{in1}}X_{\text{in2}} + X_{\text{out}} + 1 = 0$。这是NAND 门（与非门）的 ANF 约束：当 $X_{\text{in1}} = 1, X_{\text{in2}} = 1$ 时，方程要求 $X_{\text{out}} = 0$；其他情况要求 $X_{\text{out}} = 1$。</p>
 <h3 id="37-最终输出约束"><a class="header" href="#37-最终输出约束">3.7 最终输出约束</a></h3>
 <p>电路的最后要求是输出线 $x_{\text{out}}$ 必须为 1（策略满足）：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -2731,7 +2702,7 @@ Output: FdabsSignature
 
 6. Return σ
 </code></pre>
-<p><strong>信息字段</strong> <code>info</code> 和 <code>epoch</code> 使 FDABS 支持动态撤销和策略更新——签名还绑定到特定时期 <code>epoch</code> 和上下文 <code>info</code>。</p>
+<p>信息字段 <code>info</code> 和 <code>epoch</code> 使 FDABS 支持动态撤销和策略更新——签名还绑定到特定时期 <code>epoch</code> 和上下文 <code>info</code>。</p>
 <h3 id="311-公式-代码映射"><a class="header" href="#311-公式-代码映射">3.11 公式-代码映射</a></h3>
 <div class="table-wrapper">
 <table>
@@ -2774,11 +2745,11 @@ Output: FdabsSignature
 <h1 id="模块八参数配置工程优化与基准测试安全分析与性能报告"><a class="header" href="#模块八参数配置工程优化与基准测试安全分析与性能报告">模块八：参数配置、工程优化与基准测试——安全分析与性能报告</a></h1>
 <hr>
 <h2 id="一概述-7"><a class="header" href="#一概述-7">一、概述</a></h2>
-<p>本模块是整个系统的<strong>工程化结晶</strong>，涵盖三个核心维度：</p>
+<p>本模块是整个系统的工程化结晶，涵盖三个核心维度：</p>
 <ol>
-<li><strong><code>security.rs</code></strong> — 严格的安全性分析和参数选择，确保系统达到目标安全强度</li>
-<li><strong><code>artifact_bundle.rs</code></strong> — 极紧凑的签名序列化格式，将签名体积压缩到 KB 级别</li>
-<li><strong><code>benches/paper_benchmarks.rs</code> + <code>scripts/</code></strong> — 端到端基准测试框架和性能调优</li>
+<li><code>security.rs</code> — 严格的安全性分析和参数选择，确保系统达到目标安全强度</li>
+<li><code>artifact_bundle.rs</code> — 极紧凑的签名序列化格式，将签名体积压缩到 KB 级别</li>
+<li><code>benches/paper_benchmarks.rs</code> + <code>scripts/</code> — 端到端基准测试框架和性能调优</li>
 </ol>
 <hr>
 <h2 id="二安全参数分析securityrs"><a class="header" href="#二安全参数分析securityrs">二、安全参数分析：<code>security.rs</code></a></h2>
@@ -2811,14 +2782,14 @@ $$</p>
     })
 }
 <span class="boring">}</span></code></pre>
-<p>使用数值稳定的 <strong>LogSumExp 技巧</strong>避免直接计算 $2^{-128} + d \cdot 2^{-128}$ 时的浮点下溢。</p>
+<p>使用数值稳定的 LogSumExp 技巧避免直接计算 $2^{-128} + d \cdot 2^{-128}$ 时的浮点下溢。</p>
 <h3 id="23-关键安全参数"><a class="header" href="#23-关键安全参数">2.3 关键安全参数</a></h3>
-<p><code>polynomial_soundness_bound</code> 确认了<strong>严格 128-bit 安全性无法达到</strong>——即使在理想情况下（两个域都是 128 比特），Forster 的上界也给出了约 <strong>124.68 比特</strong>的安全强度：</p>
+<p><code>polynomial_soundness_bound</code> 确认了严格 128-bit 安全性无法达到——即使在理想情况下（两个域都是 128 比特），Forster 的上界也给出了约 124.68 比特的安全强度：</p>
 <pre><code>degree=9, combination=128, delta=128 → bit_security ≈ 124.678
 degree=9, combination=128, delta=120 → bit_security ≈ 116.829
 </code></pre>
 <p>这与论文表 6 的 116-bit 保守估计一致。</p>
-<p><strong>Grinding 补偿</strong>：$w_\text{grind} = 8$ 比特的 grinding 提供了额外的 $\log_2(2^8) = 8$ 比特工作因子：</p>
+<p>Grinding 补偿：$w_\text{grind} = 8$ 比特的 grinding 提供了额外的 $\log_2(2^8) = 8$ 比特工作因子：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub fn optimistic_work_factor_bits(self, grinding_bits: usize) -&gt; f64 {
@@ -2830,10 +2801,10 @@ degree=9, combination=128, delta=120 → bit_security ≈ 116.829
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>方案</th><th>$n$</th><th>$c$</th><th>$d$</th><th>挑战域</th><th>$\Delta$ 域</th><th style="text-align: center">$w_\text{grind}$</th><th>安全估计算</th></tr>
+<tr><th>方案</th><th>$n$</th><th>$c$</th><th>$d$</th><th>挑战域</th><th>$\Delta$ 预估比特</th><th style="text-align: center">$w_\text{grind}$</th><th>安全估计算</th></tr>
 </thead>
 <tbody>
-<tr><td>ReSolveD+（论文表 6 Var2）</td><td>453</td><td>3</td><td>3</td><td>128</td><td>120</td><td style="text-align: center">8</td><td>~116.8 + 8</td></tr>
+<tr><td>ReSolveD+（论文表 6 Var2）</td><td>453</td><td>3</td><td>3</td><td>128</td><td>120</td><td style="text-align: center">8</td><td>~118.4 + 8</td></tr>
 <tr><td>环签名 / 群签名 / FDABS</td><td>1280</td><td>8</td><td>9</td><td>128</td><td>120</td><td style="text-align: center">8</td><td>~116.8 + 8</td></tr>
 </tbody>
 </table>
@@ -2842,8 +2813,8 @@ degree=9, combination=128, delta=120 → bit_security ≈ 116.829
 <hr>
 <h2 id="三极紧凑序列化artifact_bundlers"><a class="header" href="#三极紧凑序列化artifact_bundlers">三、极紧凑序列化：<code>artifact_bundle.rs</code></a></h2>
 <h3 id="31-签名体积的理论基础"><a class="header" href="#31-签名体积的理论基础">3.1 签名体积的理论基础</a></h3>
-<p><strong>传统基于 Stern 协议的 ZKP 签名</strong>：每次 repetition 需要约 $k$ 比特的承诺 + 打开数据，重复 $\lambda$ 次（$\lambda = 128$），总签名体积通常在 <strong>兆字节（MB）级别</strong>。</p>
-<p><strong>VOLEitH 方法</strong>：通过 $\tau$ 棵 GGM 树并行承诺 + 选择性打开，签名体积压缩到 <strong>KB 级别</strong>。核心压缩机制：</p>
+<p>传统基于 Stern 协议的 ZKP 签名：每次 repetition 需要约 $k$ 比特的承诺 + 打开数据，重复 $\lambda$ 次（$\lambda = 128$），总签名体积通常在 兆字节（MB）级别。</p>
+<p>VOLEitH 方法：通过 $\tau$ 棵 GGM 树并行承诺 + 选择性打开，签名体积压缩到 KB 级别。核心压缩机制：</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -2857,10 +2828,10 @@ degree=9, combination=128, delta=120 → bit_security ≈ 116.829
 <tr><td>Opening</td><td>叶子打开数据</td><td>~1.5 KB</td></tr>
 <tr><td>Challenge</td><td>16 字节</td><td>16 B</td></tr>
 <tr><td>Grind Counter</td><td>4 字节</td><td>4 B</td></tr>
-<tr><td><strong>VOLE subtotal</strong></td><td></td><td><strong>~3 KB</strong></td></tr>
+<tr><td>VOLE subtotal</td><td></td><td>~3 KB</td></tr>
 <tr><td>Correction</td><td>$k$ 比特</td><td>~56 B</td></tr>
 <tr><td>Proof Coeffs</td><td>$d$ 个 $\mathbb{F}_{2^{128}}$ 元素</td><td>$d \times 16$ B</td></tr>
-<tr><td><strong>Signature total</strong></td><td></td><td><strong>~3159 B</strong></td></tr>
+<tr><td>Signature total</td><td></td><td>~3159 B</td></tr>
 </tbody>
 </table>
 </div>
@@ -2874,7 +2845,7 @@ pub const ARTIFACT_SIGNATURE_BYTES: usize = 3159;  // 仅 3.1 KB!
 <span class="boring">}</span></code></pre>
 <h3 id="32-压缩策略详解"><a class="header" href="#32-压缩策略详解">3.2 压缩策略详解</a></h3>
 <h4 id="策略一种子代替矩阵"><a class="header" href="#策略一种子代替矩阵">策略一：种子代替矩阵</a></h4>
-<p>公钥中的 $B$ 矩阵不序列化 $n \times m$ 比特（$453 \times 1208 \approx 547$ Kb $\approx 68$ KB），而是仅序列化 16 字节的<strong>种子</strong> $\sigma$：</p>
+<p>公钥中的 $B$ 矩阵不序列化 $n \times m$ 比特（$453 \times 1208 \approx 547$ Kb $\approx 68$ KB），而是仅序列化 16 字节的种子 $\sigma$：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>bytes.extend_from_slice(&amp;public_key.b_cols.seed());  // 仅 16 字节
@@ -2922,10 +2893,10 @@ pub const ARTIFACT_SIGNATURE_BYTES: usize = 3159;  // 仅 3.1 KB!
 const VERSION: u16 = 1;
 <span class="boring">}</span></code></pre>
 <ul>
-<li><strong>魔术字</strong>：8 字节 <code>CBZKRPB1</code> 用于快速识别格式</li>
-<li><strong>版本号</strong>：支持未来扩展</li>
-<li><strong>尾部拒绝</strong>：<code>decoder.finish()</code> 检查无多余字节，防止格式混淆攻击</li>
-<li><strong>参数硬编码检查</strong>：解码时验证 <code>(k, c, rows, cols, y_bits)</code> 必须匹配常量，防止跨参数集误用</li>
+<li>魔术字：8 字节 <code>CBZKRPB1</code> 用于快速识别格式</li>
+<li>版本号：支持未来扩展</li>
+<li>尾部拒绝：<code>decoder.finish()</code> 检查无多余字节，防止格式混淆攻击</li>
+<li>参数硬编码检查：解码时验证 <code>(k, c, rows, cols, y_bits)</code> 必须匹配常量，防止跨参数集误用</li>
 </ul>
 <h3 id="34-签名总大小实测"><a class="header" href="#34-签名总大小实测">3.4 签名总大小实测</a></h3>
 <p>从 <code>justfile</code> 的 report 测试可观察到（以 $\ell=5$ 的环签名和群签名为例）：</p>
@@ -2935,9 +2906,9 @@ const VERSION: u16 = 1;
 <tr><th>方案</th><th style="text-align: center">签名体积</th><th style="text-align: center">相比 Stern 基方法</th></tr>
 </thead>
 <tbody>
-<tr><td>ReSolveD+</td><td style="text-align: center">~3.1 KB</td><td style="text-align: center"><strong>~1/330</strong>（相比 1 MB）</td></tr>
-<tr><td>环签名 ($\ell=5$)</td><td style="text-align: center">~4 KB</td><td style="text-align: center"><strong>~1/250</strong></td></tr>
-<tr><td>环签名 ($\ell=10$)</td><td style="text-align: center">~4 KB</td><td style="text-align: center"><strong>~1/250</strong></td></tr>
+<tr><td>ReSolveD+</td><td style="text-align: center">~3.1 KB</td><td style="text-align: center">~1/330（相比 1 MB）</td></tr>
+<tr><td>环签名 ($\ell=5$)</td><td style="text-align: center">~4 KB</td><td style="text-align: center">~1/250</td></tr>
+<tr><td>环签名 ($\ell=10$)</td><td style="text-align: center">~4 KB</td><td style="text-align: center">~1/250</td></tr>
 <tr><td>群签名 ($\ell=5$)</td><td style="text-align: center">~8 KB（含 $c_1, c_2$）</td><td style="text-align: center">—</td></tr>
 <tr><td>FDABS</td><td style="text-align: center">~4 KB</td><td style="text-align: center">—</td></tr>
 <tr><td>批量化 LRS（10 签名）</td><td style="text-align: center">~25 KB（摊销 ~2.5 KB/个）</td><td style="text-align: center">—</td></tr>
@@ -2946,7 +2917,7 @@ const VERSION: u16 = 1;
 </div>
 <hr>
 <h2 id="四并发性能调优"><a class="header" href="#四并发性能调优">四、并发性能调优</a></h2>
-<p>系统在多个层级利用 <strong>Rayon 数据并行</strong> 实现多核加速：</p>
+<p>系统在多个层级利用 Rayon 数据并行 实现多核加速：</p>
 <h3 id="41-显式-rayonpar_iter-并行点"><a class="header" href="#41-显式-rayonpar_iter-并行点">4.1 显式 <code>rayon::par_iter</code> 并行点</a></h3>
 <div class="table-wrapper">
 <table>
@@ -2967,7 +2938,7 @@ const VERSION: u16 = 1;
 </table>
 </div>
 <h3 id="42-rayonjoin-的分叉-合并模式"><a class="header" href="#42-rayonjoin-的分叉-合并模式">4.2 <code>rayon::join</code> 的分叉-合并模式</a></h3>
-<p>在环/群/属性基签名中，多处使用 <code>rayon::join</code> 实现<strong>静态对分并行</strong>：</p>
+<p>在环/群/属性基签名中，多处使用 <code>rayon::join</code> 实现静态对分并行：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// ring_signature_sig.rs: 同时计算所有层的 χ'
@@ -3008,7 +2979,7 @@ let (linear1, linear2) = if rayon::current_num_threads() &gt; 1 {
     }
 }
 <span class="boring">}</span></code></pre>
-<p>关键设计：<code>for_each_init</code> 为每个 Rayon worker 分配<strong>独立</strong>的列字节缓冲区，避免锁竞争和缓存行乒乓。</p>
+<p>关键设计：<code>for_each_init</code> 为每个 Rayon worker 分配独立的列字节缓冲区，避免锁竞争和缓存行乒乓。</p>
 <h3 id="44-硬件指令级加速"><a class="header" href="#44-硬件指令级加速">4.4 硬件指令级加速</a></h3>
 <div class="table-wrapper">
 <table>
@@ -3022,7 +2993,7 @@ let (linear1, linear2) = if rayon::current_num_threads() &gt; 1 {
 </tbody>
 </table>
 </div>
-<p>所有硬件指令都提供<strong>可移植回退</strong>：</p>
+<p>所有硬件指令都提供可移植回退：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[cfg(all(feature = "hardware-accel", target_arch = "x86_64", target_feature = "pclmulqdq"))]
@@ -3035,7 +3006,7 @@ fn gf64_mul(lhs: u64, rhs: u64) -&gt; u64 {
 }
 <span class="boring">}</span></code></pre>
 <h3 id="45-微架构级优化"><a class="header" href="#45-微架构级优化">4.5 微架构级优化</a></h3>
-<p><strong>手工循环展开</strong>：<code>xor_32!</code> 宏和 <code>xor_pair_32!</code> 宏一次性处理 32 字节（160 字节总长时展开为 5 块），减少循环分支开销：</p>
+<p>手工循环展开：<code>xor_32!</code> 宏和 <code>xor_pair_32!</code> 宏一次性处理 32 字节（160 字节总长时展开为 5 块），减少循环分支开销：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// 160 字节的特殊优化路径
@@ -3046,7 +3017,7 @@ if byte_len == 160 {
     xor_32!(acc, &amp;tables[128..160], &amp;bytes[128..160]);
 }
 <span class="boring">}</span></code></pre>
-<p><strong>栈分配工作区</strong>：对于 $2^c \le 256$ 的小域，蝴蝶求值使用<strong>栈分配</strong>的 <code>[F; 256]</code> 定长数组，避免热路径上的堆分配：</p>
+<p>栈分配工作区：对于 $2^c \le 256$ 的小域，蝴蝶求值使用栈分配的 <code>[F; 256]</code> 定长数组，避免热路径上的堆分配：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>if domain_size &lt;= STACK_BUTTERFLY_DOMAIN {  // 256
@@ -3054,7 +3025,7 @@ if byte_len == 160 {
     return evaluate_chunk_butterfly_reuse_slice(..., &amp;mut work[..domain_size]);
 }
 <span class="boring">}</span></code></pre>
-<p><strong>四累加器线性和</strong>：<code>linear_weighted_sum</code> 使用 4 路累加器减少 $\mathbb{F}_{2^{128}}$ 乘法的数据依赖链长度：</p>
+<p>四累加器线性和：<code>linear_weighted_sum</code> 使用 4 路累加器减少 $\mathbb{F}_{2^{128}}$ 乘法的数据依赖链长度：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>let mut acc0 = F128b::ZERO;
@@ -3072,8 +3043,8 @@ let total = (acc0 + acc1) + (acc2 + acc3);
 <span class="boring">}</span></code></pre>
 <h3 id="46-基准测试框架"><a class="header" href="#46-基准测试框架">4.6 基准测试框架</a></h3>
 <p><code>paper_benchmarks.rs</code> 使用自定义的 <code>MillisecondTime</code> 测量类型（替代默认的纳秒），直接输出毫秒级的直观结果。</p>
-<p><strong>测试套件</strong>覆盖全部 4 种签名方案（ReSolveD+、环签名、群签名、FDABS），并在两组 Merkle 深度（$\ell=5$ 和 $\ell=10$）下分别测量。</p>
-<p><strong>重要参数</strong>：</p>
+<p>测试套件覆盖全部 4 种签名方案（ReSolveD+、环签名、群签名、FDABS），并在两组 Merkle 深度（$\ell=5$ 和 $\ell=10$）下分别测量。</p>
+<p>重要参数：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// ReSolveD+: 论文表 6 Var2-3 参数
@@ -3111,98 +3082,62 @@ const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 <tr><th>优化层次</th><th>具体技术</th><th>影响</th></tr>
 </thead>
 <tbody>
-<tr><td><strong>算法</strong></td><td>隐式求值/蝴蝶折叠</td><td>$O(t \cdot 2^c) \to O(m \cdot c)$</td></tr>
-<tr><td><strong>内存</strong></td><td><code>StreamingMatrixCols</code> 流式列生成</td><td>矩阵内存 $O(nm) \to O(1)$</td></tr>
-<tr><td><strong>序列化</strong></td><td>种子代替矩阵、紧凑位编码</td><td>签名体积 MB → KB</td></tr>
-<tr><td><strong>并行</strong></td><td>Rayon <code>par_iter</code> / <code>par_chunks_mut</code> / <code>join</code></td><td>接近核数线性加速</td></tr>
-<tr><td><strong>硬件</strong></td><td>PCLMULQDQ / AES-NI / BMI2</td><td>亚微秒级域运算</td></tr>
-<tr><td><strong>微架构</strong></td><td>循环展开、栈分配、四累加器</td><td>额外 2-3$\times$ 系数提升</td></tr>
-<tr><td><strong>安全</strong></td><td>Grinding 8-bit、常数时间实现</td><td>124-bit 等效安全强度</td></tr>
-<tr><td><strong>工程</strong></td><td>双后端切换（HW/SW fallback）</td><td>跨平台兼容</td></tr>
+<tr><td>算法</td><td>隐式求值/蝴蝶折叠</td><td>$O(t \cdot 2^c) \to O(m \cdot c)$</td></tr>
+<tr><td>内存</td><td><code>StreamingMatrixCols</code> 流式列生成</td><td>矩阵内存 $O(nm) \to O(1)$</td></tr>
+<tr><td>序列化</td><td>种子代替矩阵、紧凑位编码</td><td>签名体积 MB → KB</td></tr>
+<tr><td>并行</td><td>Rayon <code>par_iter</code> / <code>par_chunks_mut</code> / <code>join</code></td><td>接近核数线性加速</td></tr>
+<tr><td>硬件</td><td>PCLMULQDQ / AES-NI / BMI2</td><td>亚微秒级域运算</td></tr>
+<tr><td>微架构</td><td>循环展开、栈分配、四累加器</td><td>额外 2-3$\times$ 系数提升</td></tr>
+<tr><td>安全</td><td>Grinding 8-bit、常数时间实现</td><td>124-bit 等效安全强度</td></tr>
+<tr><td>工程</td><td>双后端切换（HW/SW fallback）</td><td>跨平台兼容</td></tr>
 </tbody>
 </table>
 </div>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="模块九之前提及的创新点和目前状态"><a class="header" href="#模块九之前提及的创新点和目前状态">模块九：之前提及的创新点和目前状态</a></h1>
-<p>有一部分已经有了，因为是纯工程上的优化，对协议流程无影响，可以放心加进去</p>
-<p>另一部分没有放进去，因为有待进一步证明其安全性</p>
-<h3 id="-一已在代码中完美落地的创新点perfectly-implemented"><a class="header" href="#-一已在代码中完美落地的创新点perfectly-implemented">🟢 一、已在代码中完美落地的创新点（Perfectly Implemented）</a></h3>
-<h4 id="1-多线性扩展折叠与求和交换打破大域乘法瓶颈"><a class="header" href="#1-多线性扩展折叠与求和交换打破大域乘法瓶颈">1. 多线性扩展折叠与求和交换（打破大域乘法瓶颈）</a></h4>
+<h1 id="模块九理论创新点的工程落地与未来工作"><a class="header" href="#模块九理论创新点的工程落地与未来工作">模块九：理论创新点的工程落地与未来工作</a></h1>
+<p>有一部分已经有了，因为是纯工程上的优化，对协议流程无影响，可以放心加用；另一部分没有放进去，因为有待进一步证明其安全性。具体总结如下：</p>
+<h2 id="一已在代码中落地的理论创新"><a class="header" href="#一已在代码中落地的理论创新">一、已在代码中落地的理论创新</a></h2>
+<h3 id="1-多线性扩展折叠与求和交换打破大域乘法瓶颈"><a class="header" href="#1-多线性扩展折叠与求和交换打破大域乘法瓶颈">1. 多线性扩展折叠与求和交换（打破大域乘法瓶颈）</a></h3>
 <ul>
-<li><strong>你的笔记</strong>：提出两步优化：第一步交换求和顺序 $\chi’<em>h = \sum \chi_i b</em>{i,h}$ 消除大数乘法；第二步利用拉格朗日多线性扩展的蝶形网络（Tree-evaluation）将 $O(2^c \cdot c^2)$ 降为 $O(2^c)$。</li>
-<li><strong>代码实现</strong>：<strong>完美实现！（核心亮点）</strong>
+<li>理论设计：针对协议中的大数乘法瓶颈，提出两步优化：第一步通过交换求和顺序 $\chi’<em>h = \sum \chi_i b</em>{i,h}$ 消除大数乘法；第二步利用拉格朗日多线性扩展的蝶形网络（Tree-evaluation）将复杂度从 $\mathcal{O}(2^c \cdot c^2)$ 降为 $\mathcal{O}(2^c)$。</li>
+<li>工程落地：在 <code>implicit_eval.rs</code> 中完整实现了上述逻辑。
 <ul>
-<li><strong>第一步（求和交换）</strong>：在 <strong>模块四</strong> 的 <code>compute_chi_prime_streaming_f128</code> 中完全对应。代码甚至做了更极端的优化——利用 Gray 码预计算字节子集 XOR 表（<code>build_byte_subset_xor_table</code>），把 $\chi’_h$ 的计算变成了纯查表+异或。</li>
-<li><strong>第二步（蝶形网络）</strong>：在 <strong>模块四</strong> 的 <code>evaluate_chunk_butterfly</code> 中完全对应。代码将你的理论命名为“<strong>蝴蝶折叠 (Butterfly Evaluation)</strong>”，按照 LSB 到 MSB 的顺序进行原地（in-place）折叠，且为了追求极致性能，对于 $2^c \le 256$ 甚至使用了栈分配 <code>[F; 256]</code>。</li>
+<li>第一步，利用 Gray 码预计算字节子集 XOR 表（<code>build_byte_subset_xor_table</code>），将 $\chi’_h$ 的计算转化为纯查表与异或操作。</li>
+<li>第二步，设计了“蝴蝶折叠 (Butterfly Evaluation)”算法，按照 LSB 到 MSB 顺序进行原地折叠。针对 $2^c \le 256$ 的场景，采用栈分配缓冲数组 <code>[F; 256]</code>，最大化内存访问速度。</li>
 </ul>
 </li>
 </ul>
-<h4 id="2-流式生成矩阵防-l3-cache-miss打破内存瓶颈"><a class="header" href="#2-流式生成矩阵防-l3-cache-miss打破内存瓶颈">2. 流式生成矩阵防 L3 Cache Miss（打破内存瓶颈）</a></h4>
+<h3 id="2-流式生成矩阵消除-l3-cache-miss打破内存瓶颈"><a class="header" href="#2-流式生成矩阵消除-l3-cache-miss打破内存瓶颈">2. 流式生成矩阵消除 L3 Cache Miss（打破内存瓶颈）</a></h3>
 <ul>
-<li><strong>你的笔记</strong>：指出 13MB 矩阵放内存会导致大量 CPU L3 Cache Miss，建议用 AES-CTR 在 L1 缓存流式吐出 128 bit，算完就扔，空间降为 $O(1)$，解决并发瓶颈。</li>
-<li><strong>代码实现</strong>：<strong>完美实现！</strong>
-<ul>
-<li>对应 <strong>模块一</strong> 的 <code>streaming_matrix.rs</code>。</li>
-<li>结构体 <code>StreamingMatrixCols</code> 严格执行了“<strong>零物化</strong>”策略，内部仅保存 16 字节的 Seed。调用 <code>fill_column_bytes_prechecked</code> 时，直接利用 <code>_mm_aesenc_si128</code> 硬件指令实时生成列数据，进行 XOR 累加后立刻丢弃，完全绕过了内存带宽瓶颈。</li>
+<li>理论设计：若直接物化 13MB 规模的伪随机矩阵，会导致严重的 L3 Cache Miss，从而拖慢并发性能。建议在 L1 缓存中流式生成数据，降低空间复杂度至 $\mathcal{O}(1)$。</li>
+<li>工程落地：在 <code>streaming_matrix.rs</code> 中引入了 <code>StreamingMatrixCols</code> 结构体，实行“零物化”策略。利用底层的 AES-NI 硬件指令（<code>_mm_aesenc_si128</code>）实时展开 PRG 种子生成矩阵列，进行 XOR 累加后立即释放，彻底消除了内存带宽瓶颈。</li>
 </ul>
-</li>
-</ul>
-<h4 id="3-叶子见证降维单矩阵叶哈希"><a class="header" href="#3-叶子见证降维单矩阵叶哈希">3. 叶子见证降维（单矩阵叶哈希）</a></h4>
+<h3 id="3-叶子见证降维单矩阵叶哈希"><a class="header" href="#3-叶子见证降维单矩阵叶哈希">3. 叶子见证降维（单矩阵叶哈希）</a></h3>
 <ul>
-<li><strong>你的笔记</strong>：指出 Merkle 树叶子（公钥）不需要双输入哈希 $h_B(x_0, x_1)$，只需要满足单向性的 $y = B_{leaf} \cdot RE(x)$，从而将私钥体积从 $2n$ 砍到 $n$。</li>
-<li><strong>代码实现</strong>：<strong>已在高级应用中落地！</strong>
-<ul>
-<li>在 <strong>模块七（FDABS 全动态属性基签名）</strong> 中，明确提到了**“与环签名的关键区别：单矩阵叶哈希”**。</li>
-<li>代码专门引入了第三个矩阵 <code>pk.b_leaf_cols</code>，并通过 <code>build_hash_terms</code>（单矩阵版本）计算 $v_\ell = B_{leaf} \cdot RE(a || rand)$，完美兑现了你关于减小 witness 维度和提速的设想。</li>
+<li>理论设计：在 Merkle 树的叶子节点（公钥）计算中，无需使用双输入哈希 $h_B(x_0, x_1)$，只需满足单向性的 $y = B_{leaf} \cdot \text{RE}(x)$，即可将私钥体积从 $2n$ 降低到 $n$。</li>
+<li>工程落地：在 FDABS（全动态属性基签名）协议中已实装。代码专门引入了第三个矩阵 <code>pk.b_leaf_cols</code>，并通过单矩阵版 <code>build_hash_terms</code> 计算 $v_\ell = B_{leaf} \cdot \text{RE}(a | \text{rand})$，有效压缩了 Witness 维度。</li>
 </ul>
-</li>
-</ul>
-<h4 id="4-单证明者多实例签名--可连接环签名-lrs"><a class="header" href="#4-单证明者多实例签名--可连接环签名-lrs">4. 单证明者多实例签名 &amp; 可连接环签名 (LRS)</a></h4>
+<h3 id="4-单证明者多实例签名与可链接环签名-lrs"><a class="header" href="#4-单证明者多实例签名与可链接环签名-lrs">4. 单证明者多实例签名与可链接环签名 (LRS)</a></h3>
 <ul>
-<li><strong>你的笔记</strong>：提出打包 $N$ 个消息共享同一个 GGM 树和 $\Delta$（静态摊销批处理），并引入密钥镜像 $I = B_{link} \cdot RE(x)$ 升级为 LRS。</li>
-<li><strong>代码实现</strong>：<strong>已完成并基准测试！</strong>
-<ul>
-<li>在 <strong>模块八（参数优化与基准测试）</strong> 的性能数据表中，赫然列出了：<code>批量化 LRS (10×) | 签名大小 ~25 KB（摊销 ~2.5 KB/个）</code>。</li>
-<li>说明代码已经实现了通过合并 Fiat-Shamir 挑战来共享 VOLE 树的逻辑，并且添加了 $B_{link}$ 的零知识约束。</li>
+<li>理论设计：通过合并 Fiat-Shamir 挑战，打包 $N$ 个消息共享同一个 GGM 树和 $\Delta$（静态摊销批处理）；同时引入密钥镜像 $I = B_{link} \cdot \text{RE}(x)$ 升级为可链接环签名 (LRS)。</li>
+<li>工程落地：代码实现了共享 VOLE 树的批处理逻辑，并在基准测试中验证了性能（批量化 LRS 在 10× 批处理下签名摊销至 ~2.5 KB/个）。</li>
 </ul>
-</li>
-</ul>
-<h4 id="5-prg-替代哈希函数生成-ggm-树"><a class="header" href="#5-prg-替代哈希函数生成-ggm-树">5. PRG 替代哈希函数生成 GGM 树</a></h4>
+<h2 id="二基于工程权衡的技术路线调整"><a class="header" href="#二基于工程权衡的技术路线调整">二、基于工程权衡的技术路线调整</a></h2>
+<h3 id="1-塔域加速大域乘法"><a class="header" href="#1-塔域加速大域乘法">1. 塔域加速大域乘法</a></h3>
 <ul>
-<li><strong>你的笔记</strong>：将 GGM 树的哈希扩展替换为固定密钥的 AES-CTR 以利用硬件加速。</li>
-<li><strong>代码实现</strong>：<strong>通过 FFI 间接完美实现。</strong>
-<ul>
-<li>在 <strong>模块三</strong>，系统通过 FFI 调用了 FAEST 的 C 语言核心库（BAVC 树）。FAEST 的官方参考实现本身就是用基于 AES/Rijndael 的 PRG 来扩展 GGM 树的，代码直接继承了这一红利。</li>
+<li>理论初衷：计划将 $\mathbb{F}<em>{2^{128}}$ 运算同构分解到塔域 $\mathbb{F}</em>{2^8}$ 上以加速运算。</li>
+<li>工程实际：在 <code>finite_field.rs</code> 中，实际采用了直接调用 CPU 底层 <code>PCLMULQDQ</code> 和 <code>PMULL</code> 无进位乘法指令的方案。同构映射在工程上易引入查表开销与分支预测失败，而硬件指令原生支持使得单次乘法达到了亚纳秒级，以更小的代码复杂度达成了大域加速的初衷。</li>
 </ul>
-</li>
-</ul>
-<hr>
-<h3 id="-二采用不同技术路线实现的创新点alternative-route"><a class="header" href="#-二采用不同技术路线实现的创新点alternative-route">🟡 二、采用不同技术路线实现的创新点（Alternative Route）</a></h3>
-<h4 id="1-塔域加速大域乘法"><a class="header" href="#1-塔域加速大域乘法">1. 塔域加速大域乘法</a></h4>
+<h2 id="三未来工作与待验证优化"><a class="header" href="#三未来工作与待验证优化">三、未来工作与待验证优化</a></h2>
+<h3 id="1-消除群签名随机数承诺左零空间-h_r"><a class="header" href="#1-消除群签名随机数承诺左零空间-h_r">1. 消除群签名随机数承诺（左零空间 $H_R$）</a></h3>
 <ul>
-<li><strong>你的笔记</strong>：建议将 $\mathbb{F}<em>{2^{128}}$ 运算同构分解到塔域 $\mathbb{F}</em>{2^8}$ 上，以加速运算。</li>
-<li><strong>代码实现</strong>：<strong>目标达到，但使用了“暴力美学”而非塔域。</strong>
-<ul>
-<li>在 <strong>模块一（<code>finite_field.rs</code>）</strong> 中，开发者没有去写复杂的同构映射（这往往会引入难以优化的分支或查表开销），而是<strong>直接调用了 CPU 底层的 <code>PCLMULQDQ</code> 和 <code>PMULL</code> 无进位乘法指令</strong>。</li>
-<li>结果达到了<strong>亚纳秒级</strong>的单次乘法速度，用最直接的硬件碾压实现了你想要的大域加速目标。</li>
+<li>优化构想：在群签名中，计算 $G_{1,R}$ 的左零空间矩阵 $H_R$，两边同乘 $H_R$ 以消去随机噪音 $r_1, r_2$，从而无需将其作为 witness 承诺。</li>
+<li>当前状态：当前版本中，依然显式将 $r_1, r_2$ 放进 Witness 并构建线性约束。该理论优化能缩短 Witness 长度，但在工程上，乘上稠密的 $H_R$ 会导致系统由稀疏（正则噪声主导）变为稠密，可能破坏现有的按列流式求值框架。这作为一项潜在的底层代数优化，留待后续版本实验验证。</li>
 </ul>
-</li>
-</ul>
-<hr>
-<h3 id="-三暂未在当前代码中看到的创新点future-work--not-adopted"><a class="header" href="#-三暂未在当前代码中看到的创新点future-work--not-adopted">🔴 三、暂未在当前代码中看到的创新点（Future Work / Not Adopted）</a></h3>
-<h4 id="1-消除群签名随机数承诺左零空间-h_r"><a class="header" href="#1-消除群签名随机数承诺左零空间-h_r">1. 消除群签名随机数承诺（左零空间 $H_R$）</a></h4>
+<h3 id="2-qrom-模型证明与-salted-rsd"><a class="header" href="#2-qrom-模型证明与-salted-rsd">2. QROM 模型证明与 Salted-RSD</a></h3>
 <ul>
-<li><strong>你的笔记</strong>：在群签名中，计算 $G_{1,R}$ 的左零空间矩阵 $H_R$，两边同乘 $H_R$ 以消去随机噪音 $r_1, r_2$，从而不需要将其作为 witness 承诺。</li>
-<li><strong>代码实现</strong>：<strong>当前未采用。</strong>
-<ul>
-<li>审查 <strong>模块七</strong> 的 <code>build_group_signature_constraints</code>，代码依然显式地将 $r_1, r_2, e’_1, e’_2$ 放进了 Witness，并通过 <code>append_linear_matrix_row_terms</code> 为 $r_1$ 构建线性约束。</li>
-<li><em>原因推测</em>：这个优化在理论上非常惊艳（能减少 witness 长度），但在工程上，乘上稠密的 $H_R$ 会使得原本由稀疏正则噪声主导的系统变得稠密，可能会大大增加 <code>chi_prime</code> 聚合的计算量，或者破坏现有的基于独热编码的快速求值框架。开发者可能权衡后放弃，或者这仍然躺在未来的 Todo List 中。</li>
-</ul>
-</li>
-</ul>
-<h4 id="2-补全-qrom-证明--salted-rsd-防御多目标攻击"><a class="header" href="#2-补全-qrom-证明--salted-rsd-防御多目标攻击">2. 补全 QROM 证明 / Salted-RSD 防御多目标攻击</a></h4>
-<ul>
-<li>这两项偏向理论安全规约和参数选择。在代码的 <code>security.rs</code> 中，当前使用了标准的 128-bit 经典安全参数以及 8-bit Grinding，未明确看到抗量子随机预言机模型（QROM）的具体协议变动（如 Unruh 变换等）。</li>
+<li>优化构想：引入抗量子随机预言机模型（QROM）的变动（如 Unruh 变换等），以及防多目标攻击的 Salted-RSD。</li>
+<li>当前状态：当前的 <code>security.rs</code> 遵循 128-bit 经典安全参数及 8-bit Grinding，以对齐现有的 VOLEitH 论文基准。QROM 兼容的哈希吸收变体将作为未来协议升级的重点方向。</li>
 </ul>
 
                     </main>

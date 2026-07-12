@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-be48b045.js";
+            window.path_to_searchindex_js = "searchindex-c077466c.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61c3e6e9.js"></script>
@@ -201,12 +201,12 @@
 <h2 id="一概述"><a class="header" href="#一概述">一、概述</a></h2>
 <p>本模块是系统中最具理论创新性的部分。它解决的核心问题是：</p>
 <blockquote>
-<p><strong>如何将正则编码函数（Regular Encoding）——一个看似非线性的、基于查表的操作——转化为 degree-$c$ 的布尔多项式（ANF），然后在 ZK 协议的“隐式空间“中高效地安全求值？</strong></p>
+<p>如何将正则编码函数（Regular Encoding）——一个看似非线性的、基于查表的操作——转化为 degree-$c$ 的布尔多项式（ANF），然后在 ZK 协议的“隐式空间“中高效地安全求值？</p>
 </blockquote>
 <p>这分为两个阶段：</p>
 <ol>
-<li><strong><code>constraint_gen.rs</code></strong> — 编译阶段：离线预计算正则编码的 ANF 系数表</li>
-<li><strong><code>implicit_eval.rs</code></strong> — 求值阶段：在线安全计算 χ-加权隐式多项式，使用<strong>蝴蝶折叠算法</strong>（Butterfly Evaluation）将复杂度从 $\mathcal{O}(m \cdot 2^c)$ 降至 $\mathcal{O}(m \cdot c)$</li>
+<li><code>constraint_gen.rs</code> — 编译阶段：离线预计算正则编码的 ANF 系数表</li>
+<li><code>implicit_eval.rs</code> — 求值阶段：在线安全计算 χ-加权隐式多项式，使用蝴蝶折叠算法（Butterfly Evaluation）将复杂度从 $\mathcal{O}(m \cdot 2^c)$ 降至 $\mathcal{O}(m \cdot c)$</li>
 </ol>
 <hr>
 <h2 id="二正则编码的代数化从独热向量到-anf-多项式"><a class="header" href="#二正则编码的代数化从独热向量到-anf-多项式">二、正则编码的代数化——从独热向量到 ANF 多项式</a></h2>
@@ -217,7 +217,7 @@
 $$</p>
 <p>其中 $f_{\text{idx}}(X) = 1$ 当且仅当 $\text{idx} = \sum_{t=0}^{c-1} X_t \cdot 2^{c-1-t}$（大端序整数解释）。</p>
 <h3 id="22-封闭形式的布尔多项式"><a class="header" href="#22-封闭形式的布尔多项式">2.2 封闭形式的布尔多项式</a></h3>
-<p>每个输出位 $f_{\text{idx}}(X)$ 可以写为一个标准的 <strong>ANF（代数正规型）</strong> 多项式。其构造基于拉格朗日插值思想：</p>
+<p>每个输出位 $f_{\text{idx}}(X)$ 可以写为一个标准的 ANF（代数正规型） 多项式。其构造基于拉格朗日插值思想：</p>
 <p>对于索引 <code>idx</code>，其大端二进制表示为 $j_0 j_1 \dots j_{c-1}$。定义：</p>
 <p>$$
 f_{\text{idx}}(X_0, \dots, X_{c-1}) = \prod_{t=0}^{c-1} (j_t + X_t + 1) \pmod{2}
@@ -227,14 +227,14 @@ $$</p>
 <li>当 $j_t = 1$（索引的该比特为 1）：因子为 $X_t$（要求 $X_t = 1$）</li>
 <li>当 $j_t = 0$（索引的该比特为 0）：因子为 $1 + X_t$（要求 $X_t = 0$）</li>
 </ul>
-<p>展开后得到一个 degree-$c$ 的 <strong>ANF 多项式</strong>——即布尔变量的乘积之和（XOR of ANDs），每个单项的度数 $\le c$。</p>
-<p><strong>示例</strong>（$c=3$, idx=5, 即二进制 <code>101</code>）：
+<p>展开后得到一个 degree-$c$ 的 ANF 多项式——即布尔变量的乘积之和（XOR of ANDs），每个单项的度数 $\le c$。</p>
+<p>示例（$c=3$, idx=5, 即二进制 <code>101</code>）：
 $$
 f_5(X_0, X_1, X_2) = X_0(1+X_1)X_2 = X_0X_2 + X_0X_1X_2
 $$</p>
 <p>这是一个度数为 3 的多项式，包含 2 个单项式。</p>
 <h3 id="23-编译方法子集包含möbius-变换"><a class="header" href="#23-编译方法子集包含möbius-变换">2.3 编译方法：子集包含（Möbius 变换）</a></h3>
-<p>代码中的 <code>compile_re_constraints</code> 没有直接展开上述乘积形式，而是使用更优雅的<strong>子集包含条件</strong>：</p>
+<p>代码中的 <code>compile_re_constraints</code> 没有直接展开上述乘积形式，而是使用更优雅的子集包含条件：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>for idx in 0..domain_size {
@@ -261,7 +261,7 @@ $$</p>
 </tbody>
 </table>
 </div>
-<p><strong>为什么子集包含条件成立？</strong></p>
+<p>为什么子集包含条件成立？</p>
 <p>这是 Mobius 变换在布尔立方体上的应用。对于布尔函数 $f: \mathbb{F}_2^c \to \mathbb{F}_2$，其 ANF 系数由下式给出：</p>
 <p>$$
 a_u = \bigoplus_{x: \text{supp}(x) \subseteq u} f(x)
@@ -279,41 +279,44 @@ $$</p>
 <h2 id="三隐式求值引擎implicit_evalrs"><a class="header" href="#三隐式求值引擎implicit_evalrs">三、隐式求值引擎：<code>implicit_eval.rs</code></a></h2>
 <h3 id="31-为什么需要隐式求值"><a class="header" href="#31-为什么需要隐式求值">3.1 为什么需要“隐式“求值？</a></h3>
 <p>完整的 ZK 协议需要 Prover 证明约束系统 ${g_i(Y) = 0}_{i=1}^t$ 成立。如果不做优化，Prover 需要对 $t$ 个独立的约束多项式逐个求值、插值——这是 $\mathcal{O}(t \cdot 2^c)$ 的复杂度，对于 $t \approx 1280$、$c \approx 8 \sim 16$ 是不可接受的。</p>
-<p><strong>核心洞察</strong>：在协议中，Verifier 实际上只验证一个 χ-加权的总多项式：</p>
+<p>核心洞察：在协议中，Verifier 实际上只验证一个 χ-加权的总多项式：</p>
 <p>$$
 \tilde{G}(Y) = \sum_{i=1}^t \chi_i \cdot \tilde{g}_i(Y)
 $$</p>
 <p>利用这个交换律，可以将求值复杂度从 $\mathcal{O}(t \cdot 2^c)$ 降低到 $\mathcal{O}(m \cdot c)$。</p>
 <h3 id="32-三步求值流水线"><a class="header" href="#32-三步求值流水线">3.2 三步求值流水线</a></h3>
-<pre><code>                    ┌─────────────────┐
-                    │  challenges χ   │
-                    │  (t 个 F_{2^128}) │
-                    └────────┬────────┘
-                             ▼
-              ┌──────────────────────────────┐
-     Step 1   │  compute_chi_prime(χ, B)     │
-              │  χ'_j = Σ_i χ_i · b_{i,j}    │
-              │  (m 个 F_{2^128} 域元素)     │
-              └──────────────┬───────────────┘
-                             ▼
-              ┌──────────────────────────────┐
-     Step 2   │  仿射基变换                   │
-              │  affine[i] = v_i + w_i · p   │
-              │  (k 个 F_{2^128} 域元素)     │
-              └──────────────┬───────────────┘
-                             ▼
-              ┌──────────────────────────────┐
-     Step 3   │  蝴蝶折叠 Butterfly Eval     │
-              │  Σ_j χ'_j · f̃_j(p)          │
-              │  → 总求值结果 (1 个域元素)   │
-              └──────────────────────────────┘
-</code></pre>
+<pre class="mermaid">graph TD
+    Input[challenges χ&lt;br&gt;t 个 F_128] --&gt; Step1
+
+    subgraph Step1 [Step 1: χ' 聚合求和交换]
+        A["χ'_j = Σ_i χ_i · b_{i,j}"]
+    end
+
+    Step1 --&gt;|m 个 F_128 域元素| Step2
+
+    subgraph Step2 [Step 2: 仿射基变换]
+        B["affine[i] = v_i + w_i · p"]
+    end
+
+    Step2 --&gt;|k 个 F_128 域元素| Step3
+
+    subgraph Step3 [Step 3: 蝴蝶折叠 Butterfly Eval]
+        C["Σ_j χ'_j · f̃_j(p)"]
+    end
+
+    Step3 --&gt; Output[总求值结果&lt;br&gt;1 个域元素]
+
+    style Step1 fill:none,stroke:#d19a66,stroke-width:2px
+    style Step2 fill:none,stroke:#c678dd,stroke-width:2px
+    style Step3 fill:none,stroke:#56b6c2,stroke-width:2px
+</pre>
+
 <h4 id="步骤-1χ-聚合求和交换"><a class="header" href="#步骤-1χ-聚合求和交换">步骤 1：χ’ 聚合（求和交换）</a></h4>
 <p>对于约束系统 $g_i(Y) = \sum_j b_{i,j} f_j(Y) + y_i$，交换求和顺序：</p>
 <p>$$
 \sum_{i=1}^t \chi_i \cdot g_i(Y) = \sum_{j=1}^m \underbrace{\left(\sum_{i=1}^t \chi_i \cdot b_{i,j}\right)}<em>{\chi’<em>j} \cdot f_j(Y) + \underbrace{\sum</em>{i=1}^t \chi_i \cdot y_i}</em>{\text{const_term}}
 $$</p>
-<p><strong><code>compute_chi_prime</code> 的极简实现</strong>：</p>
+<p><code>compute_chi_prime</code> 的极简实现：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn compute_chi_prime(challenges, b_cols) -&gt; Vec&lt;F&gt; {
@@ -322,8 +325,8 @@ $$</p>
 }
 <span class="boring">}</span></code></pre>
 <p>对于 $\mathbb{F}_{2^{128}}$ 域，求和即 XOR。利用 <code>BitVec::iter_ones()</code> 快速扫描列为 1 的行索引。</p>
-<p><strong><code>compute_chi_prime_streaming_f128</code> 的超高优化实现</strong>：</p>
-<p>对于流式矩阵（<code>StreamingMatrixCols</code>），关键在于<strong>预计算字节子集 XOR 表</strong>以避免逐位扫描：</p>
+<p><code>compute_chi_prime_streaming_f128</code> 的常数时间与流式优化实现：</p>
+<p>对于流式矩阵（<code>StreamingMatrixCols</code>），关键在于预计算字节子集 XOR 表以避免逐位扫描：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn build_byte_subset_xor_table(challenges, byte_len) -&gt; Vec&lt;[u128; 256]&gt; {
@@ -333,7 +336,7 @@ $$</p>
             subset_table[mask] = subset_table[mask &amp; (mask-1)] ^ challenge[bit]
 }
 <span class="boring">}</span></code></pre>
-<p>这利用了 <strong>Gray 码 / DP 递推</strong>：<code>subset_table[mask]</code> 表示对挑战值集合 <code>challenge[byte_idx*8 + trailing_zeroes(mask)]</code> 的 XOR 累加。一旦预计算完成，任何列的求值退化为 $n/8$ 次查表 + XOR：</p>
+<p>这利用了 Gray 码 / DP 递推：<code>subset_table[mask]</code> 表示对挑战值集合 <code>challenge[byte_idx*8 + trailing_zeroes(mask)]</code> 的 XOR 累加。一旦预计算完成，任何列的求值退化为 $n/8$ 次查表 + XOR：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn subset_xor_from_bytes(column_bytes, table, byte_len) -&gt; u128 {
@@ -342,10 +345,10 @@ $$</p>
         acc ^= table[byte_idx][byte as usize]
 }
 <span class="boring">}</span></code></pre>
-<p>更进一步，代码对手工展开的 $160$ 字节场景（$n=1280$ 的典型字节长度）做了 <strong>SIMD 风格的手动循环展开</strong>（<code>xor_32!</code> 宏同时处理 32 个字节，每次迭代处理 5 块共 160 字节），将循环开销降至最低。</p>
-<p><strong>并行化</strong>：当列数 $\ge 8192$ 时，自动启用 <code>rayon</code> 并行，每 256 列为一个 chunk，每个 worker 拥有独立的 <code>column_bytes</code> 缓冲区。</p>
+<p>更进一步，代码对手工展开的 $160$ 字节场景（$n=1280$ 的典型字节长度）做了 SIMD 风格的手动循环展开（<code>xor_32!</code> 宏同时处理 32 个字节，每次迭代处理 5 块共 160 字节），将循环开销降至最低。</p>
+<p>并行化：当列数 $\ge 8192$ 时，自动启用 <code>rayon</code> 并行，每 256 列为一个 chunk，每个 worker 拥有独立的 <code>column_bytes</code> 缓冲区。</p>
 <h4 id="步骤-2仿射基变换"><a class="header" href="#步骤-2仿射基变换">步骤 2：仿射基变换</a></h4>
-<p>将 witness 的每个比特 $w_i$ 和 VOLE 相关性 $v_i$ 组合成<strong>仿射基</strong>：</p>
+<p>将 witness 的每个比特 $w_i$ 和 VOLE 相关性 $v_i$ 组合成仿射基：</p>
 <p>$$
 \text{affine}_i(p) = v_i + w_i \cdot p
 $$</p>
@@ -364,12 +367,12 @@ $$</p>
 <span class="boring">}</span></code></pre>
 <h4 id="步骤-3蝴蝶折叠butterfly-evaluation"><a class="header" href="#步骤-3蝴蝶折叠butterfly-evaluation">步骤 3：蝴蝶折叠（Butterfly Evaluation）</a></h4>
 <p>最核心的算法创新。</p>
-<p><strong>问题</strong>：对于每个大小为 $2^c$ 的分块，我们需要计算：</p>
+<p>问题：对于每个大小为 $2^c$ 的分块，我们需要计算：</p>
 <p>$$
 \tilde{F}(p) = \sum_{j=0}^{\text{block_count}-1} \sum_{\text{idx}=0}^{2^c-1} \chi’<em>{j, \text{idx}} \cdot \tilde{f}</em>{\text{idx}}(p)
 $$</p>
 <p>其中 $\tilde{f}<em>{\text{idx}}(p)$ 是正则编码多项式 $f</em>{\text{idx}}$ 在仿射基 $\text{affine}_{j}$ 上的求值结果。直接展开需要 $\mathcal{O}(2^c)$ 次域乘法和加法。</p>
-<p><strong>蝴蝶算法</strong>将复杂度降至 $\mathcal{O}(c)$。它的灵感来自 FFT 的 Cooley-Tukey 蝶形结构：</p>
+<p>蝴蝶算法将复杂度降至 $\mathcal{O}(c)$。它的灵感来自 FFT 的 Cooley-Tukey 蝶形结构：</p>
 <pre><code>Algorithm: evaluate_chunk_butterfly(chi_prime_chunk[0..2^c),
                                      x_vars[0..c), point)
 
@@ -394,7 +397,7 @@ for k in 1..c:
 
 返回 work[0]     // 最后只剩一个元素
 </code></pre>
-<p><strong>数学原理</strong>：</p>
+<p>数学原理：</p>
 <p>对于 $c=2$ 的可视化示例：</p>
 <pre><code>        层 0 (LSB: x_0)          层 1 (x_1)
                                       
@@ -411,12 +414,12 @@ work[0] = (χ'_0(p+x_0) ⊕ χ'_1 x_0)(p+x_1) ⊕ (χ'_2(p+x_0) ⊕ χ'_3 x_0) x
          = Σ_{idx=0}^{3} χ'_{idx} · f_idx(x_0, x_1)
 </code></pre>
 <p>这精确地计算了 χ-加权的正则编码多项式在点 $(x_0, x_1)$ 的求值。</p>
-<p><strong>为什么按 LSB→MSB 顺序？</strong> 代码的注释解释了原因：</p>
+<p>为什么按 LSB→MSB 顺序？ 代码的注释解释了原因：</p>
 <blockquote>
 <p>Butterfly 从 LSB 到 MSB 处理（与 <code>(2*i, 2*i+1)</code> 配对一致），因此遍历 <code>x_vars</code> 时需要反向：<code>x_vars[c-1-k]</code> 即对应 LSB 优先顺序。</p>
 </blockquote>
 <p>这确保了 <code>monomial_from_table_index(table_idx, block_start, c)</code> 中的大端序变量索引与蝴蝶配对的正确对齐。</p>
-<p><strong>栈优化</strong>：当 $2^c \le 256$ 时，使用<strong>栈分配的定长数组</strong><code>[F; 256]</code> 代替堆分配的 <code>Vec</code>，避免热路径上的内存分配。</p>
+<p>栈优化：当 $2^c \le 256$ 时，使用栈分配的定长数组<code>[F; 256]</code> 代替堆分配的 <code>Vec</code>，避免热路径上的内存分配。</p>
 <h4 id="完整流水线集成"><a class="header" href="#完整流水线集成">完整流水线集成</a></h4>
 <p><code>implicit_evaluate_polynomials</code> 函数组合了上述三个步骤：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -441,10 +444,10 @@ work[0] = (χ'_0(p+x_0) ⊕ χ'_1 x_0)(p+x_1) ⊕ (χ'_2(p+x_0) ⊕ χ'_3 x_0) x
 }
 <span class="boring">}</span></code></pre>
 <h3 id="33-双矩阵配对蝴蝶求值环签名群签名场景"><a class="header" href="#33-双矩阵配对蝴蝶求值环签名群签名场景">3.3 双矩阵配对蝴蝶求值（环签名/群签名场景）</a></h3>
-<p>对于需要同时处理 $B_0$ 和 $B_1$ 两个矩阵的 Merkle 哈希约束（环签名），代码实现了<strong>配对蝴蝶求值</strong>：</p>
+<p>对于需要同时处理 $B_0$ 和 $B_1$ 两个矩阵的 Merkle 哈希约束（环签名），代码实现了配对蝴蝶求值：</p>
 <ul>
 <li><code>implicit_evaluate_pair_direct_from_affine_no_const</code>：计算两个独立矩阵的 χ-加权和</li>
-<li><code>implicit_evaluate_pair_swapped_from_affine_no_const</code>：计算<strong>交叉交换</strong>后的两个分量——这是 Merkle 路径方向比特约束的关键</li>
+<li><code>implicit_evaluate_pair_swapped_from_affine_no_const</code>：计算交叉交换后的两个分量——这是 Merkle 路径方向比特约束的关键</li>
 </ul>
 <p>在 <code>evaluate_pair_swapped_chunk_butterfly_reuse_slice</code> 中，左右两个仿射基 $(x_0^{\text{left}}, x_0^{\text{right}})$ 在第一层就分为四个工作缓冲区（direct left, swapped left, direct right, swapped right），后续层次分别用基向量做折叠。最终返回 $(\text{direct}, \text{swapped})$ 两个结果。</p>
 <h3 id="34-完整协议中的集成"><a class="header" href="#34-完整协议中的集成">3.4 完整协议中的集成</a></h3>

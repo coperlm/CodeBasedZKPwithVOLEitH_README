@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-be48b045.js";
+            window.path_to_searchindex_js = "searchindex-c077466c.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61c3e6e9.js"></script>
@@ -202,10 +202,10 @@
 <p>本模块构建在环签名（模块六）的基础上，增加了两个重要的密码学功能：</p>
 <ol>
 <li>
-<p><strong>群签名（Group Signature, GS）</strong>：除了环签名的匿名性外，群签名允许一个<strong>群管理员</strong>在必要时<strong>撤销匿名性</strong>，追踪出签名者的身份。这通过 McEliece 加密将身份信息 $j$ 和消息 $m$ 嵌入密文 $(c_1, c_2)$ 实现。</p>
+<p>群签名（Group Signature, GS）：除了环签名的匿名性外，群签名允许一个群管理员在必要时撤销匿名性，追踪出签名者的身份。这通过 McEliece 加密将身份信息 $j$ 和消息 $m$ 嵌入密文 $(c_1, c_2)$ 实现。</p>
 </li>
 <li>
-<p><strong>全动态属性基签名（Fully Dynamic Attribute-Based Signature, FDABS）</strong>：签名者拥有一个属性向量，只有当<strong>属性满足某个布尔电路策略（Policy）</strong> 时才能生成有效签名。代码将布尔电路编码为 AND 门约束，并利用 Merkle 树累加器证明属性集的有效性。</p>
+<p>全动态属性基签名（Fully Dynamic Attribute-Based Signature, FDABS）：签名者拥有一个属性向量，只有当属性满足某个布尔电路策略（Policy） 时才能生成有效签名。代码将布尔电路编码为 AND 门约束，并利用 Merkle 树累加器证明属性集的有效性。</p>
 </li>
 </ol>
 <hr>
@@ -218,9 +218,9 @@
 <tr><th>断言</th><th>安全目标</th><th>实现机制</th></tr>
 </thead>
 <tbody>
-<tr><td>签名者属于群</td><td><strong>匿名性</strong></td><td>Merkle 树累加器（同环签名）</td></tr>
-<tr><td>签名者的身份是 $j$</td><td><strong>可追踪性</strong></td><td>McEliece 加密 $c_1 = G_1 \cdot \binom{r_1}{\text{bin}(j)} \oplus \text{RE}(e’_1)$</td></tr>
-<tr><td>消息绑定</td><td><strong>不可伪造性</strong></td><td>$c_2 = G_2 \cdot \binom{r_2}{\text{bin}(m)} \oplus \text{RE}(e’_2)$</td></tr>
+<tr><td>签名者属于群</td><td>匿名性</td><td>Merkle 树累加器（同环签名）</td></tr>
+<tr><td>签名者的身份是 $j$</td><td>可追踪性</td><td>McEliece 加密 $c_1 = G_1 \cdot \binom{r_1}{\text{bin}(j)} \oplus \text{RE}(e’_1)$</td></tr>
+<tr><td>消息绑定</td><td>不可伪造性</td><td>$c_2 = G_2 \cdot \binom{r_2}{\text{bin}(m)} \oplus \text{RE}(e’_2)$</td></tr>
 </tbody>
 </table>
 </div>
@@ -246,7 +246,7 @@
 }
 <span class="boring">}</span></code></pre>
 <h3 id="23-加密约束的构建"><a class="header" href="#23-加密约束的构建">2.3 加密约束的构建</a></h3>
-<p>群签名约束系统 = <strong>环签名约束 + 两个 McEliece 加密约束</strong>。</p>
+<p>群签名约束系统 = 环签名约束 + 两个 McEliece 加密约束。</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// 1. 复用环签名的 Merkle 路径约束
@@ -271,18 +271,18 @@ for row_idx in 0..ne {
 
 // 3. 相同的结构用于 c2
 <span class="boring">}</span></code></pre>
-<p><strong>加密约束的 ANF 形式</strong>：</p>
+<p>加密约束的 ANF 形式：</p>
 <p>对于密文 $c_1$ 的第 $i$ 个比特，约束为：</p>
 <p>$$
 c_{1,i} + \sum_{j: G_{1,i,j}=1} (r_1 | \text{bin}(j))_j + \text{RE}(e’_1)_i = 0
 $$</p>
 <p>其中：</p>
 <ul>
-<li><code>append_linear_matrix_row_terms</code> 处理 <strong>线性部分</strong> $G \cdot \binom{r}{\text{bin}(j)}$：遍历 $G$ 矩阵的第 $i$ 行、涉及的列范围，每一列为 1 的位置对应一个线性变量</li>
-<li><code>append_re_terms</code> 处理<strong>正则噪声</strong> $\text{RE}(e’)$：$\text{RE}(e’)_i$ 在约束层面被展开为多个 degree-$c_e$ 的 ANF 单项式的 XOR 求和（通过 <code>append_re_terms</code> 注入每个单项式）</li>
+<li><code>append_linear_matrix_row_terms</code> 处理 线性部分 $G \cdot \binom{r}{\text{bin}(j)}$：遍历 $G$ 矩阵的第 $i$ 行、涉及的列范围，每一列为 1 的位置对应一个线性变量</li>
+<li><code>append_re_terms</code> 处理正则噪声 $\text{RE}(e’)$：$\text{RE}(e’)_i$ 在约束层面被展开为多个 degree-$c_e$ 的 ANF 单项式的 XOR 求和（通过 <code>append_re_terms</code> 注入每个单项式）</li>
 <li>最后翻转常数项使方程等于 0</li>
 </ul>
-<p>这与公式 $c = G \cdot \binom{u}{m} \oplus \text{RE}(e’)$ 完美对应——只不过这个关系被编码在<strong>约束方程 $g_i(\cdot) = 0$</strong> 中，而不是直接计算。</p>
+<p>这与公式 $c = G \cdot \binom{u}{m} \oplus \text{RE}(e’)$ 完美对应——只不过这个关系被编码在约束方程 $g_i(\cdot) = 0$ 中，而不是直接计算。</p>
 <h3 id="24-签名流程"><a class="header" href="#24-签名流程">2.4 签名流程</a></h3>
 <pre><code>Algorithm: Group Sign(pk, sk, msg)
 Input:  pk = (B0, B1, G1, G2, root_u, ...), sk = membership_witness, msg
@@ -295,7 +295,7 @@ Output: GroupSignature
      absorb(pk.ell, pk.n, pk.ke, pk.ne, pk.k, pk.te,
             pk.c_hash, pk.c_e, B0.seed, B1.seed, G1.seed, G2.seed, root_u, msg)
 
-4.  **加密并行计算**:
+4.  加密并行计算:
      g_input1 = (r1 || bin(j)), g_input2 = (r2 || bin(j))
      linear1 = linear_matrix_vector_mul_streaming_ct(G1, g_input1)
      linear2 = linear_matrix_vector_mul_streaming_ct(G2, g_input2)
@@ -350,7 +350,7 @@ Output: GroupSignature
 </thead>
 <tbody>
 <tr><td>属性向量 $a$ 已被群管理员认证</td><td>Merkle 叶哈希 $v_\ell = B_\text{leaf} \cdot \text{RE}(a | \text{rand})$</td></tr>
-<tr><td>叶哈希的汉明重量为奇数</td><td>$\text{wt}(v_\ell) \equiv 1 \pmod{2}$（<strong>奇偶性约束</strong>）</td></tr>
+<tr><td>叶哈希的汉明重量为奇数</td><td>$\text{wt}(v_\ell) \equiv 1 \pmod{2}$（奇偶性约束）</td></tr>
 <tr><td>属性 $a$ 满足布尔电路策略</td><td>AND 门约束和最终输出约束</td></tr>
 <tr><td>属性属于已认证集合</td><td>Merkle 累加器路径（同环签名）</td></tr>
 </tbody>
@@ -405,7 +405,7 @@ pub struct AndGate {
 }
 <span class="boring">}</span></code></pre>
 <h3 id="34-与环签名的关键区别单矩阵叶哈希"><a class="header" href="#34-与环签名的关键区别单矩阵叶哈希">3.4 与环签名的关键区别：单矩阵叶哈希</a></h3>
-<p>FDABS 中，叶节点由<strong>单个矩阵</strong> $B_\text{leaf}$ 计算，而非环签名的双矩阵配对：</p>
+<p>FDABS 中，叶节点由单个矩阵 $B_\text{leaf}$ 计算，而非环签名的双矩阵配对：</p>
 <p>$$
 v_\ell = B_\text{leaf} \cdot \text{RE}(a | \text{rand})
 $$</p>
@@ -422,7 +422,7 @@ let leaf_terms = build_hash_terms(
 )?;
 <span class="boring">}</span></code></pre>
 <h3 id="35-叶奇偶性约束"><a class="header" href="#35-叶奇偶性约束">3.5 叶奇偶性约束</a></h3>
-<p>FDABS 要求叶哈希的汉明重量为奇数。这是一个重要的<strong>合法性标记</strong>——它防止攻击者使用一个无效的（但 ANF 上满足的）叶节点替代真正的认证叶节点。</p>
+<p>FDABS 要求叶哈希的汉明重量为奇数。这是一个重要的合法性标记——它防止攻击者使用一个无效的（但 ANF 上满足的）叶节点替代真正的认证叶节点。</p>
 <p>实现为单个方程：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -439,7 +439,7 @@ constraints.push(leaf_parity.into_iter().collect());
 $$</p>
 <p>测试 <code>test_fdabs_constraints_reject_even_leaf_weight</code> 验证了当叶哈希的汉明重量为偶数时约束被违反。</p>
 <h3 id="36-nand-门二次约束名为-andgate实际上实现-nand"><a class="header" href="#36-nand-门二次约束名为-andgate实际上实现-nand">3.6 NAND 门二次约束（名为 <code>AndGate</code>，实际上实现 NAND）</a></h3>
-<p>代码中的门使用结构体名 <code>AndGate</code>，但约束实际实现的是 <strong>NAND（与非）门</strong>。对于每个门，要求 $x_{\text{out}} = \neg(x_{\text{in1}} \land x_{\text{in2}})$，在 $\mathbb{F}_2$ 上的 ANF 约束为：</p>
+<p>代码中的门使用结构体名 <code>AndGate</code>，但约束实际实现的是 NAND（与非）门。对于每个门，要求 $x_{\text{out}} = \neg(x_{\text{in1}} \land x_{\text{in2}})$，在 $\mathbb{F}_2$ 上的 ANF 约束为：</p>
 <p>$$
 x_{\text{out}} + x_{\text{in1}} \cdot x_{\text{in2}} + 1 = 0
 $$</p>
@@ -465,7 +465,7 @@ for gate in &amp;circuit.and_gates {
     ]);
 }
 <span class="boring">}</span></code></pre>
-<p>这对应于多项式的三个单项式：$X_{\text{in1}}X_{\text{in2}} + X_{\text{out}} + 1 = 0$。这是<strong>NAND 门</strong>（与非门）的 ANF 约束：当 $X_{\text{in1}} = 1, X_{\text{in2}} = 1$ 时，方程要求 $X_{\text{out}} = 0$；其他情况要求 $X_{\text{out}} = 1$。</p>
+<p>这对应于多项式的三个单项式：$X_{\text{in1}}X_{\text{in2}} + X_{\text{out}} + 1 = 0$。这是NAND 门（与非门）的 ANF 约束：当 $X_{\text{in1}} = 1, X_{\text{in2}} = 1$ 时，方程要求 $X_{\text{out}} = 0$；其他情况要求 $X_{\text{out}} = 1$。</p>
 <h3 id="37-最终输出约束"><a class="header" href="#37-最终输出约束">3.7 最终输出约束</a></h3>
 <p>电路的最后要求是输出线 $x_{\text{out}}$ 必须为 1（策略满足）：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -545,7 +545,7 @@ Output: FdabsSignature
 
 6. Return σ
 </code></pre>
-<p><strong>信息字段</strong> <code>info</code> 和 <code>epoch</code> 使 FDABS 支持动态撤销和策略更新——签名还绑定到特定时期 <code>epoch</code> 和上下文 <code>info</code>。</p>
+<p>信息字段 <code>info</code> 和 <code>epoch</code> 使 FDABS 支持动态撤销和策略更新——签名还绑定到特定时期 <code>epoch</code> 和上下文 <code>info</code>。</p>
 <h3 id="311-公式-代码映射"><a class="header" href="#311-公式-代码映射">3.11 公式-代码映射</a></h3>
 <div class="table-wrapper">
 <table>

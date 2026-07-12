@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-be48b045.js";
+            window.path_to_searchindex_js = "searchindex-c077466c.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61c3e6e9.js"></script>
@@ -199,10 +199,10 @@
                         <h1 id="模块二核心密码学原语afs-哈希与-mceliece-加密"><a class="header" href="#模块二核心密码学原语afs-哈希与-mceliece-加密">模块二：核心密码学原语——AFS 哈希与 McEliece 加密</a></h1>
 <hr>
 <h2 id="一概述"><a class="header" href="#一概述">一、概述</a></h2>
-<p>本模块提供两种基于编码的密码学原语，它们是整个 ZK 签名系统上层应用的<strong>代数骨架</strong>：</p>
+<p>本模块提供两种基于编码的密码学原语，它们是整个 ZK 签名系统上层应用的代数骨架：</p>
 <ol>
-<li><strong>AFS 哈希（AFC Hash）</strong>——一种基于 <strong>2-RNSD</strong> (2-Regular Null Syndrome Decoding) 困难问题的抗碰撞哈希函数。它的输出是一个二元向量，任何碰撞都等价于求解一个被公认为 <strong>NP-hard</strong> 的编码论问题。</li>
-<li><strong>McEliece 加密</strong>——基于 <strong>不可区分置换</strong> 和 <strong>Goppa 码</strong> 的公钥加密方案（这里用于群签名中的身份密文生成），其安全性可归约到经典 McEliece 难题。</li>
+<li>AFS 哈希（AFC Hash）——一种基于 2-RNSD (2-Regular Null Syndrome Decoding) 困难问题的抗碰撞哈希函数。它的输出是一个二元向量，任何碰撞都等价于求解一个被公认为 NP-hard 的编码论问题。</li>
+<li>McEliece 加密——基于 不可区分置换 和 Goppa 码 的公钥加密方案（这里用于群签名中的身份密文生成），其安全性可归约到经典 McEliece 难题。</li>
 </ol>
 <hr>
 <h2 id="二afs-哈希函数afs_hashrs"><a class="header" href="#二afs-哈希函数afs_hashrs">二、AFS 哈希函数：<code>afs_hash.rs</code></a></h2>
@@ -215,12 +215,12 @@ $$</p>
 <ul>
 <li>$B_0, B_1 \in \mathbb{F}_2^{n \times m}$ 是两个伪随机二元矩阵</li>
 <li>$u_0, u_1 \in \mathbb{F}_2^{n}$ 是 $n$ 比特的输入</li>
-<li>$\text{RE}: \mathbb{F}_2^{n} \to \mathbb{F}_2^{m}$ 是<strong>正则编码函数</strong>（Regular Encoding），将 $n$ 比特输入映射为 $m = \frac{n}{c} \cdot 2^c$ 比特的稀疏二元向量，其汉明重量恰为 $n/c$</li>
+<li>$\text{RE}: \mathbb{F}_2^{n} \to \mathbb{F}_2^{m}$ 是正则编码函数（Regular Encoding），将 $n$ 比特输入映射为 $m = \frac{n}{c} \cdot 2^c$ 比特的稀疏二元向量，其汉明重量恰为 $n/c$</li>
 </ul>
-<p><strong>抗碰撞安全性</strong>：寻找 $h_B(u_0, u_1) = h_B(u’_0, u’_1)$ 的碰撞等价于在 $\mathbb{F}_2$ 上求解带噪的线性方程组（即 2-RNSD 问题），这是<strong>码基密码学中公认的困难问题</strong>。</p>
+<p>抗碰撞安全性：寻找 $h_B(u_0, u_1) = h_B(u’_0, u’_1)$ 的碰撞等价于在 $\mathbb{F}_2$ 上求解带噪的线性方程组（即 2-RNSD 问题），这是码基密码学中公认的困难问题。</p>
 <h3 id="22-正则编码-regular-encoding-详解"><a class="header" href="#22-正则编码-regular-encoding-详解">2.2 正则编码 (Regular Encoding) 详解</a></h3>
 <h4 id="221-数学定义"><a class="header" href="#221-数学定义">2.2.1 数学定义</a></h4>
-<p>令 $c$ 为<strong>块大小</strong>（chunk size），$n$ 必须能被 $c$ 整除。正则编码将输入 $x$ 划分为 $\frac{n}{c}$ 个各长为 $c$ 比特的块。每个块 $x^{(i)} \in \mathbb{F}_2^{c}$ 被映射为一个<strong>独热向量</strong>（one-hot vector）：</p>
+<p>令 $c$ 为块大小（chunk size），$n$ 必须能被 $c$ 整除。正则编码将输入 $x$ 划分为 $\frac{n}{c}$ 个各长为 $c$ 比特的块。每个块 $x^{(i)} \in \mathbb{F}_2^{c}$ 被映射为一个独热向量（one-hot vector）：</p>
 <p>$$
 \text{RE}(x)<em>i = e</em>{\text{idx}(x^{(i)})} \in \mathbb{F}_2^{2^c}
 $$</p>
@@ -239,7 +239,7 @@ $$</p>
 <tr><td>$c$（块大小）</td><td><code>c: usize</code></td><td>每个块包含的比特数</td></tr>
 <tr><td>域大小 $2^c$</td><td><code>domain_size = 1 &lt;&lt; c</code></td><td>每个独热编码的维度</td></tr>
 <tr><td>块数 $n/c$</td><td><code>chunk_count = x.len() / c</code></td><td>输入分割的块数</td></tr>
-<tr><td>$\text{idx}(x^{(i)})$</td><td><code>bits_to_index_be(chunk)</code></td><td>将 $c$ 比特解释为<strong>大端无符号整数</strong></td></tr>
+<tr><td>$\text{idx}(x^{(i)})$</td><td><code>bits_to_index_be(chunk)</code></td><td>将 $c$ 比特解释为大端无符号整数</td></tr>
 <tr><td>$\text{RE}(x)$</td><td><code>regular_encode(x, c) -&gt; MainBitVec</code></td><td>拼接的独热向量</td></tr>
 </tbody>
 </table>
@@ -258,7 +258,7 @@ $$</p>
 $$</p>
 <p>其中 $x^{(i)}_t$ 是第 $i$ 个块的第 $t$ 个比特。采用大端顺序意味着第 0 个比特是最高有效位。</p>
 <h4 id="224-常数时间版本-regular_encode_ct"><a class="header" href="#224-常数时间版本-regular_encode_ct">2.2.4 常数时间版本 <code>regular_encode_ct</code></a></h4>
-<p>常规的 <code>regular_encode</code> 使用条件分支（<code>encoded.set(...)</code>），其内存访问模式依赖于秘密的块值，存在<strong>侧信道泄漏</strong>风险。常数时间版本 <code>regular_encode_ct</code> 采用以下对策：</p>
+<p>常规的 <code>regular_encode</code> 使用条件分支（<code>encoded.set(...)</code>），其内存访问模式依赖于秘密的块值，存在侧信道泄漏风险。常数时间版本 <code>regular_encode_ct</code> 采用以下对策：</p>
 <pre><code>for 每个块 i:
     one_hot_idx ← bits_to_index_be(块)
     for 每个表索引 table_idx ∈ [0, domain_size):
@@ -267,7 +267,7 @@ $$</p>
 </code></pre>
 <p>关键点：</p>
 <ul>
-<li><strong>扫描了所有 <code>domain_size</code> 个位置</strong>，无论结果如何</li>
+<li>扫描了所有 <code>domain_size</code> 个位置，无论结果如何</li>
 <li><code>ct_eq_usize</code> 使用纯位运算（无分支）实现安全相等判断：</li>
 </ul>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -285,7 +285,7 @@ $$</p>
 </span><span class="boring">fn main() {
 </span>pub fn afs_hash(b_cols: &amp;[MainBitVec], x: &amp;MainBitSlice, c: usize) -&gt; Result&lt;MainBitVec, String&gt;
 <span class="boring">}</span></code></pre>
-<p><strong>算法伪代码</strong>：</p>
+<p>算法伪代码：</p>
 <pre><code>Algorithm: afs_hash(B, x, c)
 Input:  B ∈ (F_2^n)^{m'}  — 列主序存储 (m' = (n/c)·2^c)
         x ∈ F_2^{n}       — 输入
@@ -298,11 +298,11 @@ Output: y ∈ F_2^{rows(B)} — 哈希输出
 4.      acc ← acc ⊕ B[:, col_idx]        // XOR 累加对应的列
 5.  return acc
 </code></pre>
-<p><strong>数学等价性</strong>：</p>
+<p>数学等价性：</p>
 <p>$$
 y = B \cdot \text{RE}(x) = \bigoplus_{i=0}^{n/c-1} B_{:, i \cdot 2^c + \text{idx}(x^{(i)})}
 $$</p>
-<p>由于 $\text{RE}(x)$ 的每个块中仅有一个比特为 1，矩阵-向量乘法退化到只需选取 $n/c$ 个列做 XOR——这是<strong>稀疏性红利</strong>的又一次体现。</p>
+<p>由于 $\text{RE}(x)$ 的每个块中仅有一个比特为 1，矩阵-向量乘法退化到只需选取 $n/c$ 个列做 XOR——这是稀疏矩阵的计算优势的又一次体现。</p>
 <h4 id="232-流式版本afs_hash_streaming"><a class="header" href="#232-流式版本afs_hash_streaming">2.3.2 流式版本：<code>afs_hash_streaming</code></a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -312,10 +312,10 @@ $$</p>
     c: usize,
 ) -&gt; Result&lt;MainBitVec, String&gt;
 <span class="boring">}</span></code></pre>
-<p>与 <code>afs_hash</code> 的区别：矩阵 $B$ 不预先物化，而是通过 <code>StreamingMatrixCols</code> 按需<strong>流式生成</strong>每一列。在累加循环内调用 <code>fill_column_bytes_prechecked</code>，生成的列数据写入临时缓冲区、与累加器 XOR 后即丢弃。内存占用从物化矩阵的 $\mathcal{O}(nm)$ 降至临时缓冲区的 $\mathcal{O}(n)$。</p>
+<p>与 <code>afs_hash</code> 的区别：矩阵 $B$ 不预先物化，而是通过 <code>StreamingMatrixCols</code> 按需流式生成每一列。在累加循环内调用 <code>fill_column_bytes_prechecked</code>，生成的列数据写入临时缓冲区、与累加器 XOR 后即丢弃。内存占用从物化矩阵的 $\mathcal{O}(nm)$ 降至临时缓冲区的 $\mathcal{O}(n)$。</p>
 <h4 id="233-常数时间流式版本afs_hash_streaming_ct"><a class="header" href="#233-常数时间流式版本afs_hash_streaming_ct">2.3.3 常数时间流式版本：<code>afs_hash_streaming_ct</code></a></h4>
-<p><strong>安全问题</strong>：<code>afs_hash_streaming</code> 的列选择直接依赖于秘密输入 $x$ 的块值——这通过控制流暴露了索引信息。</p>
-<p><strong>常数时间对策</strong>：扫描每个块对应的<strong>所有</strong> $2^c$ 个可能的列，但对每一列使用一个<strong>掩码</strong>来决定是否 XOR：</p>
+<p>安全问题：<code>afs_hash_streaming</code> 的列选择直接依赖于秘密输入 $x$ 的块值——这通过控制流暴露了索引信息。</p>
+<p>常数时间对策：扫描每个块对应的所有 $2^c$ 个可能的列，但对每一列使用一个掩码来决定是否 XOR：</p>
 <pre><code>Algorithm: afs_hash_streaming_ct(B, x, c)
 Input:  B ∈ StreamingMatrixCols
         x ∈ F_2^{n}
@@ -336,11 +336,11 @@ Output: y ∈ F_2^{rows(B)}
 \text{acc}[j] \leftarrow \text{acc}[j] \oplus (\text{column}[j] \land \text{mask})
 $$</p>
 <p>其中 <code>mask</code> 在 <code>table_idx == secret_idx</code> 时为 <code>0xFF</code>，否则为 <code>0x00</code>。因此内存访问模式（读取了所有列）和数据流（通过掩码进行条件 XOR）均不依赖秘密值。</p>
-<p><strong>并行加速</strong>：当矩阵规模超过阈值（<code>CT_AFS_PAR_COL_THRESHOLD = 4096</code> 列）且 Rayon 可用时，任务被分割为 <code>chunk_count / 4</code> 个并行子任务，每个子任务独立计算部分累加结果，最后通过 <code>reduce</code> 做 XOR 归并：</p>
+<p>并行加速：当矩阵规模超过阈值（<code>CT_AFS_PAR_COL_THRESHOLD = 4096</code> 列）且 Rayon 可用时，任务被分割为 <code>chunk_count / 4</code> 个并行子任务，每个子任务独立计算部分累加结果，最后通过 <code>reduce</code> 做 XOR 归并：</p>
 <pre><code>并行:  acc = acc_0 ⊕ acc_1 ⊕ ... ⊕ acc_{T-1}
 </code></pre>
 <h3 id="24-普通线性矩阵-向量乘法"><a class="header" href="#24-普通线性矩阵-向量乘法">2.4 普通线性矩阵-向量乘法</a></h3>
-<p><code>afs_hash</code> 是针对<strong>正则编码模式</strong>（每块恰好选一列）的优化。对于一般的 $\mathbb{F}_2$ 线性变换：</p>
+<p><code>afs_hash</code> 是针对正则编码模式（每块恰好选一列）的优化。对于一般的 $\mathbb{F}_2$ 线性变换：</p>
 <p>$$
 y = M \cdot v, \quad M \in \mathbb{F}_2^{n \times m}, v \in \mathbb{F}_2^{m}
 $$</p>
@@ -361,7 +361,7 @@ $$</p>
 <hr>
 <h2 id="三mceliece-加密与随机线性码mceliecers"><a class="header" href="#三mceliece-加密与随机线性码mceliecers">三、McEliece 加密与随机线性码：<code>mceliece.rs</code></a></h2>
 <h3 id="31-数学背景"><a class="header" href="#31-数学背景">3.1 数学背景</a></h3>
-<p>Classic McEliece 使用 <strong>不可约 Goppa 码</strong>。公钥是一个伪随机的 $k \times (n-k)$ 二元生成矩阵 $G$。加密公式为：</p>
+<p>Classic McEliece 使用 不可约 Goppa 码。公钥是一个伪随机的 $k \times (n-k)$ 二元生成矩阵 $G$。加密公式为：</p>
 <p>$$
 c = G \cdot \binom{u}{m} \oplus \text{RE}(e’)
 $$</p>
@@ -384,7 +384,8 @@ pub const PK_NCOLS: usize = 3360;   // 公钥列数 = k
 pub const PK_ROW_BYTES: usize = 420;// 每行的字节数
 pub const PK_BYTES: usize = 524160; // 公钥总字节数 (~512 KB)
 <span class="boring">}</span></code></pre>
-<p>这些参数对应 <strong>Classic McEliece-460896f</strong>（NIST 第三轮候选参数集），提供 <strong>128-bit 安全强度</strong>。</p>
+<p>这些参数对应 Classic McEliece-460896f（NIST 第三轮候选参数集），提供 128-bit 安全强度。</p>
+<p>注：虽然 <code>mceliece.rs</code> 封装了 NIST 标准参数以供提取公钥结构，但在本系统实际的群签名应用中，为了满足正则噪声输出维度与密文维度严格对齐的要求，实际实例化的参数调整为 $n_e = 4096, k_e = 3328, t_e = 64$。</p>
 <h3 id="33-公式-代码映射"><a class="header" href="#33-公式-代码映射">3.3 公式-代码映射</a></h3>
 <h4 id="331-生成矩阵提取"><a class="header" href="#331-生成矩阵提取">3.3.1 生成矩阵提取</a></h4>
 <p>在 <code>run_matrix_validation</code> 测试函数中，公钥的字节流被解析为 $G’$ 矩阵：</p>
@@ -428,7 +429,7 @@ for (row_idx, x_bit) in x.iter().enumerate() {
 </ul>
 <h4 id="333-在群签名中的完整加密应用"><a class="header" href="#333-在群签名中的完整加密应用">3.3.3 在群签名中的完整加密应用</a></h4>
 <p>群签名约束生成函数 <code>build_group_signature_constraints</code> 中将 McEliece 加密拆解为两个部分：</p>
-<p><strong>第一部分 —— 线性组合</strong>：$G \cdot \binom{r}{\text{bin}(j)}$</p>
+<p>第一部分 —— 线性组合：$G \cdot \binom{r}{\text{bin}(j)}$</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn append_linear_matrix_row_terms(
@@ -450,7 +451,7 @@ for (row_idx, x_bit) in x.iter().enumerate() {
 c_i = \bigoplus_{j: G_{i,j} = 1} x_j
 $$</p>
 <p>其中 $x = (r ;|; \text{bin}(j))$ 是随机数和用户索引的拼接。</p>
-<p><strong>第二部分 —— 正则噪声项</strong>：$\text{RE}(e’)$</p>
+<p>第二部分 —— 正则噪声项：$\text{RE}(e’)$</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn append_re_terms(
@@ -465,7 +466,7 @@ $$</p>
 }
 <span class="boring">}</span></code></pre>
 <p>这为密文的第 $i$ 位添加 $\text{RE}(e’)$ 贡献的噪声多项式。</p>
-<p><strong>完整密文约束</strong>：</p>
+<p>完整密文约束：</p>
 <p>$$
 c_{1,i} = \left(\bigoplus_{j: G_{1,i,j}=1} (r_1 ;|; \text{bin}(j))_j\right) \oplus \text{RE}(e’_1)_i
 $$</p>
@@ -484,7 +485,7 @@ $$</p>
 <p>矩阵密度接近 0.5 是 Goppa 码生成矩阵为伪随机矩阵的统计证据。</p>
 <hr>
 <h2 id="四afs-哈希在-merkle-树中的应用环签名上下文"><a class="header" href="#四afs-哈希在-merkle-树中的应用环签名上下文">四、AFS 哈希在 Merkle 树中的应用（环签名上下文）</a></h2>
-<p>为帮助导师理解这两个原语如何协作，这里简述其在上层协议中的使用方式：</p>
+<p>为阐明这两个密码学原语在系统中的协作关系，以下简述其在上层协议中的调用方式：</p>
 <p>环签名的 Merkle 树每一层使用 AFS 双矩阵哈希：</p>
 <p>$$
 v_\ell = h_B(v_{\ell+1}, w_{\ell+1}) = B_0 \cdot \text{RE}(v_{\ell+1}) \oplus B_1 \cdot \text{RE}(w_{\ell+1})
@@ -494,7 +495,7 @@ $$</p>
 <li>$B_0$ 编码左子节点的影响，$B_1$ 编码右子节点的影响</li>
 <li>最终根哈希 $u_0 = v_0$ 被公开作为哈希链承诺</li>
 </ul>
-<p>而 McEliece 加密则在群签名中提供<strong>追踪机制</strong>：管理方可利用私钥解密密文 $(c_1, c_2)$ 获取签名者的身份索引 $j$ 与消息 $m$，实现<strong>匿名性中的可控可追踪</strong>。</p>
+<p>而 McEliece 加密则在群签名中提供追踪机制：管理方可利用私钥解密密文 $(c_1, c_2)$ 获取签名者的身份索引 $j$ 与消息 $m$，实现匿名性中的可控可追踪。</p>
 <hr>
 <h2 id="五工程要点总结"><a class="header" href="#五工程要点总结">五、工程要点总结</a></h2>
 <div class="table-wrapper">

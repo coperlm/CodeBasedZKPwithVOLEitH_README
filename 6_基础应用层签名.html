@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-be48b045.js";
+            window.path_to_searchindex_js = "searchindex-c077466c.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61c3e6e9.js"></script>
@@ -199,15 +199,15 @@
                         <h1 id="模块六基础应用层resolved-与环签名"><a class="header" href="#模块六基础应用层resolved-与环签名">模块六：基础应用层——ReSolveD+ 与环签名</a></h1>
 <hr>
 <h2 id="一概述"><a class="header" href="#一概述">一、概述</a></h2>
-<p>本模块是将底层 $\Pi^t_{dD-Rep}$ 协议应用到<strong>具体密码学原语</strong>的第一层。包含两种签名方案：</p>
+<p>本模块是将底层 $\Pi^t_{dD-Rep}$ 协议应用到具体密码学原语的第一层。包含两种签名方案：</p>
 <ol>
-<li><strong>ReSolveD+</strong>：基于 <strong>RSD（Regular Syndrome Decoding）</strong> 困难问题的数字签名方案。公钥是一个随机矩阵 $B$ 和其对应的综合症 $y$；私钥是一个随机秘密 $x$，满足 $y = B \cdot \text{RE}(x)$。</li>
-<li><strong>环签名（Ring Signature）</strong>：签名者可以从一个公钥集合（环）中匿名地签署消息，使验证者确信签名者属于该集合，但<strong>无法确定具体是哪一个</strong>。这里利用 Merkle 树累加器 + AFS 双矩阵哈希构造环。</li>
+<li>ReSolveD+：基于 RSD（Regular Syndrome Decoding） 困难问题的数字签名方案。公钥是一个随机矩阵 $B$ 和其对应的综合症 $y$；私钥是一个随机秘密 $x$，满足 $y = B \cdot \text{RE}(x)$。</li>
+<li>环签名（Ring Signature）：签名者可以从一个公钥集合（环）中匿名地签署消息，使验证者确信签名者属于该集合，但无法确定具体是哪一个。这里利用 Merkle 树累加器 + AFS 双矩阵哈希构造环。</li>
 </ol>
 <hr>
 <h2 id="二resolved-签名"><a class="header" href="#二resolved-签名">二、ReSolveD+ 签名</a></h2>
 <h3 id="21-数学基础rsd-问题"><a class="header" href="#21-数学基础rsd-问题">2.1 数学基础：RSD 问题</a></h3>
-<p><strong>RSD（Regular Syndrome Decoding）</strong> 是编码理论中的一个 NP-hard 问题：给定矩阵 $B \in \mathbb{F}_2^{n \times m}$ 和综合症 $y \in \mathbb{F}_2^n$，寻找一个<strong>正则词</strong> $x$（其汉明重量极低，结构上由 $c$ 比特块映射为独热向量）使得：</p>
+<p>RSD（Regular Syndrome Decoding） 是编码理论中的一个 NP-hard 问题：给定矩阵 $B \in \mathbb{F}_2^{n \times m}$ 和综合症 $y \in \mathbb{F}_2^n$，寻找一个正则词 $x$（其汉明重量极低，结构上由 $c$ 比特块映射为独热向量）使得：</p>
 <p>$$
 y = B \cdot \text{RE}(x) \quad (\text{在 } \mathbb{F}_2 \text{ 上})
 $$</p>
@@ -226,7 +226,7 @@ pub struct SecretKey {
     pub x: MainBitVec,                 // 秘密 x（witness）
 }
 <span class="boring">}</span></code></pre>
-<p><strong>密钥生成</strong>：</p>
+<p>密钥生成：</p>
 <ol>
 <li>随机选择种子 $\sigma$ → 生成 $B = \text{PRG}(\sigma) \in \mathbb{F}_2^{n \times m}$</li>
 <li>随机选择 $x \in \mathbb{F}_2^k$</li>
@@ -242,9 +242,9 @@ $$</p>
 <p>其中 $f_j(x)$ 是 $x$ 的正则编码 $\text{RE}(x)$ 的第 $j$ 个输出位，可以表示为 degree-$c$ 的 ANF 多项式（参见模块四）。</p>
 <h3 id="24-约束构建build_resolved_plus_constraints"><a class="header" href="#24-约束构建build_resolved_plus_constraints">2.4 约束构建：<code>build_resolved_plus_constraints</code></a></h3>
 <p>对于每个约束方程 $g_i(x) = 0$，代码使用三步流程构建 ANF 约束系统：</p>
-<p><strong>第一步</strong>：获取每个正则编码索引的本地单项式（<code>local_monomials</code>）</p>
+<p>第一步：获取每个正则编码索引的本地单项式（<code>local_monomials</code>）</p>
 <p>对于正则编码输出索引 $\text{idx}$（0 到 $2^c-1$），其 ANF 展开包含一组单项式（来自 <code>re_table[idx]</code> 中为 1 的列）。</p>
-<p><strong>第二步</strong>：反向映射 + BitVec 批量 XOR</p>
+<p>第二步：反向映射 + BitVec 批量 XOR</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// table_idx -&gt; 包含它的 re_idx 列表
@@ -268,7 +268,7 @@ for block_idx in 0..block_count {
 }
 <span class="boring">}</span></code></pre>
 <p>这里的关键洞察：ANF 单项式 $X_{j_1} X_{j_2} \cdots X_{j_d}$ 在约束 $g_i$ 中的系数由 $B_{i, \cdot}$ 与 ANF 系数表的组合决定。通过位向量批量 XOR，避免了逐行逐列的 $\mathcal{O}(n \cdot m \cdot 2^c)$ 暴力循环。</p>
-<p><strong>第三步</strong>：构建最终方程</p>
+<p>第三步：构建最终方程</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>for (global_idx, presence) in global_monomial_presence.into_iter().enumerate() {
@@ -285,7 +285,7 @@ for (row_idx, bit) in y.iter().by_vals().enumerate() {
     if bit { equations[row_idx] ^= 1（常数项）}
 }
 <span class="boring">}</span></code></pre>
-<p><strong>最终输出的 ANF 约束系统</strong>：<code>Vec&lt;Vec&lt;Monomial&gt;&gt;</code>，共 $n$ 个多项式（对应 $y$ 的 $n$ 个比特），每个多项式的度数为 $c$，变量范围为 $k$。</p>
+<p>最终输出的 ANF 约束系统：<code>Vec&lt;Vec&lt;Monomial&gt;&gt;</code>，共 $n$ 个多项式（对应 $y$ 的 $n$ 个比特），每个多项式的度数为 $c$，变量范围为 $k$。</p>
 <h3 id="25-签名流程sign_with_rng"><a class="header" href="#25-签名流程sign_with_rng">2.5 签名流程（<code>sign_with_rng</code>）</a></h3>
 <pre><code>Algorithm: ReSolveD+ Sign(pk, sk, msg)
 Input:  pk = (B, y, k, c), sk = x, msg
@@ -359,13 +359,13 @@ Output: Signature σ
 <hr>
 <h2 id="三环签名ring-signature"><a class="header" href="#三环签名ring-signature">三、环签名（Ring Signature）</a></h2>
 <h3 id="31-数学基础merkle-累加器的-zk-证明"><a class="header" href="#31-数学基础merkle-累加器的-zk-证明">3.1 数学基础：Merkle 累加器的 ZK 证明</a></h3>
-<p>环签名的核心思路是使用 <strong>Merkle 哈希树</strong> 累加环中所有公钥。签名者需要在零知识下证明自己知道一条从叶子（自己的密钥材料）到根（公开的 Merkle 根 $u_0$）的认证路径。</p>
-<p><strong>AFS 双矩阵哈希</strong> 用于 Merkle 树的每一层。对于层 $\theta$，给定左子节点 $v_\theta$ 和右子节点 $w_\theta$，双亲节点由下式算出：</p>
+<p>环签名的核心思路是使用 Merkle 哈希树 累加环中所有公钥。签名者需要在零知识下证明自己知道一条从叶子（自己的密钥材料）到根（公开的 Merkle 根 $u_0$）的认证路径。</p>
+<p>AFS 双矩阵哈希 用于 Merkle 树的每一层。对于层 $\theta$，给定左子节点 $v_\theta$ 和右子节点 $w_\theta$，双亲节点由下式算出：</p>
 <p>$$
 v_{\theta-1} = h_B(v_\theta, w_\theta) = B_0 \cdot \text{RE}(v_\theta) \oplus B_1 \cdot \text{RE}(w_\theta)
 $$</p>
 <p>其中 $B_0, B_1 \in \mathbb{F}_2^{n \times m}$ 是两个独立的伪随机矩阵。</p>
-<p><strong>关键点</strong>：在每一层，签名者还需要证明路径的方向——即当前节点是左子还是右子。这通过一个<strong>方向比特</strong> $j_\theta \in {0,1}$ 编码在约束中。</p>
+<p>关键点：在每一层，签名者还需要证明路径的方向——即当前节点是左子还是右子。这通过一个方向比特 $j_\theta \in {0,1}$ 编码在约束中。</p>
 <h3 id="32-密钥结构"><a class="header" href="#32-密钥结构">3.2 密钥结构</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -464,7 +464,7 @@ for (row_idx, mut equation) in leaf_terms.into_iter().enumerate() {
 }
 <span class="boring">}</span></code></pre>
 <h3 id="35-隐式求值引擎针对环签名的配对蝴蝶"><a class="header" href="#35-隐式求值引擎针对环签名的配对蝴蝶">3.5 隐式求值引擎（针对环签名的配对蝴蝶）</a></h3>
-<p>由于环签名需要同时处理两个矩阵 $B_0$ 和 $B_1$，代码构建了专用的 <strong>配对 χ’ 数据结构</strong>：</p>
+<p>由于环签名需要同时处理两个矩阵 $B_0$ 和 $B_1$，代码构建了专用的 配对 χ’ 数据结构：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub(crate) struct RingImplicitData&lt;F&gt; {
@@ -482,7 +482,7 @@ for (row_idx, mut equation) in leaf_terms.into_iter().enumerate() {
 }
 <span class="boring">}</span></code></pre>
 <p>这里的 <code>compute_chi_prime_pair_streaming_f128</code> 是模块四中配对 χ’ 聚合的实现——它同时计算 $B_0$ 和 $B_1$ 的 χ’ 向量，并在可能的情况下使用配对蝴蝶（<code>xor_pair_32!</code>）同时处理左右矩阵。</p>
-<p><strong>核心求值函数</strong> <code>evaluate_ring_implicit_from_affine</code> 实现：</p>
+<p>核心求值函数 <code>evaluate_ring_implicit_from_affine</code> 实现：</p>
 <pre><code>Algorithm: evaluate_ring_implicit_from_affine(challenges, data, affine, point, ell, n, c)
 Input:  affine (仿射基), point (p)
 Output: Σ_i χ_i · g̃_i(p)
@@ -515,7 +515,7 @@ Output: Σ_i χ_i · g̃_i(p)
    
 4. return total
 </code></pre>
-<p>注意这里约束的度数比 ReSolveD+ 高 1（$c+1$ 而非 $c$），因为<strong>方向比特 $j_\theta$ 额外贡献了一度</strong>。</p>
+<p>注意这里约束的度数比 ReSolveD+ 高 1（$c+1$ 而非 $c$），因为方向比特 $j_\theta$ 额外贡献了一度。</p>
 <h3 id="36-环签名完整签名流程"><a class="header" href="#36-环签名完整签名流程">3.6 环签名完整签名流程</a></h3>
 <pre><code>Algorithm: Ring Sign(pk, sk, msg)
 Input:  pk = (B0, B1, root_u, ell, n, c), sk = witness, msg
@@ -550,9 +550,9 @@ Output: RingSignature σ
 <h3 id="37-witness-正确性验证"><a class="header" href="#37-witness-正确性验证">3.7 Witness 正确性验证</a></h3>
 <p>测试 <code>test_ring_signature_rejects_witness_mutations_in_implicit_path</code> 验证了三种违反情况的检测：</p>
 <ol>
-<li><strong>叶子秘密篡改</strong>（修改 $x_0$）：破坏 $v_{\ell-1} = h_B(x_0, x_1)$</li>
-<li><strong>路径选择比特篡改</strong>（修改 $j_\theta$）：破坏路径方向</li>
-<li><strong>内部节点篡改</strong>（修改 $v_\theta$）：破坏 $u_{\theta-1} = h_B(v_\theta, w_\theta)$</li>
+<li>叶子秘密篡改（修改 $x_0$）：破坏 $v_{\ell-1} = h_B(x_0, x_1)$</li>
+<li>路径选择比特篡改（修改 $j_\theta$）：破坏路径方向</li>
+<li>内部节点篡改（修改 $v_\theta$）：破坏 $u_{\theta-1} = h_B(v_\theta, w_\theta)$</li>
 </ol>
 <p>三种情况均被验证拒绝，证明了约束系统的完备覆盖。</p>
 <h3 id="38-公式-代码映射"><a class="header" href="#38-公式-代码映射">3.8 公式-代码映射</a></h3>

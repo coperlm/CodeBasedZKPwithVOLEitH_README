@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-be48b045.js";
+            window.path_to_searchindex_js = "searchindex-c077466c.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61c3e6e9.js"></script>
@@ -199,19 +199,19 @@
                         <h1 id="模块五pit_dd-rep-核心协议与-nizk-变换"><a class="header" href="#模块五pit_dd-rep-核心协议与-nizk-变换">模块五：$\Pi^t_{dD-Rep}$ 核心协议与 NIZK 变换</a></h1>
 <hr>
 <h2 id="一概述"><a class="header" href="#一概述">一、概述</a></h2>
-<p>$\Pi^t_{dD-Rep}$（degree-$d$ Representation）协议是整个 ZK 系统的<strong>灵魂</strong>。它解决的核心问题是：</p>
+<p>$\Pi^t_{dD-Rep}$（degree-$d$ Representation）协议是整个 ZK 系统的核心。它解决的核心问题是：</p>
 <blockquote>
 <p>给定一个由 $t$ 个 degree-$d$ 布尔多项式组成的约束系统 ${g_i(X) = 0}_{i=1}^t$，Prover 如何在不泄露 witness $w \in \mathbb{F}_2^k$ 的前提下，让 Verifier 确信 $w$ 满足所有约束？</p>
 </blockquote>
 <p>本模块包含两个层面：</p>
 <ol>
-<li><strong><code>protocol_dd_rep.rs</code></strong> — $\Pi^t_{dD-Rep}$ 协议的三步实现（承诺 → 挑战 → 响应/验证）</li>
-<li><strong><code>transcript.rs</code></strong> — Fiat-Shamir 变换的 Random Oracle 实例化（SHA-3 Keccak-256）</li>
+<li><code>protocol_dd_rep.rs</code> — $\Pi^t_{dD-Rep}$ 协议的三步实现（承诺 → 挑战 → 响应/验证）</li>
+<li><code>transcript.rs</code> — Fiat-Shamir 变换的 Random Oracle 实例化（SHA-3 Keccak-256）</li>
 </ol>
 <hr>
 <h2 id="二pit_dd-rep-协议三步曲"><a class="header" href="#二pit_dd-rep-协议三步曲">二、$\Pi^t_{dD-Rep}$ 协议三步曲</a></h2>
 <h3 id="21-协议概览"><a class="header" href="#21-协议概览">2.1 协议概览</a></h3>
-<p>$\Pi^t_{dD-Rep}$ 建立在 <strong>VOLE 相关性</strong>之上。回顾 Prover 和 Verifier 通过延迟 VOLE 功能 $\mathcal{F}_{\text{sVOLE}}$ 建立的关系：</p>
+<p>$\Pi^t_{dD-Rep}$ 建立在 VOLE 相关性之上。回顾 Prover 和 Verifier 通过延迟 VOLE 功能 $\mathcal{F}_{\text{sVOLE}}$ 建立的关系：</p>
 <p>$$
 \begin{aligned}
 \text{Prover: } &amp;(u, \mathbf{v}) \in \mathbb{F}<em>2^k \times \mathbb{F}</em>{2^{128}}^k \
@@ -219,43 +219,28 @@
 \end{aligned}
 $$</p>
 <p>满足 $\mathbf{v} = \mathbf{q} + \Delta \cdot u$。Prover 拥有 witness $w \in \mathbb{F}<em>2^k$，公开约束系统为 ${g_i(X)}</em>{i=1}^t$。</p>
-<pre><code>┌─────────────────┐                 ┌─────────────────┐
-│    Prover       │                 │    Verifier     │
-│  (w, u, v)     │                 │  (Δ, q)         │
-└────────┬────────┘                 └────────┬────────┘
-         │                                   │
-         │  Step 1: 承诺 (Commit)             │
-         │  ─────────────────────            │
-         │  corr ← w ⊕ u                     │
-         │                                   │
-         │  ── corr ────────────────────────► │
-         │                     ┌──────────────┴──────┐
-         │                     │ 吸收承诺:             │
-         │                     │  q̃_i ← q_i + corr_i·Δ│
-         │                     │  (即 q̃ = v)          │
-         │                     └──────────────────────┘
-         │                                   │
-         │  Step 2: 挑战 (Challenge)          │
-         │  ◄── χ_1, ..., χ_t ─────────────── │
-         │                     │  χ_i ← Random / Fiat-Shamir
-         │                     │
-         │  Step 3: 响应 (Respond)            │
-         │  ─────────────────────            │
-         │  对每个插值点 p_k：                 │
-         │    affine[i] ← v[i] + w[i]·p_k    │
-         │    val_k ← Σ_i χ_i · g̃_i(p_k)     │
-         │  插值恢复多项式系数 a_0..a_{d-1}   │
-         │  盲化: ã_j ← a_j + r_j            │
-         │                                   │
-         │  ── {ã_0, ..., ã_{d-1}} ────────► │
-         │                     ┌──────────────┴──────┐
-         │                     │ 验证:                 │
-         │                     │  Σχ_i·g_i(q̃) + Πqq   │
-         │                     │  ?= Σã_j·Δ^j        │
-         │                     └──────────────────────┘
-</code></pre>
+<pre class="mermaid">sequenceDiagram
+    participant P as Prover&lt;br&gt;(w, u, v)
+    participant V as Verifier&lt;br&gt;(Δ, q)
+
+    Note over P, V: Step 1: 承诺 (Commit)
+    Note over P: corr ← w ⊕ u
+    P-&gt;&gt;V: corr
+    Note over V: 吸收承诺:&lt;br/&gt;q̃_i ← q_i + corr_i·Δ&lt;br/&gt;(即 q̃ = v)
+
+    Note over P, V: Step 2: 挑战 (Challenge)
+    Note over V: χ_i ← Random / Fiat-Shamir
+    V-&gt;&gt;P: χ_1, ..., χ_t
+
+    Note over P, V: Step 3: 响应 (Respond)
+    Note over P: 对每个插值点 p_k：&lt;br/&gt;affine[i] ← v[i] + w[i]·p_k&lt;br/&gt;val_k ← Σ_i χ_i · g̃_i(p_k)&lt;br/&gt;插值恢复系数 a_0..a_{d-1}&lt;br/&gt;盲化: ã_j ← a_j + B^*掩码
+    P-&gt;&gt;V: {ã_0, ..., ã_{d-1}}
+    
+    Note over V: 验证:&lt;br/&gt;Σ χ_i·g_i(q̃) + B^*掩码&lt;br/&gt;?= Σ ã_j·Δ^j
+</pre>
+
 <h3 id="22-step-1witness-承诺commit"><a class="header" href="#22-step-1witness-承诺commit">2.2 Step 1：Witness 承诺（<code>commit</code>）</a></h3>
-<p><strong>代数动机</strong>：Prover 不能直接发送 $w$（会泄露 witness），也不能发送 $u$（Verifier 已通过 $\mathcal{F}_{\text{sVOLE}}$ 部分知道 $u$）。解决方案是发送<strong>校正子</strong>（correction）：</p>
+<p>代数动机：Prover 不能直接发送 $w$（会泄露 witness），也不能发送 $u$（Verifier 已通过 $\mathcal{F}_{\text{sVOLE}}$ 部分知道 $u$）。解决方案是发送校正子（correction）：</p>
 <p>$$
 \text{corr} = w \oplus u \in \mathbb{F}_2^k
 $$</p>
@@ -271,8 +256,8 @@ $$</p>
     CommitmentMessage { correction }
 }
 <span class="boring">}</span></code></pre>
-<p><strong>校正子的信息论安全性</strong>：由于 $u$ 是 Prover 私有的秘密向量（Verifier 只知道 $q$ 和 $\Delta$，但 $u$ 对 Verifier 具有 $-\log_2(\text{Pr}[u=0]) = k$ 比特的熵），$w \oplus u$ 完美隐藏了 $w$。</p>
-<p><strong>Verifier 端的吸收</strong>：Verifier 利用校正子修正自己的 $q$：</p>
+<p>校正子的信息论安全性：由于 $u$ 是 Prover 私有的秘密向量（Verifier 只知道 $q$ 和 $\Delta$，但 $u$ 对 Verifier 具有 $-\log_2(\text{Pr}[u=0]) = k$ 比特的熵），$w \oplus u$ 完美隐藏了 $w$。</p>
+<p>Verifier 端的吸收：Verifier 利用校正子修正自己的 $q$：</p>
 <p>$$
 \tilde{q}_i = q_i + \text{corr}<em>i \cdot \Delta \in \mathbb{F}</em>{2^{128}}
 $$</p>
@@ -282,8 +267,8 @@ $$</p>
 $$</p>
 <p>当 $w_i = u_i$ 时，$\text{corr}_i = 0$，$\tilde{q}_i = q_i = v_i$
 当 $w_i \neq u_i$ 时，$\text{corr}_i = 1$，$\tilde{q}_i = q_i + \Delta = v_i$</p>
-<p>因此 $\tilde{q} = \mathbf{v}$ 当且仅当校正子正确。Verifier 在<strong>不知道 $u$ 和 $v$</strong> 的情况下，获得了正确 witness 所对应的 VOLE 关系。</p>
-<p><strong>常数时间实现</strong>：<code>corrected_q_from_bitvec</code> 使用 <code>conditional_select</code>（来自 <code>subtle</code> crate）逐字节展开校正子位，避免秘密依赖的分支。</p>
+<p>因此 $\tilde{q} = \mathbf{v}$ 当且仅当校正子正确。Verifier 在不知道 $u$ 和 $v$ 的情况下，获得了正确 witness 所对应的 VOLE 关系。</p>
+<p>常数时间实现：<code>corrected_q_from_bitvec</code> 使用 <code>conditional_select</code>（来自 <code>subtle</code> crate）逐字节展开校正子位，避免秘密依赖的分支。</p>
 <h3 id="23-step-2挑战生成challengemessage"><a class="header" href="#23-step-2挑战生成challengemessage">2.3 Step 2：挑战生成（<code>ChallengeMessage</code>）</a></h3>
 <p>在交互式版本中，Verifier 采样随机域元素：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -301,7 +286,7 @@ ChallengeMessage { challenges: f128_challenges_from_seed(seed, challenge_count) 
 <span class="boring">}</span></code></pre>
 <h3 id="24-step-3prover-响应respond--respond_resolved_plus_implicit"><a class="header" href="#24-step-3prover-响应respond--respond_resolved_plus_implicit">2.4 Step 3：Prover 响应（<code>respond</code> / <code>respond_resolved_plus_implicit</code>）</a></h3>
 <p>Prover 面对的核心任务是：计算 $\tilde{G}(Y) = \sum_{i=1}^t \chi_i \cdot \tilde{g}_i(Y)$ 在 $c+1$ 个插值点上的值，然后插值恢复多项式系数，最后用辅助 VOLE 进行盲化。</p>
-<p>代码提供<strong>三种响应模式</strong>：</p>
+<p>代码提供三种响应模式：</p>
 <h4 id="模式-a通用-anf-求值respond"><a class="header" href="#模式-a通用-anf-求值respond">模式 A：通用 ANF 求值（<code>respond</code>）</a></h4>
 <p>直接对约束系统 ${g_i}$ 的每个多项式在每个插值点逐项求值：</p>
 <pre><code>Algorithm: respond(system, challenge)
@@ -318,7 +303,7 @@ ChallengeMessage { challenges: f128_challenges_from_seed(seed, challenge_count) 
 5. 加上辅助 VOLE 的线性因子乘积 → 盲化系数
 6. 返回 ProofMessage { blinded_coeffs }
 </code></pre>
-<p><strong>关键子函数</strong> <code>evaluate_ck_at_point_precomputed</code>：</p>
+<p>关键子函数 <code>evaluate_ck_at_point_precomputed</code>：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub(crate) fn evaluate_ck_at_point_precomputed&lt;F: FiniteRing&gt;(
@@ -355,7 +340,7 @@ $$</p>
 <h4 id="模式-c自定义求值器respond_advanced_implicit"><a class="header" href="#模式-c自定义求值器respond_advanced_implicit">模式 C：自定义求值器（<code>respond_advanced_implicit</code>）</a></h4>
 <p>允许应用层提供自定义求值函数 <code>evaluator: Fn(&amp;[F], F) -&gt; F</code>，用于环签名中需要同时求值两个矩阵的复杂场景。</p>
 <h3 id="25-verifier-验证verify--verify_resolved_plus_implicit"><a class="header" href="#25-verifier-验证verify--verify_resolved_plus_implicit">2.5 Verifier 验证（<code>verify</code> / <code>verify_resolved_plus_implicit</code>）</a></h3>
-<p><strong>核心验证等式</strong>：</p>
+<p>核心验证等式：</p>
 <p>$$
 \sum_{i=1}^t \chi_i \cdot g_i(\tilde{q}) + \prod_{h=1}^{d-1} q_{\text{aux}, h} \stackrel{?}{=} \sum_{j=0}^{d-1} \tilde{a}_j \cdot \Delta^j
 $$</p>
@@ -372,7 +357,7 @@ $$</p>
     Ok(lhs == rhs)
 }
 <span class="boring">}</span></code></pre>
-<p><strong>逐项解析</strong>：</p>
+<p>逐项解析：</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -385,7 +370,7 @@ $$</p>
 </tbody>
 </table>
 </div>
-<p><strong><code>evaluate_univariate</code> 使用 Horner 法则</strong>：</p>
+<p><code>evaluate_univariate</code> 使用 Horner 法则：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn evaluate_univariate&lt;F&gt;(coeffs: &amp;[F], point: F) -&gt; F {
@@ -393,20 +378,20 @@ $$</p>
 }
 <span class="boring">}</span></code></pre>
 <p>等价于 $\tilde{a}_0 + \tilde{a}_1 \cdot \Delta + \tilde{a}_2 \cdot \Delta^2 + \cdots$，使用 Horner 法需要 $d$ 次乘法和 $d$ 次加法。</p>
-<p><strong>为什么 $\prod_h q_{\text{aux}, h}$ 会出现？</strong></p>
-<p>因为有 $d-1$ 个辅助 VOLE 相关性用于<strong>盲化</strong>（masking）。Prover 在响应中加入了 $\prod_h (v_{\text{aux},h} + u_{\text{aux},h} \cdot Y)$，Verifier 相应地在验证时加入 $\prod_h q_{\text{aux},h}$。</p>
+<p>为什么 $\prod_h q_{\text{aux}, h}$ 会出现？</p>
+<p>因为有 $d-1$ 个辅助 VOLE 相关性用于盲化（masking）。Prover 在响应中加入了 $\prod_h (v_{\text{aux},h} + u_{\text{aux},h} \cdot Y)$，Verifier 相应地在验证时加入 $\prod_h q_{\text{aux},h}$。</p>
 <p>完整的正确性推导：</p>
-<p><strong>Prover</strong> 计算盲化系数：
+<p>Prover 计算盲化系数：
 $$
 \tilde{a}<em>j = a_j + \sum</em>{h: \text{组合}} (\text{来自线性因子乘积的 } Y^j \text{ 系数})
 $$</p>
-<p><strong>Verifier</strong> 验证：
+<p>Verifier 验证：
 $$
 \sum_i \chi_i g_i(\tilde{q}) + \prod_h q_{\text{aux},h} = \sum_j \tilde{a}_j \cdot \Delta^j
 $$</p>
-<p>当 $\tilde{q} = \mathbf{v}$ 且 witness 正确时，$\sum_i \chi_i g_i(\tilde{q}) = \sum_j a_j \cdot \Delta^j$，而线性因子乘积的盲化在两侧恰好抵消。</p>
+<p>当 $\tilde{q} = \mathbf{v}$ 且 witness 正确时，$\sum_i \chi_i g_i(\tilde{q}) = \sum_j a_j \cdot \Delta^j$，而线性因子乘积的盲化在两侧相等，从而在不泄露原多项式系数 $a_j$ 的情况下完成了等式的代数校验。。</p>
 <h3 id="26-插值细节"><a class="header" href="#26-插值细节">2.6 插值细节</a></h3>
-<p><code>interpolate_polynomial_prefix_into</code> 实现标准<strong>拉格朗日插值</strong>。插值点选择：</p>
+<p><code>interpolate_polynomial_prefix_into</code> 实现标准拉格朗日插值。插值点选择：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn fill_interpolation_points&lt;F: FiniteField&gt;(points: &amp;mut [F]) {
@@ -418,7 +403,7 @@ $$</p>
 }
 <span class="boring">}</span></code></pre>
 <p>即 $P = {0, 1, g, g^2, \dots, g^{d-1}}$，其中 $g$ 是 $\mathbb{F}_{2^{128}}$ 的乘法生成元。这保证了所有插值点互不相同（因为 $g$ 的阶为 $2^{128}-1$）。</p>
-<p>当度数 $d \le 15$ 时（<code>STACK_POLY_COEFFS = 16</code>），插值工作缓冲区使用<strong>栈分配</strong>，避免堆分配的开销。</p>
+<p>当度数 $d \le 15$ 时（<code>STACK_POLY_COEFFS = 16</code>），插值工作缓冲区使用栈分配，避免堆分配的开销。</p>
 <hr>
 <h2 id="三完整的数据流公式-代码映射"><a class="header" href="#三完整的数据流公式-代码映射">三、完整的数据流公式-代码映射</a></h2>
 <div class="table-wrapper">
@@ -445,8 +430,8 @@ $$</p>
 <hr>
 <h2 id="四fiat-shamir-变换transcriptrs"><a class="header" href="#四fiat-shamir-变换transcriptrs">四、Fiat-Shamir 变换：<code>transcript.rs</code></a></h2>
 <h3 id="41-random-oracle-实例化"><a class="header" href="#41-random-oracle-实例化">4.1 Random Oracle 实例化</a></h3>
-<p>Fiat-Shamir 启发式将交互式协议转换为非交互式零知识证明（NIZK），其核心是将 Verifier 的随机挑战替换为对协议 transcript 的 <strong>密码学哈希</strong>。</p>
-<p><code>Transcript</code> 使用 <strong>SHA-3 Keccak-256</strong> 作为底层哈希函数实例化 Random Oracle：</p>
+<p>Fiat-Shamir 启发式将交互式协议转换为非交互式零知识证明（NIZK），其核心是将 Verifier 的随机挑战替换为对协议 transcript 的 密码学哈希。</p>
+<p><code>Transcript</code> 使用 SHA-3 Keccak-256 作为底层哈希函数实例化 Random Oracle：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use sha3::{Digest, Keccak256};
@@ -456,22 +441,35 @@ pub struct Transcript {
 }
 <span class="boring">}</span></code></pre>
 <h3 id="42-absorb-squeeze-模式"><a class="header" href="#42-absorb-squeeze-模式">4.2 Absorb-Squeeze 模式</a></h3>
-<p>Transcript 遵循 <strong>海绵结构</strong>（Sponge Construction）的 absorb-squeeze 范式：</p>
-<pre><code>         Absorb (吸收)                    Squeeze (挤出)
-  ┌──────────────────────────────┐    ┌─────────────────────────┐
-  │  domain_separator            │    │                         │
-  │  + public_key (B, y, n, c)  │    │                         │
-  │  + commitment_hash           │    │  Keccak-256 Hash        │
-  │  + consistency_c             │    │      ↓                  │
-  │  + u_tilde / v_tilde         │    │  256-bit Seed           │
-  │  + correction bits           │    │      ↓                  │
-  │  + proof coefficients        │    │  ChaCha20 PRG 展开      │
-  │  + grind_counter             │    │      ↓                  │
-  │                              │    │  F128b 挑战值序列       │
-  └──────────────────────────────┘    └─────────────────────────┘
-</code></pre>
+<p>Transcript 遵循 海绵结构（Sponge Construction）的 absorb-squeeze 范式：</p>
+<pre class="mermaid">graph TD
+    subgraph Absorb [Absorb 吸收阶段]
+        direction TB
+        A1[domain_separator] --&gt; A2[public_key]
+        A2 --&gt; A3[commitment_hash]
+        A3 --&gt; A4[consistency_c]
+        A4 --&gt; A5[u_tilde / v_tilde]
+        A5 --&gt; A6[correction bits]
+        A6 --&gt; A7[proof coefficients]
+        A7 --&gt; A8[grind_counter]
+    end
+
+    A8 --&gt; K((Keccak-256&lt;br&gt;Hash Engine))
+
+    subgraph Squeeze [Squeeze 挤出阶段]
+        direction TB
+        K --&gt; S[256-bit Seed]
+        S --&gt; PRG{ChaCha20 PRG&lt;br&gt;流式展开}
+        PRG --&gt; Out[F128b 挑战值序列]
+    end
+
+    style Absorb fill:none,stroke:#61afef,stroke-width:2px,stroke-dasharray: 5 5
+    style Squeeze fill:none,stroke:#e06c75,stroke-width:2px,stroke-dasharray: 5 5
+    style K fill:none,stroke:#98c379,stroke-width:3px
+</pre>
+
 <h3 id="43-absorb-方法"><a class="header" href="#43-absorb-方法">4.3 Absorb 方法</a></h3>
-<p><strong><code>absorb_labelled_bytes(label, bytes)</code></strong> — 通用字节吸收：</p>
+<p><code>absorb_labelled_bytes(label, bytes)</code> — 通用字节吸收：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn absorb_frame(hasher: &amp;mut Keccak256, label: &amp;[u8], bytes: &amp;[u8]) {
@@ -481,15 +479,15 @@ pub struct Transcript {
     hasher.update(bytes);                               // 数据
 }
 <span class="boring">}</span></code></pre>
-<p><strong>帧编码确保域分离</strong>：每个字段前有标签长度 + 标签 + 数据长度，保证 $(L_1, D_1)$ 和 $(L_2, D_2)$ 的拼接不会与 $(L_1 | D_1 | L_2, D_2)$ 混淆。</p>
-<p><strong><code>absorb_usize(label, value)</code></strong> — 吸收整数（转为小端 u64）：</p>
+<p>帧编码确保域分离：每个字段前有标签长度 + 标签 + 数据长度，保证 $(L_1, D_1)$ 和 $(L_2, D_2)$ 的拼接不会与 $(L_1 | D_1 | L_2, D_2)$ 混淆。</p>
+<p><code>absorb_usize(label, value)</code> — 吸收整数（转为小端 u64）：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub fn absorb_usize(&amp;mut self, label: &amp;[u8], value: usize) {
     self.absorb_labelled_bytes(label, &amp;(value as u64).to_le_bytes());
 }
 <span class="boring">}</span></code></pre>
-<p><strong><code>absorb_bits(label, bits)</code></strong> — 吸收精确比特数（使用 <code>update_digest_with_exact_bits</code> 避免尾部位填充混淆）：</p>
+<p><code>absorb_bits(label, bits)</code> — 吸收精确比特数（使用 <code>update_digest_with_exact_bits</code> 避免尾部位填充混淆）：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub fn absorb_bits(&amp;mut self, label: &amp;[u8], bits: &amp;MainBitSlice) {
@@ -499,7 +497,7 @@ pub struct Transcript {
     update_digest_with_exact_bits(&amp;mut self.hasher, bits);
 }
 <span class="boring">}</span></code></pre>
-<p><strong><code>absorb_matrix(label, matrix)</code></strong> — 吸收流式矩阵（只吸收种子，不吸收整个矩阵）：</p>
+<p><code>absorb_matrix(label, matrix)</code> — 吸收流式矩阵（只吸收种子，不吸收整个矩阵）：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub fn absorb_matrix(&amp;mut self, label: &amp;[u8], matrix: &amp;StreamingMatrixCols) {
@@ -508,16 +506,16 @@ pub struct Transcript {
     self.absorb_labelled_bytes(label, &amp;matrix.seed());
 }
 <span class="boring">}</span></code></pre>
-<p>这利用了矩阵的<strong>伪随机性质</strong>——矩阵由种子 $\sigma$ 确定，吸收 $\sigma$ 就等价于吸收了整个矩阵。</p>
+<p>这利用了矩阵的伪随机性质——矩阵由种子 $\sigma$ 确定，吸收 $\sigma$ 就等价于吸收了整个矩阵。</p>
 <h3 id="44-squeeze-方法"><a class="header" href="#44-squeeze-方法">4.4 Squeeze 方法</a></h3>
-<p><strong><code>finalize_seed()</code></strong> — 完成 Keccak-256 哈希，输出 256-bit 种子：</p>
+<p><code>finalize_seed()</code> — 完成 Keccak-256 哈希，输出 256-bit 种子：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub fn finalize_seed(self) -&gt; [u8; 32] {
     self.hasher.finalize().into()
 }
 <span class="boring">}</span></code></pre>
-<p><strong><code>challenge_f128_vec(count)</code></strong> — 从种子展开 $\mathbb{F}_{2^{128}}$ 挑战值序列：</p>
+<p><code>challenge_f128_vec(count)</code> — 从种子展开 $\mathbb{F}_{2^{128}}$ 挑战值序列：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub fn challenge_f128_vec(self, count: usize) -&gt; Vec&lt;F128b&gt; {
@@ -532,13 +530,13 @@ pub fn f128_challenges_from_seed(seed: [u8; 32], count: usize) -&gt; Vec&lt;F128
     }).collect()
 }
 <span class="boring">}</span></code></pre>
-<p><strong>双层展开设计</strong>：</p>
+<p>双层展开设计：</p>
 <ol>
-<li>Keccak-256 从 absorb 数据中<strong>压缩</strong>出 256-bit 种子</li>
-<li>ChaCha20 PRG 将种子<strong>扩展</strong>为任意长度的挑战值序列</li>
+<li>Keccak-256 从 absorb 数据中压缩出 256-bit 种子</li>
+<li>ChaCha20 PRG 将种子扩展为任意长度的挑战值序列</li>
 </ol>
 <p>这样设计的原因是：如果直接使用 Keccak-256 的 XOF 模式（如 SHAKE256），每次 squeeze 都需要重新处理 absorb 数据。而 ChaCha20 的 keyed PRG 模式可以在固定时间内的任意长度展开，更适合大量挑战值的生成。</p>
-<p><strong><code>challenge_bytes(count)</code></strong> — 通用字节挑战：</p>
+<p><code>challenge_bytes(count)</code> — 通用字节挑战：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub fn challenge_bytes(self, count: usize) -&gt; Vec&lt;u8&gt; {
@@ -562,9 +560,9 @@ const OPENING_CHALLENGE_DOMAIN: &amp;[u8] = b"CodeBasedZK/FAEST-sVOLE/opening-ch
 </span>const FS_DOMAIN_SEPARATOR: &amp;[u8] = b"ReSolveD+_v1.0_Sigma_Challenge";
 const FS_DOMAIN_SEPARATOR: &amp;[u8] = b"RingSig_v1.0";
 <span class="boring">}</span></code></pre>
-<p>这确保了不同协议、不同阶段的挑战无法互换，防止<strong>域混淆攻击</strong>。</p>
+<p>这确保了不同协议、不同阶段的挑战无法互换，防止域混淆攻击。</p>
 <h3 id="46-确定性验证"><a class="header" href="#46-确定性验证">4.6 确定性验证</a></h3>
-<p>单元测试 <code>transcript_is_deterministic</code> 验证相同 absorb 输入产生相同挑战，<code>transcript_is_order_sensitive</code> 验证 absorb 顺序影响输出——满足 Random Oracle 的 <strong>一致性</strong> 和 <strong>敏感性</strong>。</p>
+<p>单元测试 <code>transcript_is_deterministic</code> 验证相同 absorb 输入产生相同挑战，<code>transcript_is_order_sensitive</code> 验证 absorb 顺序影响输出——满足 Random Oracle 的 一致性 和 敏感性。</p>
 <hr>
 <h2 id="五完整非交互式协议流程"><a class="header" href="#五完整非交互式协议流程">五、完整非交互式协议流程</a></h2>
 <p>结合 VOLEitH 状态机（模块三）、隐式求值引擎（模块四）和 $\Pi^t_{dD-Rep}$（本模块），完整的非交互式签名流程为：</p>
@@ -610,10 +608,10 @@ Verifier:
 <tr><th>安全属性</th><th>实现机制</th></tr>
 </thead>
 <tbody>
-<tr><td><strong>零知识性</strong></td><td>VOLE 校正子 $w \oplus u$ 隐藏 witness；盲化系数 $\tilde{a}_j$ 隐藏多项式系数</td></tr>
-<tr><td><strong>可靠性</strong></td><td>验证等式 $\sum \chi_i g_i(\tilde{q}) + \Pi q_{\text{aux}} = \sum \tilde{a}_j \Delta^j$ 在违规 witness 下成立的概率 $\le 2^{-\lambda}$</td></tr>
-<tr><td><strong>非交互性</strong></td><td>Fiat-Shamir 变换将 Verifier 的随机挑战替换为 SHA-3 哈希输出</td></tr>
-<tr><td><strong>抗碰撞</strong></td><td>Fiat-Shamir 挑战域分离 + Keccak-256 抗碰撞保证</td></tr>
+<tr><td>零知识性</td><td>VOLE 校正子 $w \oplus u$ 隐藏 witness；盲化系数 $\tilde{a}_j$ 隐藏多项式系数</td></tr>
+<tr><td>可靠性</td><td>验证等式 $\sum \chi_i g_i(\tilde{q}) + \Pi q_{\text{aux}} = \sum \tilde{a}_j \Delta^j$ 在违规 witness 下成立的概率 $\le 2^{-\lambda}$</td></tr>
+<tr><td>非交互性</td><td>Fiat-Shamir 变换将 Verifier 的随机挑战替换为 SHA-3 哈希输出</td></tr>
+<tr><td>抗碰撞</td><td>Fiat-Shamir 挑战域分离 + Keccak-256 抗碰撞保证</td></tr>
 </tbody>
 </table>
 </div>
