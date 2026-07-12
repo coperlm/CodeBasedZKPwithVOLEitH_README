@@ -259,7 +259,7 @@ $$</p>
 </table>
 </div>
 <h3 id="33-核心流程图"><a class="header" href="#33-核心流程图">3.3 核心流程图</a></h3>
-<pre><code class="language-mermaid">graph TD
+<pre class="mermaid">graph TD
     subgraph SMC [StreamingMatrixCols 核心逻辑]
         direction TB
         A[seed: 16 Bytes] --&gt;|初始化 MatrixPrg| B(AES-128 密钥扩展)
@@ -279,7 +279,8 @@ $$</p>
     style SMC fill:transparent,stroke:#666,stroke-width:2px,stroke-dasharray: 5 5
     style E fill:#f9f,stroke:#333,stroke-width:2px
     style G fill:#bbf,stroke:#333,stroke-width:2px
-</code></pre>
+</pre>
+
 <h3 id="34-内存管理策略详解"><a class="header" href="#34-内存管理策略详解">3.4 内存管理策略详解</a></h3>
 <h4 id="策略一零物化zero-materialization"><a class="header" href="#策略一零物化zero-materialization">策略一：零物化（Zero Materialization）</a></h4>
 <p>矩阵从未完整存储在内存中。<code>StreamingMatrixCols</code> 仅持有 32 字节的状态信息（16 字节种子 + 部分元数据）。每次调用 <code>column(j)</code> 生成一列的 <code>n</code> 个比特（约 $n/8$ 字节），用完即丢弃。这使得 $1280 \times 81920$ 的矩阵实际占用从约 $12.5\text{ MB}$ 降至约 $0.00003\text{ MB}$。</p>
@@ -483,6 +484,8 @@ fn test_streaming_matrix_is_deterministic() {
         <script src="book-609e4cb8.js"></script>
 
         <!-- Custom JS scripts -->
+        <script src="mermaid-eefea253.min.js"></script>
+        <script src="mermaid-init-ccf746f1.js"></script>
 
 
 
