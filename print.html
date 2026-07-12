@@ -58,7 +58,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-44900fc6.js";
+            window.path_to_searchindex_js = "searchindex-e32a1582.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61c3e6e9.js"></script>
@@ -1029,11 +1029,11 @@ $$</p>
 <p>其中 $\Delta$ 是 Verifier 的全局挑战，$u$ 是 Prover 的秘密比特向量，$\mathbf{v}, \mathbf{q}$ 是对应的 $\mathbb{F}_{2^{128}}$ 域元素向量。</p>
 <p>“延迟“的含义是：在协议初始阶段（承诺阶段），Prover 和 Verifier 仅交换承诺，等到协议运行到特定步骤后才确定 $\Delta$ 和挑战。</p>
 <h3 id="42-prover-状态机voleithprover"><a class="header" href="#42-prover-状态机voleithprover">4.2 Prover 状态机：<code>VoleitHProver</code></a></h3>
-<pre class="mermaid">graph TD
-    A([commit]) --&gt;|生成 root_key, iv| B[faest_vole_commit C层]
+<pre class="mermaid">graph LR
+    A([commit]) --&gt;|生成 key, iv| B[faest_vole_commit]
     B --&gt; C[推导 challenge_1]
-    C --&gt; D[计算 u_tilde, v_tilde]
-    D --&gt; E[提取 ProverCorrelations]
+    C --&gt; D[计算 u/v_tilde]
+    D --&gt; E[提取 Correlations]
     
     E --&gt; F([commitment_for_witness])
     F --&gt; G[返回 CommitmentMessage]
@@ -1047,9 +1047,9 @@ $$</p>
     L --&gt; M[推导 opening_challenge]
     
     M --&gt; N{Grinding&lt;br/&gt;满足零尾?}
-    N --&gt;|否: counter ++| M
-    N --&gt;|是| O[调用 bavc_open C层]
-    O --&gt; P(((返回 VoleitHTranscript)))
+    N --&gt;|否: counter++| M
+    N --&gt;|是| O[调用 bavc_open]
+    O --&gt; P(((返回 Transcript)))
 
     style A fill:none,stroke:#61afef,stroke-width:2px
     style F fill:none,stroke:#61afef,stroke-width:2px
@@ -1318,7 +1318,7 @@ $$</p>
 $$</p>
 <p>利用这个交换律，可以将求值复杂度从 $\mathcal{O}(t \cdot 2^c)$ 降低到 $\mathcal{O}(m \cdot c)$。</p>
 <h3 id="32-三步求值流水线"><a class="header" href="#32-三步求值流水线">3.2 三步求值流水线</a></h3>
-<pre class="mermaid">graph LR
+<pre class="mermaid">graph TD
     Input[challenges χ&lt;br&gt;t 个 F_128] --&gt; Step1
 
     subgraph Step1 [Step 1: χ' 聚合求和交换]
