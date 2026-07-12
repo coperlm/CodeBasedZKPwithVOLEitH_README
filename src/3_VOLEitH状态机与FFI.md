@@ -2,7 +2,7 @@
 
 ## 一、概述
 
-本模块是整个 ZKP 系统的核心引擎——它负责将密码学约束系统与底层的延迟 VOLE 功能（Delayed VOLE functionality, $\mathcal{F}_{\text{sVOLE}}$）衔接起来。架构上采用两层级联设计：
+本模块是整个 ZKP 系统的核心引擎——它负责将密码学约束系统与底层的延迟 VOLE 功能（Delayed VOLE functionality, $\mathcal{F}\_{\text{sVOLE}}$）衔接起来。架构上采用两层级联设计：
 
 1. C 层（FAEST）：提供高效的 GGM 树形向量承诺（BAVC - Binary Auxiliary Vector Commitment），处理 $\tau$ 棵 $\lambda$ 深度的 GGM 树的构建、打开和验证。这是密码学计算密集部分。
 2. Rust 层：通过 FFI 安全封装 C 层状态机，并在此基础上实现 Prover/Verifier 的协议状态机，负责挑战生成、相关性提取（correlation extraction）、约束绑定等高层协议逻辑。
@@ -14,7 +14,7 @@
 在 VOLE-in-the-Head 范式中，Prover 需要承诺 $\tau$ 个伪随机种子 $K_1, \dots, K_\tau$，然后对每个种子应用 GGM 伪随机函数树（Goldreich-Goldwasser-Micali 树）展开出 $\lambda$ 层的叶子。这些叶子形成了 VOLE 关系中 Prover 的秘密向量：
 
 $$
-\{(u_i, v_i)\}_{i=1}^\tau \xrightarrow{\text{GGM 展开}} \{(u, \mathbf{v})\} \in \mathbb{F}_2^\ell \times \mathbb{F}_{2^{128}}^\ell
+\{(u_i, v_i)\}\_{i=1}^\tau \xrightarrow{\text{GGM 展开}} \{(u, \mathbf{v})\} \in \mathbb{F}\_2^\ell \times \mathbb{F}\_{2^{128}}^\ell
 $$
 
 BAVC（Binary Auxiliary Vector Commitment）是 FAEST 使用的一种优化的 GGM 树承诺方案，它支持：
@@ -187,8 +187,8 @@ H = (h_2, h_3) = (r_0 \cdot h_0 + r_1 \cdot h_1,\; r_2 \cdot h_0 + r_3 \cdot h_1
 $$
 
 其中：
-- $h_0$ 通过 Horner 法在 $\mathbb{F}_{2^{128}}$ 上计算多项式求值
-- $h_1$ 通过 Horner 法在 $\mathbb{F}_{2^{64}}$ 上计算多项式求值（使用 `gf64_mul`）
+- $h_0$ 通过 Horner 法在 $\mathbb{F}\_{2^{128}}$ 上计算多项式求值
+- $h_1$ 通过 Horner 法在 $\mathbb{F}\_{2^{64}}$ 上计算多项式求值（使用 `gf64_mul`）
 
 `gf64_mul` 的双重加速策略：
 
@@ -197,7 +197,7 @@ $$
 | 硬件加速 | x86_64 + PCLMULQDQ | `_mm_clmulepi64_si128` 一次完成 64×64→128 无进位乘法 |
 | 可移植回退 | 其他平台 | 逐位 `shift-and-XOR` 软实现 |
 
-硬件路径使用 PCLMULQDQ 指令完成 $\mathbb{F}_{2^{64}}$ 上的无进位多项式乘法，约简通过经典的两步折叠（fold）算法实现：
+硬件路径使用 PCLMULQDQ 指令完成 $\mathbb{F}\_{2^{64}}$ 上的无进位多项式乘法，约简通过经典的两步折叠（fold）算法实现：
 
 ```rust
 let overflow = (high >> 63) ^ (high >> 61) ^ (high >> 60);
@@ -216,10 +216,10 @@ low ^ high ^ (high << 1) ^ (high << 3) ^ (high << 4)
 在 VOLEitH 协议中，Prover 和 Verifier 需要建立以下 VOLE 关系：
 
 $$
-\text{Prover 持有: } (u, \mathbf{v}) \in \mathbb{F}_2^\ell \times \mathbb{F}_{2^{128}}^\ell
+\text{Prover 持有: } (u, \mathbf{v}) \in \mathbb{F}\_2^\ell \times \mathbb{F}\_{2^{128}}^\ell
 $$
 $$
-\text{Verifier 持有: } (\Delta, \mathbf{q}) \in \mathbb{F}_{2^{128}} \times \mathbb{F}_{2^{128}}^\ell
+\text{Verifier 持有: } (\Delta, \mathbf{q}) \in \mathbb{F}\_{2^{128}} \times \mathbb{F}\_{2^{128}}^\ell
 $$
 
 满足线性关系：
@@ -228,7 +228,7 @@ $$
 \mathbf{v} = \mathbf{q} + \Delta \cdot u
 $$
 
-其中 $\Delta$ 是 Verifier 的全局挑战，$u$ 是 Prover 的秘密比特向量，$\mathbf{v}, \mathbf{q}$ 是对应的 $\mathbb{F}_{2^{128}}$ 域元素向量。
+其中 $\Delta$ 是 Verifier 的全局挑战，$u$ 是 Prover 的秘密比特向量，$\mathbf{v}, \mathbf{q}$ 是对应的 $\mathbb{F}\_{2^{128}}$ 域元素向量。
 
 "延迟"的含义是：在协议初始阶段（承诺阶段），Prover 和 Verifier 仅交换承诺，等到协议运行到特定步骤后才确定 $\Delta$ 和挑战。
 
