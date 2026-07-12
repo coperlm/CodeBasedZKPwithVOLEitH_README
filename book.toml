@@ -1,0 +1,6 @@
+[book]
+authors = ["coperlm"]
+language = "en"
+
+[output.html]
+mathjax-support = true

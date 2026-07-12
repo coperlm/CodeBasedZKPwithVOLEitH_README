@@ -1,0 +1,685 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>模块三：VOLEitH状态机与FFI</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="favicon-8114d1fc.png">
+        <link rel="stylesheet" href="css/variables-8adf115d.css">
+        <link rel="stylesheet" href="css/general-e96d0476.css">
+        <link rel="stylesheet" href="css/chrome-d279d366.css">
+        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex-9cb3f75c.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc-a46918db.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title"></h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="模块三voleith-状态机与跨语言-ffi"><a class="header" href="#模块三voleith-状态机与跨语言-ffi">模块三：VOLEitH 状态机与跨语言 FFI</a></h1>
+<hr>
+<h2 id="一概述"><a class="header" href="#一概述">一、概述</a></h2>
+<p>本模块是整个 ZKP 系统的<strong>核心引擎</strong>——它负责将密码学约束系统与底层的<strong>延迟 VOLE 功能</strong>（Delayed VOLE functionality, $\mathcal{F}_{\text{sVOLE}}$）衔接起来。架构上采用<strong>两层级联</strong>设计：</p>
+<ol>
+<li><strong>C 层（FAEST）</strong>：提供高效的 <strong>GGM 树形向量承诺</strong>（BAVC - Binary Auxiliary Vector Commitment），处理 $\tau$ 棵 $\lambda$ 深度的 GGM 树的构建、打开和验证。这是密码学计算密集部分。</li>
+<li><strong>Rust 层</strong>：通过 FFI 安全封装 C 层状态机，并在此基础上实现 Prover/Verifier 的<strong>协议状态机</strong>，负责挑战生成、相关性提取（correlation extraction）、约束绑定等高层协议逻辑。</li>
+</ol>
+<hr>
+<h2 id="二为什么需要-ffi-复用-faest-的-c-代码"><a class="header" href="#二为什么需要-ffi-复用-faest-的-c-代码">二、为什么需要 FFI 复用 FAEST 的 C 代码？</a></h2>
+<h3 id="21-ggm-树形向量承诺bavc的密码学角色"><a class="header" href="#21-ggm-树形向量承诺bavc的密码学角色">2.1 GGM 树形向量承诺（BAVC）的密码学角色</a></h3>
+<p>在 VOLE-in-the-Head 范式中，Prover 需要承诺 $\tau$ 个伪随机种子 $K_1, \dots, K_\tau$，然后对每个种子应用 <strong>GGM 伪随机函数树</strong>（Goldreich-Goldwasser-Micali 树）展开出 $\lambda$ 层的叶子。这些叶子形成了 VOLE 关系中 Prover 的秘密向量：</p>
+<p>$$
+{(u_i, v_i)}_{i=1}^\tau \xrightarrow{\text{GGM 展开}} {(u, \mathbf{v})} \in \mathbb{F}<em>2^\ell \times \mathbb{F}</em>{2^{128}}^\ell
+$$</p>
+<p>BAVC（Binary Auxiliary Vector Commitment）是 FAEST 使用的一种优化的 GGM 树承诺方案，它支持：</p>
+<ul>
+<li><strong>批量承诺</strong>：一次承诺 $\tau$ 棵树的所有根密钥</li>
+<li><strong>选择性打开</strong>：根据 Verifier 挑战，仅打开挑战指定的叶子路径</li>
+<li><strong>一致性验证</strong>：Verifier 可通过承诺哈希验证打开的叶子是否正确</li>
+</ul>
+<h3 id="22-不复用的代价"><a class="header" href="#22-不复用的代价">2.2 不复用的代价</a></h3>
+<p>如果完全用 Rust 重新实现 BAVC：</p>
+<ul>
+<li>需要重新实现 $\tau$ 棵 GGM 树的构建、密钥扩展、Merkle 哈希聚合——这是数千行经过审计的 C 代码</li>
+<li>需要保证与 FAEST 规范的行为<strong>完全一致</strong>（包括常数时间执行、字节序、SHA-3 用法等）</li>
+<li>FAEST 的 C 代码经历了 NIST 后量子密码标准化过程的严格审查，复用它直接继承了其<strong>安全保证</strong></li>
+</ul>
+<h3 id="23-代码组织"><a class="header" href="#23-代码组织">2.3 代码组织</a></h3>
+<pre><code>faest-ref/           ← C 源码（子模块）
+  ├── vole.c         ← 核心 VOLE 展开逻辑
+  ├── bavc.c/h       ← BAVC 树承诺实现
+  └── instances.c/h  ← 参数实例化
+
+src/
+  ├── faest_abi.c     ← C 侧 ABI 验证辅助函数
+  ├── faest_ffi.rs    ← Rust 侧 FFI 绑定 + Rust 复用的 VOLE 哈希
+  ├── core/voleith.rs ← 高层 Prover/Verifier 状态机
+  └── core/wire.rs    ← 序列化/反序列化
+</code></pre>
+<hr>
+<h2 id="三ffi-绑定的安全封装faest_ffirs"><a class="header" href="#三ffi-绑定的安全封装faest_ffirs">三、FFI 绑定的安全封装：<code>faest_ffi.rs</code></a></h2>
+<h3 id="31-c-侧数据结构的内存布局对齐"><a class="header" href="#31-c-侧数据结构的内存布局对齐">3.1 C 侧数据结构的内存布局对齐</a></h3>
+<p><code>faest_ffi.rs</code> 使用 <code>#[repr(C)]</code> 精确复刻了 C 侧的两个核心结构体：</p>
+<p><strong><code>FaestParamset</code></strong> — FAEST 参数集（对应 C 的 <code>faest_paramset_t</code>）</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Rust 字段</th><th>C 偏移</th><th>含义</th></tr>
+</thead>
+<tbody>
+<tr><td><code>lambda</code></td><td><code>offset 0</code></td><td>安全参数（128/192/256）</td></tr>
+<tr><td><code>tau</code></td><td><code>offset 2</code></td><td>平行 GGM 树数量（16 / 10）</td></tr>
+<tr><td><code>w_grind</code></td><td><code>offset 3</code></td><td>Grinding 安全比特数</td></tr>
+<tr><td><code>t_open</code></td><td><code>offset 4</code></td><td>打开的树数量</td></tr>
+<tr><td><code>k</code></td><td><code>offset 8</code></td><td>树深度参数</td></tr>
+<tr><td><code>tau0, tau1</code></td><td><code>offset 9-10</code></td><td>不同深度树的数量</td></tr>
+<tr><td><code>big_l</code></td><td><code>offset 11</code></td><td>叶子总数</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong><code>Bavc</code></strong> — BAVC 承诺状态（对应 C 的 <code>bavc_t</code>）</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[repr(C)]
+struct Bavc {
+    h: *mut u8,    // 承诺哈希指针
+    k: *mut u8,    // 打开密钥指针
+    com: *mut u8,  // 承诺值指针
+    sd: *mut u8,   // 种子指针
+}
+<span class="boring">}</span></code></pre>
+<p><strong>ABI 一致性验证</strong>：<code>test_rust_c_ffi_layouts_match_exactly</code> 测试通过调用 C 侧的 <code>cbzk_faest_paramset_layout</code> 和 <code>cbzk_bavc_layout</code> 获取 C 编译器的 <code>sizeof</code>、<code>alignof</code> 和 <code>offsetof</code>，与 Rust 侧的 <code>size_of</code>、<code>align_of</code>、<code>offset_of!</code> 精确比对。若 ABI 在未来的 faest-ref 版本中有变化，该测试会立即失败。</p>
+<h3 id="32-外部函数接口声明"><a class="header" href="#32-外部函数接口声明">3.2 外部函数接口声明</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>extern "C" {
+    fn vole_commit(
+        root_key: *const u8,     // τ 个种子密钥
+        iv: *const u8,           // 初始化向量
+        ell_hat: c_uint,         // 扩展关系长度
+        params: *const FaestParamset,
+        bavc: *mut Bavc,         // [输出] BAVC 状态
+        c: *mut u8,              // [输出] 一致性承诺
+        u: *mut u8,              // [输出] VOLE 的 u 向量
+        v: *mut *mut u8,         // [输出] VOLE 的 v 矩阵（行指针数组）
+    );
+
+    fn bavc_open(
+        decom_i: *mut u8,        // [输出] 打开数据
+        bavc: *const Bavc,       // BAVC 状态
+        decoded_challenge: *const u16, // 解码后的挑战
+        params: *const FaestParamset,
+    ) -&gt; bool;                   // 成功/失败
+
+    fn vole_reconstruct(
+        commitment_hash: *mut u8,
+        q: *mut *mut u8,
+        iv: *const u8,
+        challenge: *const u8,
+        opening: *const u8,
+        c: *const u8,
+        ell_hat: c_uint,
+        params: *const FaestParamset,
+    ) -&gt; bool;
+
+    fn decode_all_chall_3(
+        decoded_challenge: *mut u16,
+        challenge: *const u8,
+        params: *const FaestParamset,
+    ) -&gt; bool;
+    // ...
+}
+<span class="boring">}</span></code></pre>
+<p>这些函数构成了 Prover 和 Verifier 与 C 层的<strong>完整接口契约</strong>。</p>
+<h3 id="33-rust-侧的安全封装层"><a class="header" href="#33-rust-侧的安全封装层">3.3 Rust 侧的安全封装层</a></h3>
+<h4 id="331-生命周期管理faestvolecommitmentstate--drop"><a class="header" href="#331-生命周期管理faestvolecommitmentstate--drop">3.3.1 生命周期管理：<code>FaestVoleCommitmentState</code> + <code>Drop</code></a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct FaestVoleCommitmentState {
+    bavc: Bavc,               // 裸 C 结构体（含裸指针）
+    params: Box&lt;FaestParamset&gt;, // 堆分配的参数集
+}
+
+impl Drop for FaestVoleCommitmentState {
+    fn drop(&amp;mut self) {
+        if /* 任一指针非空 */ {
+            unsafe { bavc_clear(&amp;mut self.bavc); }
+            // 清空所有指针
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<p><strong>安全性担保</strong>：</p>
+<ul>
+<li><code>params</code> 使用 <code>Box&lt;FaestParamset&gt;</code> 堆分配，确保 <code>vole_commit</code> 写入时指针稳定性</li>
+<li><code>Drop</code> trait 在对象销毁时自动调用 <code>bavc_clear</code> 释放 C 侧堆内存，防止内存泄漏</li>
+<li>双重 null 检查防止重复释放</li>
+</ul>
+<h4 id="332-行指针数组的拼接"><a class="header" href="#332-行指针数组的拼接">3.3.2 行指针数组的拼接</a></h4>
+<p><code>vole_commit</code> 要求 <code>v</code> 参数为一个 <code>*mut *mut u8</code>（指向指针数组的指针），每个指针指向 VOLE 的 $\lambda$ 行中的一行。Rust 侧构建方式：</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let mut v_rows = vec![0u8; public_params.lambda_bits * row_bytes];
+let mut row_ptrs = (0..public_params.lambda_bits)
+    .map(|row| unsafe { v_rows.as_mut_ptr().add(row * row_bytes) })
+    .collect::&lt;Vec&lt;_&gt;&gt;();
+<span class="boring">}</span></code></pre>
+<p>C 函数写入 <code>v_rows</code> 后，Rust 侧通过 <code>row_ptrs</code> 重新解读为<strong>连续内存块</strong>中的 $\lambda$ 行 × <code>row_bytes</code> 列的矩阵。这样既满足了 C 接口的指针数组要求，又在 Rust 侧保持了连续内存的安全访问。</p>
+<h4 id="333-错误传播与状态验证"><a class="header" href="#333-错误传播与状态验证">3.3.3 错误传播与状态验证</a></h4>
+<p>每次外部函数调用后都进行状态验证：</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 检查 BAVC 状态是否完整
+if bavc.h.is_null() || bavc.k.is_null() || bavc.com.is_null() || bavc.sd.is_null() {
+    // 部分分配时清理，然后返回错误
+    return Err("FAEST vole_commit returned an incomplete BAVC state".to_string());
+}
+<span class="boring">}</span></code></pre>
+<p>这种<strong>防御式编程</strong>模式确保即使 C 侧返回异常状态，Rust 侧也不会在空指针上继续操作。</p>
+<h3 id="34-不依赖-c-的-rust-原生实现vole-哈希"><a class="header" href="#34-不依赖-c-的-rust-原生实现vole-哈希">3.4 不依赖 C 的 Rust 原生实现：VOLE 哈希</a></h3>
+<p>为减少 C FFI 调用的性能开销和跨语言维护负担，FAEST 的 <strong>VOLE 哈希函数</strong>（<code>vole_hash</code>）在 Rust 中<strong>完整重新实现</strong>：</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn vole_hash_128f_rust(seed, input, hash_ell_bits) -&gt; [u8; 18]
+<span class="boring">}</span></code></pre>
+<p>这实现了一个基于 <strong>F128b 域运算</strong>的密钥哈希（Keyed Hash），核心计算为：</p>
+<p>$$
+H = (h_2, h_3) = (r_0 \cdot h_0 + r_1 \cdot h_1,; r_2 \cdot h_0 + r_3 \cdot h_1)
+$$</p>
+<p>其中：</p>
+<ul>
+<li>$h_0$ 通过 Horner 法在 $\mathbb{F}_{2^{128}}$ 上计算多项式求值</li>
+<li>$h_1$ 通过 Horner 法在 $\mathbb{F}_{2^{64}}$ 上计算多项式求值（使用 <code>gf64_mul</code>）</li>
+</ul>
+<p><strong><code>gf64_mul</code> 的双重加速策略</strong>：</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>路径</th><th>条件</th><th>实现</th></tr>
+</thead>
+<tbody>
+<tr><td>硬件加速</td><td>x86_64 + PCLMULQDQ</td><td><code>_mm_clmulepi64_si128</code> 一次完成 64×64→128 无进位乘法</td></tr>
+<tr><td>可移植回退</td><td>其他平台</td><td>逐位 <code>shift-and-XOR</code> 软实现</td></tr>
+</tbody>
+</table>
+</div>
+<p>硬件路径使用 PCLMULQDQ 指令完成 $\mathbb{F}_{2^{64}}$ 上的无进位多项式乘法，约简通过经典的两步折叠（fold）算法实现：</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let overflow = (high &gt;&gt; 63) ^ (high &gt;&gt; 61) ^ (high &gt;&gt; 60);
+low ^ high ^ (high &lt;&lt; 1) ^ (high &lt;&lt; 3) ^ (high &lt;&lt; 4)
+    ^ overflow ^ (overflow &lt;&lt; 1) ^ (overflow &lt;&lt; 3) ^ (overflow &lt;&lt; 4)
+<span class="boring">}</span></code></pre>
+<p>这约简多项式 $x^{64} + x^4 + x^3 + x + 1$。</p>
+<p><strong>正确性保障</strong>：<code>test_rust_vole_hash_matches_faest_c_reference</code> 在多种输入长度（0 ~ 28176 比特）和多种随机种子下，逐字节比对 Rust 实现与 C 参考实现的输出，确保完全一致。</p>
+<hr>
+<h2 id="四状态机设计voleithrs"><a class="header" href="#四状态机设计voleithrs">四、状态机设计：<code>voleith.rs</code></a></h2>
+<h3 id="41-延迟-vole-功能delayed-vole"><a class="header" href="#41-延迟-vole-功能delayed-vole">4.1 延迟 VOLE 功能（Delayed VOLE）</a></h3>
+<p>在 VOLEitH 协议中，Prover 和 Verifier 需要建立以下 VOLE 关系：</p>
+<p>$$
+\text{Prover 持有: } (u, \mathbf{v}) \in \mathbb{F}<em>2^\ell \times \mathbb{F}</em>{2^{128}}^\ell
+$$
+$$
+\text{Verifier 持有: } (\Delta, \mathbf{q}) \in \mathbb{F}<em>{2^{128}} \times \mathbb{F}</em>{2^{128}}^\ell
+$$</p>
+<p>满足线性关系：</p>
+<p>$$
+\mathbf{v} = \mathbf{q} + \Delta \cdot u
+$$</p>
+<p>其中 $\Delta$ 是 Verifier 的全局挑战，$u$ 是 Prover 的秘密比特向量，$\mathbf{v}, \mathbf{q}$ 是对应的 $\mathbb{F}_{2^{128}}$ 域元素向量。</p>
+<p>“延迟“的含义是：在协议初始阶段（承诺阶段），Prover 和 Verifier 仅交换承诺，<strong>等到协议运行到特定步骤后才确定 $\Delta$ 和挑战</strong>。</p>
+<h3 id="42-prover-状态机voleithprover"><a class="header" href="#42-prover-状态机voleithprover">4.2 Prover 状态机：<code>VoleitHProver</code></a></h3>
+<pre><code>┌──────────────────────────────────────────────────────────────────┐
+│                   VoleitHProver 状态机                            │
+│                                                                  │
+│  commit()                                                        │
+│    │                                                             │
+│    ├─ 生成 root_key, iv ──────► faest_vole_commit() ──► C 层     │
+│    │                               │                             │
+│    │                         返回 {u, v_rows,                    │
+│    │                          consistency_c,                     │
+│    │                          commitment_hash, bavc_state}       │
+│    │                                                             │
+│    ├─ 推导 challenge_1 (Fiat-Shamir消化上述输出)                  │
+│    ├─ 计算 u_tilde = H(challenge_1, u)                           │
+│    ├─ 计算 v_tilde = H(challenge_1, v_rows)                      │
+│    └─ 提取 ProverCorrelations {u, v, packed_aux_u, packed_aux_v} │
+│         │                                                        │
+│         ▼                                                        │
+│  commitment_for_witness(witness)                                 │
+│    │                                                             │
+│    ├─ 构建 ProverRef (使用 correlations)                          │
+│    └─ 返回 CommitmentMessage {correction}                        │
+│         │                                                        │
+│         ▼                                                        │
+│  bind_relation(commitment, challenge_count)                      │
+│    │                                                             │
+│    ├─ 推导 relation_seed (消化 commitment.correction)             │
+│    ├─ 生成挑战 χ[0..challenge_count]                             │
+│    └─ 返回 ChallengeMessage {challenges}                         │
+│         │                                                        │
+│         ▼                                                        │
+│  finalize(proof_message)                                         │
+│    │                                                             │
+│    ├─ 推导 opening_challenge_from(relation_seed, proof)          │
+│    ├─ Grinding: 递增 counter 直到满足 w_grind 个零尾比特          │
+│    ├─ 调用 bavc_open(challenge, bavc) ──► C 层                   │
+│    └─ 返回 VoleitHTranscript                                     │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3 id="43-verifier-状态机voleithverifier"><a class="header" href="#43-verifier-状态机voleithverifier">4.3 Verifier 状态机：<code>VoleitHVerifier</code></a></h3>
+<pre><code>┌──────────────────────────────────────────────────────────────────┐
+│                   VoleitHVerifier 状态机                           │
+│                                                                  │
+│  reconstruct(statement_digest, commitment, proof, transcript)    │
+│    │                                                             │
+│    ├─ 验证 transcript.profile 与参数一致性                        │
+│    ├─ 验证 opening challenge 的 grinding 条件                    │
+│    ├─ faest_vole_reconstruct(iv, challenge, opening, c, ell_hat) │
+│    │       ──► C 层 vole_reconstruct                             │
+│    │       ──► 返回 q_rows + commitment_hash                     │
+│    │                                                             │
+│    ├─ 验证 reconstructed_commitment_hash == transcript.hash       │
+│    │                                                             │
+│    ├─ 派生 challenge_1 = 同 Prover 的 Fiat-Shamir 公式            │
+│    ├─ 计算 v_tilde = H(challenge_1, q_rows)                      │
+│    │                                                             │
+│    ├─ 修正 v_tilde: 对每个 row, 若 challenge_bit=1,              │
+│    │   v_tilde[row] ⊕= u_tilde                                   │
+│    │   (因为 v = q + Δ·u ⇒ H(v) ≠ H(q) 当 Δ 非零)               │
+│    │                                                             │
+│    ├─ 派生 relation_seed = 同 Prover 的 Fiat-Shamir 公式          │
+│    ├─ 验证 opening_challenge == transcript.challenge             │
+│    │   (确认 opening 与 relation proof 绑定)                     │
+│    │                                                             │
+│    └─ 提取 VerifierCorrelations {Δ, q, packed_aux_q}             │
+│         │                                                        │
+│         ▼                                                        │
+│  challenges(count)                                               │
+│    └─ 从 relation_seed 派生与 Prover 相同的挑战集合               │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3 id="44-核心数据结构"><a class="header" href="#44-核心数据结构">4.4 核心数据结构</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>结构体</th><th>持有方</th><th>数学含义</th></tr>
+</thead>
+<tbody>
+<tr><td><code>ProverCorrelations</code></td><td>Prover</td><td>$(u, \mathbf{v})$ + 打包的辅助相关性</td></tr>
+<tr><td><code>VerifierCorrelations</code></td><td>Verifier</td><td>$(\Delta, \mathbf{q})$ + 打包的辅助相关性</td></tr>
+<tr><td><code>VoleitHTranscript</code></td><td>公开传输</td><td>协议的全部通信轨迹：承诺哈希、IV、一致性承诺、哈希值、打开数据等</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="45-fiat-shamir-挑战派生序列"><a class="header" href="#45-fiat-shamir-挑战派生序列">4.5 Fiat-Shamir 挑战派生序列</a></h3>
+<p>协议使用<strong>四轮 Fiat-Shamir 变换</strong>将交互式协议转化为 NIZK：</p>
+<p><strong>第 1 轮挑战</strong> <code>challenge_1</code>：源自 BAVC 承诺 + 一致性证明</p>
+<pre><code>absorb(profile, statement, witness_bits, degree, relation_bits,
+       ell_hat_bits, commitment_hash, iv, consistency_c)
+squeeze() → challenge_1
+</code></pre>
+<p><strong>第 2 轮关系挑战</strong> <code>relation_seed</code>：源自承诺哈希 + VOLE 哈希值 + 校正子</p>
+<pre><code>absorb(profile, statement, witness_bits, degree, relation_bits,
+       ell_hat_bits, commitment_hash, iv, consistency_c,
+       u_tilde, v_tilde[0..λ], correction)
+squeeze() → relation_seed
+</code></pre>
+<p><strong>第 3 轮打开挑战</strong> <code>opening_challenge</code>：源自 relation_seed + 证明系数</p>
+<pre><code>absorb(relation_seed, proof.blinded_coeffs[0..d])
+squeeze() → opening_challenge
+</code></pre>
+<p>然后通过 <strong>Grinding</strong>（递增 counter 使挑战值的后 <code>w_grind</code> 位为零）增加协议的安全性。</p>
+<h3 id="46-grinding-证明工作量"><a class="header" href="#46-grinding-证明工作量">4.6 Grinding 证明工作量</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn challenge_has_required_grind_bits(challenge, w_grind) -&gt; bool {
+    // 检查挑战值的后 w_grind 个比特是否全部为零
+    ((λ - w_grind)..λ).all(|bit| !bit_lsb(challenge, bit))
+}
+<span class="boring">}</span></code></pre>
+<p>这要求 Prover 在最终确定签名前，平均需要进行 $2^{w_\text{grind}}$ 次尝试。对于 $w_\text{grind} = 8$（ReSolveD+ 的默认参数），Prover 需尝试约 256 次。这保证了 Verifier 对证明的非平凡性（non-triviality）有 $\lambda + w_\text{grind}$ 比特的置信度。</p>
+<hr>
+<h2 id="五线缆编码wirers"><a class="header" href="#五线缆编码wirers">五、线缆编码：<code>wire.rs</code></a></h2>
+<h3 id="51-版本化规范格式"><a class="header" href="#51-版本化规范格式">5.1 版本化规范格式</a></h3>
+<p><code>wire.rs</code> 实现了一个<strong>自描述、版本化、严格规范的序列化格式</strong>，用于所有签名类型的线缆传输。</p>
+<p><strong>格式结构</strong>：</p>
+<pre><code>┌─────────┬──────────┬────────┬──────────┬──────────────┬──────┐
+│  Magic  │ Version  │  Kind  │ Reserved │   Payload    │ Tail │
+│  8 字节 │  2 字节  │ 1 字节 │  1 字节  │ 变长        │ 检查 │
+└─────────┴──────────┴────────┴──────────┴──────────────┴──────┘
+</code></pre>
+<ul>
+<li><strong>Magic</strong>：<code>CBZKVSIG</code>（8 字节魔术数，用于快速识别和版本过滤）</li>
+<li><strong>Version</strong>：当前为 <code>1</code>（小端编码）</li>
+<li><strong>Kind</strong>：签名类型标识</li>
+</ul>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>常量</th><th>值</th><th>含义</th></tr>
+</thead>
+<tbody>
+<tr><td><code>KIND_RESOLVED_PLUS</code></td><td>1</td><td>ReSolveD+ 签名</td></tr>
+<tr><td><code>KIND_RING</code></td><td>2</td><td>环签名</td></tr>
+<tr><td><code>KIND_GROUP</code></td><td>3</td><td>群签名</td></tr>
+<tr><td><code>KIND_FDABS</code></td><td>4</td><td>全动态属性基签名</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="52-序列化内容"><a class="header" href="#52-序列化内容">5.2 序列化内容</a></h3>
+<p><strong>Payload</strong> 包含三个主要部分：</p>
+<ol>
+<li><strong><code>CommitmentMessage</code></strong>：校正子（correction）比特向量
+<ul>
+<li>编码方式：长度前缀（u64）+ 紧凑位编码（<code>extend_exact_bits_to_bytes</code>）</li>
+</ul>
+</li>
+<li><strong><code>ProofMessage&lt;F128b&gt;</code></strong>：盲化系数向量（blinded coefficients）
+<ul>
+<li>编码方式：长度前缀（u64）+ 每个系数 16 字节（<code>F128b::to_bytes()</code>）</li>
+</ul>
+</li>
+<li><strong><code>VoleitHTranscript</code></strong>：完整的 VOLE 协议通信轨迹
+<ul>
+<li>profile（1 字节）</li>
+<li>commitment_hash（32 字节）</li>
+<li>IV（16 字节）</li>
+<li>consistency_c（长度前缀 + 变长）</li>
+<li>u_tilde（长度前缀 + 变长）</li>
+<li>opening（长度前缀 + 变长）</li>
+<li>challenge（16 字节）</li>
+<li>grind_counter（4 字节）</li>
+</ul>
+</li>
+</ol>
+<h3 id="53-解码验证"><a class="header" href="#53-解码验证">5.3 解码验证</a></h3>
+<p>解码器 <code>SignatureDecoder</code> 保证：</p>
+<ol>
+<li><strong>尾部零多余数据</strong>：<code>finish()</code> 检查 <code>offset == input.len()</code>，拒绝任何尾随字节</li>
+<li><strong>唯一定义性</strong>：所有变长字段使用精确长度前缀，任何非规范编码（如尾部未使用比特非零）被拒绝</li>
+<li><strong>F128 值的规范反序列化</strong>：使用 <code>F128b::from_bytes</code> 而非 <code>from_uniform_bytes</code>，拒绝非规范的域元素表示</li>
+<li><strong>集合大小上限</strong>：<code>MAX_COLLECTION_ITEMS = 1,000,000</code> 防止拒绝服务攻击</li>
+</ol>
+<hr>
+<h2 id="六跨语言调用架构总结"><a class="header" href="#六跨语言调用架构总结">六、跨语言调用架构总结</a></h2>
+<pre><code>┌──────────────────────────────────────────────────────────┐
+│                    Rust 应用层                            │
+│  ┌─────────────────────────────────────────────────────┐ │
+│  │  VoleitHProver / VoleitHVerifier                    │ │
+│  │  ├─ Fiat-Shamir 挑战派生                            │ │
+│  │  ├─ ProverCorrelations / VerifierCorrelations 提取  │ │
+│  │  ├─ 列转置优化 (BMI2 PEXT / 可移植回退)              │ │
+│  │  └─ Rayon 并行哈希（≥64KB 时自动激活）              │ │
+│  └──────────────┬──────────────────────────────────────┘ │
+│                 │ FFI 调用                                │
+│  ┌──────────────▼──────────────────────────────────────┐ │
+│  │  FaestVoleCommitmentState (Drop 安全析构)           │ │
+│  │  ├─ vole_commit()    → BAVC 树构建 + VOLE 展开     │ │
+│  │  ├─ bavc_open()      → 选择性打开 GGM 路径         │ │
+│  │  └─ vole_reconstruct → Verifier 重构 VOLE 关系     │ │
+│  └──────────────┬──────────────────────────────────────┘ │
+└─────────────────┼────────────────────────────────────────┘
+                  │ extern "C"
+┌─────────────────▼────────────────────────────────────────┐
+│                 C (faest-ref)                             │
+│  ┌─────────────────────────────────────────────────────┐ │
+│  │  vole.c / bavc.c                                    │ │
+│  │  ├─ BAVC 树构建 (τ × λ 深度)                        │ │
+│  │  ├─ GGM 伪随机函数展开                              │ │
+│  │  ├─ 承诺哈希聚合 (SHA-3)                             │ │
+│  │  └─ 选择性打开验证                                   │ │
+│  └─────────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────┘
+</code></pre>
+<h3 id="关键设计决策"><a class="header" href="#关键设计决策">关键设计决策</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>决策</th><th>理由</th></tr>
+</thead>
+<tbody>
+<tr><td>VOLE 哈希在 Rust 中重写</td><td>减少 FFI 调用频率，利用内联的 PCLMULQDQ/PMULL 加速</td></tr>
+<tr><td>BAVC 树承诺保留在 C 侧</td><td>GGM 树构建涉及大量递归内存分配，C 的 <code>malloc/free</code> 更高效</td></tr>
+<tr><td>列转置在 Rust 侧执行</td><td>需要 Rust 的 <code>rayon</code> 并行框架；使用 BMI2 <code>PEXT</code> 指令优化逐位列提取</td></tr>
+<tr><td>Grinding 在 Rust 侧完成</td><td>纯数学运算，不依赖 C 状态；可利用 <code>rayon</code> 并行搜索</td></tr>
+<tr><td>序列化手动编码</td><td>避免通用序列化框架的开销和版本漂移；精确的位紧凑编码</td></tr>
+</tbody>
+</table>
+</div>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="2_核心密码学原语.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="4_多项式约束生成.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="2_核心密码学原语.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="4_多项式约束生成.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+        <!-- Livereload script (if served using the cli tool) -->
+        <script>
+            const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsAddress = wsProtocol + "//" + location.host + "/" + "__livereload";
+            const socket = new WebSocket(wsAddress);
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr-ef4e11c1.min.js"></script>
+        <script src="mark-09e88c2c.min.js"></script>
+        <script src="searcher-09f2665d.js"></script>
+
+        <script src="clipboard-1626706a.min.js"></script>
+        <script src="highlight-abc7f01d.js"></script>
+        <script src="book-609e4cb8.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

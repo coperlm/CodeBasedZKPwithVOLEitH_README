@@ -1,0 +1,333 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>系统概述</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="favicon-8114d1fc.png">
+        <link rel="stylesheet" href="css/variables-8adf115d.css">
+        <link rel="stylesheet" href="css/general-e96d0476.css">
+        <link rel="stylesheet" href="css/chrome-d279d366.css">
+        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex-9cb3f75c.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc-a46918db.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title"></h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="code-based-zero-knowledge-from-vole-in-the-head-核心代码与架构解析报告"><a class="header" href="#code-based-zero-knowledge-from-vole-in-the-head-核心代码与架构解析报告">Code-Based Zero-Knowledge from VOLE-in-the-Head: 核心代码与架构解析报告</a></h1>
+<h2 id="-报告导读"><a class="header" href="#-报告导读">📑 报告导读</a></h2>
+<p>本报告旨在详细解析本项目在代码工程层面对 <strong>“基于 VOLE-in-the-Head (VOLEitH) 范式的码基零知识证明及其高级隐私保护应用”</strong> 的完整实现。</p>
+<p>由于本项目采用 Rust 编写，包含约上万行代码，为便于您审查理论公式与代码逻辑的准确映射，本报告以**“自底向上，化整为零”**的策略，将整个系统拆分为 <strong>5 个核心逻辑模块</strong>。</p>
+<p>报告尽可能剥离了编程语言的繁文缛节，<strong>聚焦于密码学理论、代数约束的构建、以及底层数学公式的代码级映射</strong>，并全面阐述了为达到极优 Benchmark 数据所做出的硬件加速与并发工程优化。</p>
+<hr>
+<h2 id="-系统架构与模块导航"><a class="header" href="#-系统架构与模块导航">🏗️ 系统架构与模块导航</a></h2>
+<h3 id="-模块一基础密码学与数学原语-primitives--math"><a class="header" href="#-模块一基础密码学与数学原语-primitives--math">📦 模块一：基础密码学与数学原语 (Primitives &amp; Math)</a></h3>
+<p><strong>对应论文</strong>：Section 2.1 (Boolean Functions), 2.2 (AFS Hash), 2.5 (Randomized McEliece)
+<strong>模块概述</strong>：本模块是整个 ZKP 系统的数学基石，实现了极其高效的底层有限域算术，并构建了基于编码的经典困难问题（如 2-RNSD, RSD）。
+<strong>核心亮点</strong>：</p>
+<ul>
+<li><strong>$GF(2^{128})$ 硬件加速</strong>：直接利用 CPU 的 CLMUL / PMULL 无进位乘法指令，实现亚纳秒级域乘法。</li>
+<li><strong>列流式零物化矩阵</strong>：对于极其庞大的公开伪随机矩阵 $B \in \mathbb{F}_2^{n \times m}$，采用按需列流式（Column-streaming）生成与掩码 XOR，彻底消除 OOM 风险并防御侧信道泄漏。</li>
+<li><strong>正则噪声参数对齐</strong>：精准实现 McEliece 加密公式 $c = G \cdot \binom{u}{m} \oplus \text{RE}(e’)$，并采用专为正则噪声优化的参数集（$n_e = 4096, k_e = 3328, t_e = 64$）。</li>
+</ul>
+<p><strong>包含文件</strong>：</p>
+<ul>
+<li><code>src/finite_field.rs</code>, <code>src/bitvec_ops.rs</code></li>
+<li><code>src/primitives/afs_hash.rs</code>, <code>src/primitives/streaming_matrix.rs</code></li>
+<li><code>src/mceliece.rs</code></li>
+<li>👉 <strong><a href="./1_基础密码学与数学原语.html">点击查看详细报告：1_基础密码学与数学原语.md</a></strong></li>
+</ul>
+<hr>
+<h3 id="-模块二voleith-底层框架集成-voleith-framework-integration"><a class="header" href="#-模块二voleith-底层框架集成-voleith-framework-integration">📦 模块二：VOLEitH 底层框架集成 (VOLEitH Framework Integration)</a></h3>
+<p><strong>对应论文</strong>：Section 2.7 (VOLE-in-the-Head)
+<strong>模块概述</strong>：本模块实现了 VOLE-in-the-Head 范式所需的<strong>延迟 VOLE 功能（Delayed VOLE functionality $\mathcal{F}_{\text{sVOLE}}$）</strong>。
+<strong>核心亮点</strong>：</p>
+<ul>
+<li><strong>跨语言 FFI 安全封装</strong>：为了极致性能，系统并未重复造轮子，而是通过 Rust FFI 安全地集成了 FAEST 的 C 核心代码，完美复用了其经过 NIST 审查的高效 GGM-based 二叉辅助向量承诺树（BAVC）。</li>
+<li><strong>严格的状态机生命周期</strong>：通过 Rust 的所有权模型与 Drop 机制，安全管理 C 层的 Prover / Verifier 证明树状态，避免内存泄漏。</li>
+</ul>
+<p><strong>包含文件</strong>：</p>
+<ul>
+<li><code>src/faest_abi.c</code>, <code>src/faest_ffi.rs</code></li>
+<li>👉 <strong><a href="./2_VOLEitH底层框架集成.html">点击查看详细报告：2_VOLEitH底层框架集成.md</a></strong></li>
+</ul>
+<hr>
+<h3 id="-模块三zk-核心约束引擎-core-zk-protocol-engine"><a class="header" href="#-模块三zk-核心约束引擎-core-zk-protocol-engine">📦 模块三：ZK 核心约束引擎 (Core ZK Protocol Engine)</a></h3>
+<p><strong>对应论文</strong>：Section 3 (New Techniques for Proving Regular Encoding Process)
+<strong>模块概述</strong>：这是<strong>整个系统的代数灵魂</strong>，负责将非线性的编码操作编译为布尔多项式，并基于 VOPE 完成零知识证明。
+<strong>核心亮点</strong>：</p>
+<ul>
+<li><strong>非线性正则编码的多项式转化</strong>：利用拉格朗日插值/Möbius 变换，将查表式的正则编码（Regular Encoding）巧妙转化为 degree-$c$ 的 ANF 约束系统 $f(X_1, \dots, X_c) = \prod_{i=1}^c (1 + j_i + X_i)$。</li>
+<li><strong>线性因子乘积盲化（VOPE）</strong>：在 $\Pi^t_{dD-Rep}$ 协议中，创新性地采用 $\prod_h (v_h + u_h \cdot Y)$ 等价于验证端 $\prod_h q_{\text{aux}, h}$ 的技术对多项式系数进行安全盲化。</li>
+<li><strong>Fiat-Shamir 变换</strong>：利用 SHA-3 Keccak-256 海绵结构吸收承诺并挤出挑战值，实现完美 NIZK。</li>
+</ul>
+<p><strong>包含文件</strong>：</p>
+<ul>
+<li><code>src/core/constraint_gen.rs</code>, <code>src/core/implicit_eval.rs</code></li>
+<li><code>src/core/protocol_dd_rep.rs</code>, <code>src/core/voleith.rs</code>, <code>src/core/transcript.rs</code></li>
+<li>👉 <strong><a href="./3_ZK核心约束引擎.html">点击查看详细报告：3_ZK核心约束引擎.md</a></strong></li>
+</ul>
+<hr>
+<h3 id="-模块四高级密码学应用层-advanced-cryptographic-applications"><a class="header" href="#-模块四高级密码学应用层-advanced-cryptographic-applications">📦 模块四：高级密码学应用层 (Advanced Cryptographic Applications)</a></h3>
+<p><strong>对应论文</strong>：Section 4, 5, 6 (RS, GS, FDABS, ReSolveD+)
+<strong>模块概述</strong>：本模块将上述底层的 ZK 引擎转化为四种开箱即用的顶尖后量子隐私保护签名方案。
+<strong>核心亮点</strong>：</p>
+<ul>
+<li><strong>ReSolveD+ 标准签名</strong>：基于 RSD 困难问题构建 $y = B \cdot \text{RE}(x)$ 约束。</li>
+<li><strong>零知识环签名 (RS)</strong>：通过证明哈希链方程 $v_\ell = B_0 \cdot \text{RE}(x_0) \oplus B_1 \cdot \text{RE}(x_1)$ 完成 Merkle 树累加器成员资格认证。</li>
+<li><strong>群签名 (GS)</strong>：在环签名的基础上，额外将 McEliece 身份密文运算注入 ANF 约束系统，实现“可控追踪”。</li>
+<li><strong>属性基签名 (FDABS)</strong>：极具创新地使用<strong>图灵完备的 NAND 门约束</strong>（$x_{\text{out}} + x_{\text{in1}} \cdot x_{\text{in2}} + 1 = 0 \pmod 2$）来表达任意复杂的布尔电路策略，并辅以奇偶性校验确保叶子节点合法性。</li>
+</ul>
+<p><strong>包含文件</strong>：</p>
+<ul>
+<li><code>src/apps/</code> 目录下的 <code>resolved_plus.rs</code>, <code>ring_signature.rs</code>, <code>group_signature.rs</code>, <code>fdabs.rs</code> 及其 <code>_sig.rs</code> 实现。</li>
+<li>👉 <strong><a href="./4_高级密码学应用层.html">点击查看详细报告：4_高级密码学应用层.md</a></strong></li>
+</ul>
+<hr>
+<h3 id="-模块五实验参数序列化与性能评估-engineering-cli--evaluation"><a class="header" href="#-模块五实验参数序列化与性能评估-engineering-cli--evaluation">📦 模块五：实验参数、序列化与性能评估 (Engineering, CLI &amp; Evaluation)</a></h3>
+<p><strong>对应论文</strong>：Table 3, 4, 5, 7, 8 (Benchmarking &amp; Performance)
+<strong>模块概述</strong>：向您汇报代码在参数选择、序列化体积及并发执行上的极致工程榨取。
+<strong>核心亮点</strong>：</p>
+<ul>
+<li><strong>代数边界严谨性</strong>：严格确保全局挑战 $\Delta$ 驻留在 128-bit 域，并结合 $w_{\text{grind}}=8$ 比特的 Fiat-Shamir 工作量证明（Grinding），在兼顾性能的同时死守 128-bit 等效安全强度。</li>
+<li><strong>KB 级序列化奇迹</strong>：通过 PRG 种子替换大型随机矩阵、极致位宽截断等手段，将传统基于 Stern 范式的“兆字节（MB）级”签名体积暴降至几 <strong>KB</strong>。</li>
+<li><strong>多核并发压榨</strong>：在基准测试（Benchmarking）中，大量使用 <code>rayon</code> 数据并行化框架。在多项式隐式求值、多层哈希树的节点配对等热点路径上实现了接近线性的多核加速比。</li>
+</ul>
+<p><strong>包含文件</strong>：</p>
+<ul>
+<li><code>src/core/security.rs</code>, <code>src/artifact_bundle.rs</code></li>
+<li><code>benches/paper_benchmarks.rs</code>, <code>scripts/</code></li>
+<li>👉 <strong><a href="./5_实验参数与性能评估.html">点击查看详细报告：5_实验参数与性能评估.md</a></strong></li>
+</ul>
+<hr>
+<p><em>注：本系列报告由开发者深度提炼，详细的函数证明、结构体拆解与多项式推导请点击各模块对应的子文档查看。</em></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+                            <a rel="next prefetch" href="1_底层数学与矩阵运算.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+                    <a rel="next prefetch" href="1_底层数学与矩阵运算.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+        <!-- Livereload script (if served using the cli tool) -->
+        <script>
+            const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsAddress = wsProtocol + "//" + location.host + "/" + "__livereload";
+            const socket = new WebSocket(wsAddress);
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr-ef4e11c1.min.js"></script>
+        <script src="mark-09e88c2c.min.js"></script>
+        <script src="searcher-09f2665d.js"></script>
+
+        <script src="clipboard-1626706a.min.js"></script>
+        <script src="highlight-abc7f01d.js"></script>
+        <script src="book-609e4cb8.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>
