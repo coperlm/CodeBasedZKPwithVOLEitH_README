@@ -58,7 +58,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-8d2bd1c6.js";
+            window.path_to_searchindex_js = "searchindex-44900fc6.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61c3e6e9.js"></script>
@@ -1318,7 +1318,7 @@ $$</p>
 $$</p>
 <p>利用这个交换律，可以将求值复杂度从 $\mathcal{O}(t \cdot 2^c)$ 降低到 $\mathcal{O}(m \cdot c)$。</p>
 <h3 id="32-三步求值流水线"><a class="header" href="#32-三步求值流水线">3.2 三步求值流水线</a></h3>
-<pre class="mermaid">graph TD
+<pre class="mermaid">graph LR
     Input[challenges χ&lt;br&gt;t 个 F_128] --&gt; Step1
 
     subgraph Step1 [Step 1: χ' 聚合求和交换]
@@ -1782,25 +1782,20 @@ pub struct Transcript {
 <span class="boring">}</span></code></pre>
 <h3 id="42-absorb-squeeze-模式"><a class="header" href="#42-absorb-squeeze-模式">4.2 Absorb-Squeeze 模式</a></h3>
 <p>Transcript 遵循 海绵结构（Sponge Construction）的 absorb-squeeze 范式：</p>
-<pre class="mermaid">graph TD
+<pre class="mermaid">graph LR
     subgraph Absorb [Absorb 吸收阶段]
-        direction TB
-        A1[domain_separator] --&gt; A2[public_key]
-        A2 --&gt; A3[commitment_hash]
-        A3 --&gt; A4[consistency_c]
-        A4 --&gt; A5[u_tilde / v_tilde]
-        A5 --&gt; A6[correction bits]
-        A6 --&gt; A7[proof coefficients]
-        A7 --&gt; A8[grind_counter]
+        direction LR
+        A1[domain_sep] --&gt; A2[pub_key] --&gt; A3[com_hash] --&gt; A4[cons_c]
+        A4 --&gt; A5[u/v_tilde] --&gt; A6[corr_bits] --&gt; A7[proof_coeff] --&gt; A8[grind_ctr]
     end
 
     A8 --&gt; K((Keccak-256&lt;br&gt;Hash Engine))
 
     subgraph Squeeze [Squeeze 挤出阶段]
-        direction TB
+        direction LR
         K --&gt; S[256-bit Seed]
-        S --&gt; PRG{ChaCha20 PRG&lt;br&gt;流式展开}
-        PRG --&gt; Out[F128b 挑战值序列]
+        S --&gt; PRG{ChaCha20&lt;br&gt;流式展开}
+        PRG --&gt; Out[F128b 挑战序列]
     end
 
     style Absorb fill:none,stroke:#61afef,stroke-width:2px,stroke-dasharray: 5 5
