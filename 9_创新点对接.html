@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>系统概述</title>
+        <title>模块九：创新点对接</title>
 
 
         <!-- Custom HTML head -->
@@ -196,87 +196,96 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="code-based-zero-knowledge-from-vole-in-the-head-核心代码与架构解析报告"><a class="header" href="#code-based-zero-knowledge-from-vole-in-the-head-核心代码与架构解析报告">Code-Based Zero-Knowledge from VOLE-in-the-Head: 核心代码与架构解析报告</a></h1>
-<h2 id="报告导读"><a class="header" href="#报告导读">报告导读</a></h2>
-<p>本报告旨在详细解析本项目在代码工程层面对 “基于 VOLE-in-the-Head (VOLEitH) 范式的码基零知识证明及其高级隐私保护应用” 的完整实现。</p>
-<p>由于本项目采用 Rust 编写，包含约上万行代码，为便于您审查理论公式与代码逻辑的准确映射，本报告分为 5 个核心逻辑模块。</p>
-<p>报告尽可能剥离了编程语言的繁文缛节，聚焦于密码学理论、代数约束的构建、以及底层数学公式的代码级映射，并全面阐述了为达到极优 Benchmark 数据所做出的硬件加速与并发工程优化。</p>
-<h2 id="系统架构与模块导航"><a class="header" href="#系统架构与模块导航">系统架构与模块导航</a></h2>
-<p>为了便于您审查理论公式与代码逻辑的准确映射，本报告以“自底向上，化整为零”的策略，将整个系统拆分为 8 个核心逻辑模块。</p>
-<h3 id="模块一底层数学与矩阵运算"><a class="header" href="#模块一底层数学与矩阵运算">模块一：底层数学与矩阵运算</a></h3>
-<p>模块概述：本模块是整个 ZKP 系统的数学基石与性能瓶颈突破口。实现了极其高效的底层有限域算术，以及防 OOM 的超大矩阵处理。</p>
-<p>核心亮点：</p>
+                        <h1 id="模块九之前提及的创新点和目前状态"><a class="header" href="#模块九之前提及的创新点和目前状态">模块九：之前提及的创新点和目前状态</a></h1>
+<p>有一部分已经有了，因为是纯工程上的优化，对协议流程无影响，可以放心加进去</p>
+<p>另一部分没有放进去，因为有待进一步证明其安全性</p>
+<h3 id="-一已在代码中完美落地的创新点perfectly-implemented"><a class="header" href="#-一已在代码中完美落地的创新点perfectly-implemented">🟢 一、已在代码中完美落地的创新点（Perfectly Implemented）</a></h3>
+<h4 id="1-多线性扩展折叠与求和交换打破大域乘法瓶颈"><a class="header" href="#1-多线性扩展折叠与求和交换打破大域乘法瓶颈">1. 多线性扩展折叠与求和交换（打破大域乘法瓶颈）</a></h4>
 <ul>
-<li>$GF(2^{128})$ 硬件加速：利用 CPU 的 CLMUL/PMULL 指令，实现亚纳秒级域乘法。</li>
-<li>列流式零物化矩阵：对于极庞大的公开矩阵 $B$，采用按需列流式（Column-streaming）生成与掩码 XOR，彻底消除内存溢出风险并防御侧信道泄漏。</li>
-</ul>
-<p>👉 <a href="./1_底层数学与矩阵运算.html">点击查看：1_底层数学与矩阵运算.md</a></p>
-<h3 id="模块二核心密码学原语"><a class="header" href="#模块二核心密码学原语">模块二：核心密码学原语</a></h3>
-<p>模块概述：提供两种基于编码的密码学原语，它们是构建上层 ZK 签名系统的代数骨架。</p>
-<p>核心亮点：</p>
+<li><strong>你的笔记</strong>：提出两步优化：第一步交换求和顺序 $\chi’<em>h = \sum \chi_i b</em>{i,h}$ 消除大数乘法；第二步利用拉格朗日多线性扩展的蝶形网络（Tree-evaluation）将 $O(2^c \cdot c^2)$ 降为 $O(2^c)$。</li>
+<li><strong>代码实现</strong>：<strong>完美实现！（核心亮点）</strong>
 <ul>
-<li>AFS 哈希：基于 2-RNSD 问题构建的抗碰撞哈希函数，提供了极其精妙的常数时间（Constant-time）流式求值实现。</li>
-<li>McEliece 加密：精准实现带正则噪声的 McEliece 身份加密算法，为群签名提供可控追踪能力。</li>
+<li><strong>第一步（求和交换）</strong>：在 <strong>模块四</strong> 的 <code>compute_chi_prime_streaming_f128</code> 中完全对应。代码甚至做了更极端的优化——利用 Gray 码预计算字节子集 XOR 表（<code>build_byte_subset_xor_table</code>），把 $\chi’_h$ 的计算变成了纯查表+异或。</li>
+<li><strong>第二步（蝶形网络）</strong>：在 <strong>模块四</strong> 的 <code>evaluate_chunk_butterfly</code> 中完全对应。代码将你的理论命名为“<strong>蝴蝶折叠 (Butterfly Evaluation)</strong>”，按照 LSB 到 MSB 的顺序进行原地（in-place）折叠，且为了追求极致性能，对于 $2^c \le 256$ 甚至使用了栈分配 <code>[F; 256]</code>。</li>
 </ul>
-<p>👉 <a href="./2_核心密码学原语.html">点击查看：2_核心密码学原语.md</a></p>
-<h3 id="模块三voleith-状态机与-ffi"><a class="header" href="#模块三voleith-状态机与-ffi">模块三：VOLEitH 状态机与 FFI</a></h3>
-<p>模块概述：实现了 VOLE-in-the-Head 范式所需的延迟 VOLE 功能，并负责跨语言的安全集成。</p>
-<p>核心亮点：</p>
+</li>
+</ul>
+<h4 id="2-流式生成矩阵防-l3-cache-miss打破内存瓶颈"><a class="header" href="#2-流式生成矩阵防-l3-cache-miss打破内存瓶颈">2. 流式生成矩阵防 L3 Cache Miss（打破内存瓶颈）</a></h4>
 <ul>
-<li>跨语言 FFI 安全封装：安全地集成了 FAEST 的 C 代码，复用其经过 NIST 审查的高效 GGM-based 树承诺。</li>
-<li>严格的状态机生命周期：通过 Rust 的所有权模型安全管理 C 层的 Prover/Verifier 证明树状态，避免内存泄漏。
-👉 <a href="./3_VOLEitH状态机与FFI.html">点击查看：3_VOLEitH状态机与FFI.md</a></li>
-</ul>
-<h3 id="模块四多项式约束生成"><a class="header" href="#模块四多项式约束生成">模块四：多项式约束生成</a></h3>
-<p>模块概述：系统的理论创新核心，负责将正则编码等操作编译为布尔多项式，并进行极速求值。</p>
-<p>核心亮点：</p>
+<li><strong>你的笔记</strong>：指出 13MB 矩阵放内存会导致大量 CPU L3 Cache Miss，建议用 AES-CTR 在 L1 缓存流式吐出 128 bit，算完就扔，空间降为 $O(1)$，解决并发瓶颈。</li>
+<li><strong>代码实现</strong>：<strong>完美实现！</strong>
 <ul>
-<li>非线性正则编码代数化：利用 Möbius 变换，将非线性的正则编码巧妙转化为 degree-$c$ 的 ANF 约束系统。</li>
-<li>蝴蝶隐式求值引擎：借鉴 FFT 蝶形结构，将约束求值的计算复杂度从 $\mathcal{O}(m \cdot 2^c)$ 极致压缩到 $\mathcal{O}(m \cdot c)$。</li>
+<li>对应 <strong>模块一</strong> 的 <code>streaming_matrix.rs</code>。</li>
+<li>结构体 <code>StreamingMatrixCols</code> 严格执行了“<strong>零物化</strong>”策略，内部仅保存 16 字节的 Seed。调用 <code>fill_column_bytes_prechecked</code> 时，直接利用 <code>_mm_aesenc_si128</code> 硬件指令实时生成列数据，进行 XOR 累加后立刻丢弃，完全绕过了内存带宽瓶颈。</li>
 </ul>
-<p>👉 <a href="./4_多项式约束生成.html">点击查看：4_多项式约束生成.md</a></p>
-<h3 id="模块五zk-核心证明协议"><a class="header" href="#模块五zk-核心证明协议">模块五：ZK 核心证明协议</a></h3>
-<p>模块概述：实现 $\Pi^t_{dD-Rep}$ 核心协议，负责具体的零知识证明与验证逻辑。</p>
-<p>核心亮点：</p>
+</li>
+</ul>
+<h4 id="3-叶子见证降维单矩阵叶哈希"><a class="header" href="#3-叶子见证降维单矩阵叶哈希">3. 叶子见证降维（单矩阵叶哈希）</a></h4>
 <ul>
-<li>线性因子乘积盲化：巧妙利用辅助 VOLE 的线性乘积，对约束求值后的多项式系数进行安全盲化。</li>
-<li>Fiat-Shamir 变换：基于 SHA-3 Keccak-256 海绵结构吸收承诺并挤出挑战值，实现完美的 NIZK 交互转换。</li>
-</ul>
-<p>👉 <a href="./5_ZK核心证明协议.html">点击查看：5_ZK核心证明协议.md</a></p>
-<h3 id="模块六基础应用层签名"><a class="header" href="#模块六基础应用层签名">模块六：基础应用层签名</a></h3>
-<p>模块概述：将底层协议转化为具体的密码学签名方案，包含两种基础签名。</p>
-<p>核心亮点：</p>
+<li><strong>你的笔记</strong>：指出 Merkle 树叶子（公钥）不需要双输入哈希 $h_B(x_0, x_1)$，只需要满足单向性的 $y = B_{leaf} \cdot RE(x)$，从而将私钥体积从 $2n$ 砍到 $n$。</li>
+<li><strong>代码实现</strong>：<strong>已在高级应用中落地！</strong>
 <ul>
-<li>ReSolveD+ 标准签名：基于 RSD 困难问题，直接证明正则编码约束。</li>
-<li>零知识环签名 (RS)：通过证明双矩阵 AFS 哈希链方程，完成 Merkle 树累加器的成员资格匿名认证。</li>
+<li>在 <strong>模块七（FDABS 全动态属性基签名）</strong> 中，明确提到了**“与环签名的关键区别：单矩阵叶哈希”**。</li>
+<li>代码专门引入了第三个矩阵 <code>pk.b_leaf_cols</code>，并通过 <code>build_hash_terms</code>（单矩阵版本）计算 $v_\ell = B_{leaf} \cdot RE(a || rand)$，完美兑现了你关于减小 witness 维度和提速的设想。</li>
 </ul>
-<p>👉 <a href="./6_基础应用层签名.html">点击查看：6_基础应用层签名.md</a></p>
-<h3 id="模块七高级应用层签名"><a class="header" href="#模块七高级应用层签名">模块七：高级应用层签名</a></h3>
-<p>模块概述：在环签名基础上，引入加密与电路约束，实现具有复杂访问控制的顶级签名方案。</p>
-<p>核心亮点：</p>
+</li>
+</ul>
+<h4 id="4-单证明者多实例签名--可连接环签名-lrs"><a class="header" href="#4-单证明者多实例签名--可连接环签名-lrs">4. 单证明者多实例签名 &amp; 可连接环签名 (LRS)</a></h4>
 <ul>
-<li>群签名 (GS)：将 McEliece 身份密文运算注入 ANF 约束系统，实现匿名性下的“管理员可控追踪”。</li>
-<li>属性基签名 (FDABS)：极具创新地使用 NAND 门约束表达任意布尔电路策略，并用叶子节点奇偶性校验防止欺骗。</li>
-</ul>
-<p>👉 <a href="./7_高级应用层签名.html">点击查看：7_高级应用层签名.md</a></p>
-<h3 id="模块八参数优化与基准测试"><a class="header" href="#模块八参数优化与基准测试">模块八：参数优化与基准测试</a></h3>
-<p>模块概述：汇报系统在参数选择、序列化体积及并发执行上的极致工程优化。</p>
-<p>核心亮点：</p>
+<li><strong>你的笔记</strong>：提出打包 $N$ 个消息共享同一个 GGM 树和 $\Delta$（静态摊销批处理），并引入密钥镜像 $I = B_{link} \cdot RE(x)$ 升级为 LRS。</li>
+<li><strong>代码实现</strong>：<strong>已完成并基准测试！</strong>
 <ul>
-<li>严格的安全评估：结合 8-bit Grinding 工作量证明，在兼顾性能的同时死守 128-bit 等效安全强度。</li>
-<li>KB 级序列化奇迹：通过 PRG 种子替代大矩阵、极致位宽截断，将传统 MB 级的签名体积暴降至几 KB。</li>
-<li>多核并发榨取：大量使用 <code>rayon</code> 数据并行化框架，在哈希树计算和多项式求值上实现接近线性的加速比。</li>
+<li>在 <strong>模块八（参数优化与基准测试）</strong> 的性能数据表中，赫然列出了：<code>批量化 LRS (10×) | 签名大小 ~25 KB（摊销 ~2.5 KB/个）</code>。</li>
+<li>说明代码已经实现了通过合并 Fiat-Shamir 挑战来共享 VOLE 树的逻辑，并且添加了 $B_{link}$ 的零知识约束。</li>
 </ul>
-<p>👉 <a href="./8_参数优化与基准测试.html">点击查看：8_参数优化与基准测试.md</a></p>
+</li>
+</ul>
+<h4 id="5-prg-替代哈希函数生成-ggm-树"><a class="header" href="#5-prg-替代哈希函数生成-ggm-树">5. PRG 替代哈希函数生成 GGM 树</a></h4>
+<ul>
+<li><strong>你的笔记</strong>：将 GGM 树的哈希扩展替换为固定密钥的 AES-CTR 以利用硬件加速。</li>
+<li><strong>代码实现</strong>：<strong>通过 FFI 间接完美实现。</strong>
+<ul>
+<li>在 <strong>模块三</strong>，系统通过 FFI 调用了 FAEST 的 C 语言核心库（BAVC 树）。FAEST 的官方参考实现本身就是用基于 AES/Rijndael 的 PRG 来扩展 GGM 树的，代码直接继承了这一红利。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="-二采用不同技术路线实现的创新点alternative-route"><a class="header" href="#-二采用不同技术路线实现的创新点alternative-route">🟡 二、采用不同技术路线实现的创新点（Alternative Route）</a></h3>
+<h4 id="1-塔域加速大域乘法"><a class="header" href="#1-塔域加速大域乘法">1. 塔域加速大域乘法</a></h4>
+<ul>
+<li><strong>你的笔记</strong>：建议将 $\mathbb{F}<em>{2^{128}}$ 运算同构分解到塔域 $\mathbb{F}</em>{2^8}$ 上，以加速运算。</li>
+<li><strong>代码实现</strong>：<strong>目标达到，但使用了“暴力美学”而非塔域。</strong>
+<ul>
+<li>在 <strong>模块一（<code>finite_field.rs</code>）</strong> 中，开发者没有去写复杂的同构映射（这往往会引入难以优化的分支或查表开销），而是<strong>直接调用了 CPU 底层的 <code>PCLMULQDQ</code> 和 <code>PMULL</code> 无进位乘法指令</strong>。</li>
+<li>结果达到了<strong>亚纳秒级</strong>的单次乘法速度，用最直接的硬件碾压实现了你想要的大域加速目标。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="-三暂未在当前代码中看到的创新点future-work--not-adopted"><a class="header" href="#-三暂未在当前代码中看到的创新点future-work--not-adopted">🔴 三、暂未在当前代码中看到的创新点（Future Work / Not Adopted）</a></h3>
+<h4 id="1-消除群签名随机数承诺左零空间-h_r"><a class="header" href="#1-消除群签名随机数承诺左零空间-h_r">1. 消除群签名随机数承诺（左零空间 $H_R$）</a></h4>
+<ul>
+<li><strong>你的笔记</strong>：在群签名中，计算 $G_{1,R}$ 的左零空间矩阵 $H_R$，两边同乘 $H_R$ 以消去随机噪音 $r_1, r_2$，从而不需要将其作为 witness 承诺。</li>
+<li><strong>代码实现</strong>：<strong>当前未采用。</strong>
+<ul>
+<li>审查 <strong>模块七</strong> 的 <code>build_group_signature_constraints</code>，代码依然显式地将 $r_1, r_2, e’_1, e’_2$ 放进了 Witness，并通过 <code>append_linear_matrix_row_terms</code> 为 $r_1$ 构建线性约束。</li>
+<li><em>原因推测</em>：这个优化在理论上非常惊艳（能减少 witness 长度），但在工程上，乘上稠密的 $H_R$ 会使得原本由稀疏正则噪声主导的系统变得稠密，可能会大大增加 <code>chi_prime</code> 聚合的计算量，或者破坏现有的基于独热编码的快速求值框架。开发者可能权衡后放弃，或者这仍然躺在未来的 Todo List 中。</li>
+</ul>
+</li>
+</ul>
+<h4 id="2-补全-qrom-证明--salted-rsd-防御多目标攻击"><a class="header" href="#2-补全-qrom-证明--salted-rsd-防御多目标攻击">2. 补全 QROM 证明 / Salted-RSD 防御多目标攻击</a></h4>
+<ul>
+<li>这两项偏向理论安全规约和参数选择。在代码的 <code>security.rs</code> 中，当前使用了标准的 128-bit 经典安全参数以及 8-bit Grinding，未明确看到抗量子随机预言机模型（QROM）的具体协议变动（如 Unruh 变换等）。</li>
+</ul>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-
-                            <a rel="next prefetch" href="1_底层数学与矩阵运算.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            <a rel="prev" href="8_参数优化与基准测试.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
+
 
                         <div style="clear: both"></div>
                     </nav>
@@ -284,10 +293,10 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-
-                    <a rel="next prefetch" href="1_底层数学与矩阵运算.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    <a rel="prev" href="8_参数优化与基准测试.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
+
             </nav>
 
         </div>

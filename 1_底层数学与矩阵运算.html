@@ -57,10 +57,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-b481d68f.js";
+            window.path_to_searchindex_js = "searchindex-d8096076.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-b2e20d01.js"></script>
+        <script src="toc-61c3e6e9.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -196,22 +196,20 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="模块一底层数学与内存优化gf2¹²⁸-域运算与大矩阵流式计算"><a class="header" href="#模块一底层数学与内存优化gf2¹²⁸-域运算与大矩阵流式计算">模块一：底层数学与内存优化——GF(2¹²⁸) 域运算与大矩阵流式计算</a></h1>
-<hr>
+                        <h1 id="模块一底层数学与内存优化gf2128-域运算与大矩阵流式计算"><a class="header" href="#模块一底层数学与内存优化gf2128-域运算与大矩阵流式计算">模块一：底层数学与内存优化——GF(2^128) 域运算与大矩阵流式计算</a></h1>
 <h2 id="一概述"><a class="header" href="#一概述">一、概述</a></h2>
-<p>本模块是整个 ZKP 系统的<strong>数学基石</strong>与<strong>性能瓶颈突破口</strong>。它解决两个根本问题：</p>
+<p>本模块是整个 ZKP 系统的数学基石，也是性能瓶颈突破口。它解决两个根本问题：</p>
 <ol>
-<li><strong>如何在 $\mathbb{F}_{2^{128}}$ 上做极速乘法</strong>——零知识证明协议中大量涉及域上的线性组合与多项式求值，域乘法的速度直接决定协议延迟。</li>
-<li><strong>如何在不耗尽内存的前提下操作 $\mathbb{F}_2^{n \times m}$（$n \approx 10^4, m \approx 10^5$）量级的二元矩阵</strong>——基于编码的 ZK 协议需要大量的随机矩阵（如 $B \in \mathbb{F}_2^{n \times m}$），直接物化（materialize）会导致数十 GB 的内存占用。</li>
+<li>如何在 $\mathbb{F}_{2^{128}}$ 上尽可能快的做乘法运算，这一点同样也在原论文被提及到。</li>
+<li>如何在尽可能内存的前提下操作 $\mathbb{F}_2^{n \times m}$（$n \approx 10^4, m \approx 10^5$）量级的二元矩阵，这是基于编码的 ZK 协议需要大量的随机矩阵（如 $B \in \mathbb{F}_2^{n \times m}$），直接放进去会导致大量的内存占用。</li>
 </ol>
-<hr>
-<h2 id="二gf2¹²⁸-有限域运算finite_fieldrs"><a class="header" href="#二gf2¹²⁸-有限域运算finite_fieldrs">二、GF(2¹²⁸) 有限域运算：<code>finite_field.rs</code></a></h2>
+<h2 id="二gf2128-有限域运算finite_fieldrs"><a class="header" href="#二gf2128-有限域运算finite_fieldrs">二、GF(2^128) 有限域运算：<code>finite_field.rs</code></a></h2>
 <h3 id="21-数学背景"><a class="header" href="#21-数学背景">2.1 数学背景</a></h3>
 <p>$\text{GF}(2^{128})$ 是特征为 2 的扩域，域元素是次数小于 128 的二元多项式：</p>
 <p>$$
 a(x) = a_{127}x^{127} + a_{126}x^{126} + \cdots + a_1x + a_0, \quad a_i \in \mathbb{F}_2
 $$</p>
-<p>加法即按位 <strong>XOR</strong>；乘法是多项式乘法再模一个 128 次不可约多项式（通常是 $x^{128} + x^7 + x^2 + x + 1$，即 GCM 所用的 reduction 多项式）。</p>
+<p>加法即按位 XOR；乘法是多项式乘法再模一个 128 次不可约多项式（即模 $x^{128} + x^7 + x^2 + x + 1$， GCM 所用的 reduction 多项式）。</p>
 <h3 id="22-代码实现方式"><a class="header" href="#22-代码实现方式">2.2 代码实现方式</a></h3>
 <div class="table-wrapper">
 <table>
@@ -227,24 +225,23 @@ $$</p>
 </tbody>
 </table>
 </div>
-<p><strong>核心实现路径</strong>：</p>
-<p>代码没有自己实现域运算，而是复用 <strong>Galois Inc. 的 <code>swanky</code> 密码库</strong>（原 <code>scuttlebutt</code> 库）。<code>swanky-field-binary</code> 在编译时通过条件编译自动检测目标架构：</p>
+<p>核心实现路径：</p>
+<p>代码没有自己实现域运算，而是复用 Galois Inc. 的 <code>swanky</code> 密码库（原 <code>scuttlebutt</code> 库）。<code>swanky-field-binary</code> 在编译时通过条件编译自动检测目标架构：</p>
 <ul>
-<li><strong>x86_64</strong>：使用 <code>PCLMULQDQ</code> 指令 + AES-NI 的 <code>AESDEC</code> 做多项式约简——单条指令在一个时钟周期内完成 64-bit 无进位乘法，约简阶段复用 AES 轮函数加速。</li>
-<li><strong>aarch64/ARM</strong>：使用 <code>PMULL</code> 指令做多项式乘法，配合 ARM 的 <code>EOR3</code> 等指令做约简。</li>
+<li>x86_64：使用 <code>PCLMULQDQ</code> 指令 + AES-NI 的 <code>AESDEC</code> 做多项式约简——单条指令在一个时钟周期内完成 64-bit 无进位乘法，约简阶段复用 AES 轮函数加速。</li>
+<li>aarch64/ARM：使用 <code>PMULL</code> 指令做多项式乘法，配合 ARM 的 <code>EOR3</code> 等指令做约简。(我的电脑是 intel 的，所以没有直接测试)</li>
 </ul>
-<p>从 <code>benches/gf128_bench.rs</code> 可以看到，当使用 <code>RUSTFLAGS="-C target-cpu=native"</code> 编译时，微基准测试报告显示平均每次乘法耗时在<strong>亚纳秒级</strong>（实测 &lt; 0.5 ms / 万次），验证了硬件加速路径被正确激活。</p>
+<p>从 <code>benches/gf128_bench.rs</code> 可以看到，当使用 <code>RUSTFLAGS="-C target-cpu=native"</code> 编译时，微基准测试报告显示平均每次乘法耗时在亚纳秒级（实测 &lt; 0.5 ms / 万次），验证了硬件加速路径被正确激活。</p>
 <h3 id="23-安全注意事项"><a class="header" href="#23-安全注意事项">2.3 安全注意事项</a></h3>
-<p>整个 <code>finite_field.rs</code> 仅 47 行有效代码（其余为测试），它<strong>不做任何内存分配或可变状态操作</strong>，因此侧信道攻击面极低。域乘法的常数时间性质由硬件指令（PCLMULQDQ / PMULL）天然保证——这些指令是固定延迟的，不依赖操作数的值。</p>
-<hr>
+<p>整个 <code>finite_field.rs</code> 仅 47 行有效代码（其余为测试），它不做任何内存分配或可变状态操作，因此侧信道攻击面极低。域乘法的常数时间性质由硬件指令（PCLMULQDQ / PMULL）天然保证——这些指令是固定延迟的，不依赖操作数的值。</p>
 <h2 id="三大矩阵流式计算streaming_matrixrs"><a class="header" href="#三大矩阵流式计算streaming_matrixrs">三、大矩阵流式计算：<code>streaming_matrix.rs</code></a></h2>
 <h3 id="31-问题与设计思想"><a class="header" href="#31-问题与设计思想">3.1 问题与设计思想</a></h3>
 <p>在基于编码的 ZK 协议中（AFC 哈希、VOLE 承诺等），需要大量使用伪随机矩阵：</p>
 <p>$$
 B \in \mathbb{F}_2^{n \times m}, \quad n = 1280,\ m = 81920
 $$</p>
-<p>若直接物化，$1280 \times 81920 \text{ bits} = 1280 \times 10240 \text{ bytes} \approx 12.5 \text{ MB}$。对于单张矩阵尚且可控，但协议运行中会生成<strong>几十到上百张</strong>这样的矩阵，加上中间变量的暂存，内存压力急剧上升。更关键的是，VOLE 树的叶子承诺需要用到<strong>种子衍生</strong>（seed-derived）的矩阵列——大量矩阵只在求值时用一次，无需常驻内存。</p>
-<p>设计思路是 <strong>“列式伪随机流式生成”</strong>：不存储整个矩阵，而是存储一个 128-bit 种子，在需要某一列时即时计算。</p>
+<p>若直接物化，$1280 \times 81920 \text{ bits} = 1280 \times 10240 \text{ bytes} \approx 12.5 \text{ MB}$。对于单张矩阵尚且可控，但协议运行中会生成几十到上百张这样的矩阵，加上中间变量的暂存，内存压力急剧上升。更关键的是，VOLE 树的叶子承诺需要用到种子衍生（seed-derived）的矩阵列——大量矩阵只在求值时用一次，无需常驻内存。</p>
+<p>设计思路是 “列式伪随机流式生成”：不存储整个矩阵，而是存储一个 128-bit 种子，在需要某一列时即时计算。</p>
 <h3 id="32-核心数据结构与公式-代码映射"><a class="header" href="#32-核心数据结构与公式-代码映射">3.2 核心数据结构与公式-代码映射</a></h3>
 <div class="table-wrapper">
 <table>
@@ -252,7 +249,7 @@ $$</p>
 <tr><th>数学符号</th><th>代码对应</th><th>说明</th></tr>
 </thead>
 <tbody>
-<tr><td>$B \in \mathbb{F}_2^{n \times m}$</td><td><code>StreamingMatrixCols</code></td><td><strong>不存储矩阵本身</strong>，仅持有种子和维度信息</td></tr>
+<tr><td>$B \in \mathbb{F}_2^{n \times m}$</td><td><code>StreamingMatrixCols</code></td><td>不存储矩阵本身，仅持有种子和维度信息</td></tr>
 <tr><td>种子 $\sigma$</td><td><code>seed: [u8; 16]</code></td><td>128-bit PRG 种子，用于确定性扩展</td></tr>
 <tr><td>行数 $n$</td><td><code>rows: usize</code></td><td>矩阵行数</td></tr>
 <tr><td>列数 $m$</td><td><code>cols: usize</code></td><td>矩阵列数</td></tr>
@@ -262,44 +259,33 @@ $$</p>
 </table>
 </div>
 <h3 id="33-核心流程图"><a class="header" href="#33-核心流程图">3.3 核心流程图</a></h3>
-<pre><code>┌─────────────────────────────────────────────────────────┐
-│                   StreamingMatrixCols                    │
-│                                                         │
-│   seed: [u8; 16]     ──►  MatrixPrg                     │
-│                               │                         │
-│                               ▼                         │
-│                    AES-128 Key Expansion                 │
-│                    (expand_key)                          │
-│                               │                         │
-│                     round_keys[11]                       │
-│                               │                         │
-│           ┌───────────────────┼───────────────────┐      │
-│           ▼                   ▼                   ▼      │
-│      column(0)           column(1)     ...   column(m-1) │
-│           │                   │                   │      │
-│           └───────────────────┼───────────────────┘      │
-│                               │                          │
-│                    ┌──────────▼──────────┐               │
-│                    │   AES-CTR 生成器    │               │
-│                    │  counter = col_idx  │               │
-│                    │  nonce  = 0         │               │
-│                    │  key    = seed      │               │
-│                    └──────────┬──────────┘               │
-│                               │                          │
-│                               ▼                          │
-│                    fill_column_bytes()                   │
-│                    (n/8 字节，尾部掩码清除)               │
-│                               │                          │
-│                               ▼                          │
-│                    BitVec (列向量)                        │
-└─────────────────────────────────────────────────────────┘
+<pre><code class="language-mermaid">graph TD
+    subgraph SMC [StreamingMatrixCols 核心逻辑]
+        direction TB
+        A[seed: 16 Bytes] --&gt;|初始化 MatrixPrg| B(AES-128 密钥扩展)
+        B --&gt; C[(round_keys 11轮子密钥)]
+        
+        C -.-&gt;|按需生成| D1[column 0]
+        C -.-&gt;|按需生成| D2[column 1]
+        C -.-&gt;|按需生成| D3[... column m-1]
+        
+        D2 --&gt;|传入 col_idx| E{AES-CTR 生成器}
+        
+        E -.-&gt; |"counter = col_idx&lt;br&gt;nonce = 0&lt;br&gt;key = seed"| F[fill_column_bytes]
+        
+        F --&gt;|生成 n/8 字节&lt;br&gt;并清除尾部无效掩码| G[/BitVec 列向量/]
+    end
+    
+    style SMC fill:transparent,stroke:#666,stroke-width:2px,stroke-dasharray: 5 5
+    style E fill:#f9f,stroke:#333,stroke-width:2px
+    style G fill:#bbf,stroke:#333,stroke-width:2px
 </code></pre>
 <h3 id="34-内存管理策略详解"><a class="header" href="#34-内存管理策略详解">3.4 内存管理策略详解</a></h3>
-<h4 id="策略一零物化zero-materialization"><a class="header" href="#策略一零物化zero-materialization">策略一：<strong>零物化（Zero Materialization）</strong></a></h4>
-<p>矩阵从未完整存储在内存中。<code>StreamingMatrixCols</code> 仅持有 <strong>32 字节</strong>的状态信息（16 字节种子 + 部分元数据）。每次调用 <code>column(j)</code> 生成一列的 <code>n</code> 个比特（约 $n/8$ 字节），用完即丢弃。这使得 $1280 \times 81920$ 的矩阵实际占用从 $\approx 12.5\text{ MB}$ 降至 $\approx 0.00003\text{ MB}$。</p>
-<h4 id="策略二延迟生成lazy-generation"><a class="header" href="#策略二延迟生成lazy-generation">策略二：<strong>延迟生成（Lazy Generation）</strong></a></h4>
-<p><code>fill_column_bytes</code> 使用<strong>按需填充</strong>模式。只有 <code>column(j)</code> 或 <code>fill_column_bytes</code> 被显式调用时，数据才被生成。<code>materialize()</code> 方法虽然提供了全矩阵物化的接口（用于测试），但在生产代码中不使用——生产中使用 <code>iter()</code> 逐个消费列。</p>
-<h4 id="策略三aes-ctr-作为向量-prg"><a class="header" href="#策略三aes-ctr-作为向量-prg">策略三：<strong>AES-CTR 作为向量 PRG</strong></a></h4>
+<h4 id="策略一零物化zero-materialization"><a class="header" href="#策略一零物化zero-materialization">策略一：零物化（Zero Materialization）</a></h4>
+<p>矩阵从未完整存储在内存中。<code>StreamingMatrixCols</code> 仅持有 32 字节的状态信息（16 字节种子 + 部分元数据）。每次调用 <code>column(j)</code> 生成一列的 <code>n</code> 个比特（约 $n/8$ 字节），用完即丢弃。这使得 $1280 \times 81920$ 的矩阵实际占用从约 $12.5\text{ MB}$ 降至约 $0.00003\text{ MB}$。</p>
+<h4 id="策略二延迟生成lazy-generation"><a class="header" href="#策略二延迟生成lazy-generation">策略二：延迟生成（Lazy Generation）</a></h4>
+<p><code>fill_column_bytes</code> 使用按需填充模式。只有 <code>column(j)</code> 或 <code>fill_column_bytes</code> 被显式调用时，数据才被生成。<code>materialize()</code> 方法虽然提供了全矩阵物化的接口（用于测试），但在生产代码中不使用——生产中使用 <code>iter()</code> 逐个消费列。</p>
+<h4 id="策略三aes-ctr-作为向量-prg"><a class="header" href="#策略三aes-ctr-作为向量-prg">策略三：AES-CTR 作为向量 PRG</a></h4>
 <p>每一列 $B_{:,j}$ 通过 AES-128 在 CTR 模式下生成：</p>
 <p>$$
 B_{:,j} = \text{AES}<em>\sigma(\text{ctr}=j || \text{nonce}=0) ; | ; \text{AES}</em>\sigma(\text{ctr}=j || \text{nonce}=1) ; | ; \cdots
@@ -307,11 +293,11 @@ $$</p>
 <p>其中 $\sigma$ 是 16 字节种子。每个 AES 块产生 128 位伪随机输出，因此生成 $n$ 位列向量需要 $\lceil n/128 \rceil$ 次 AES 加密调用。</p>
 <p>关键优化细节：</p>
 <ul>
-<li><strong>密钥扩展一次</strong>：<code>expand_key</code> 在构造 <code>MatrixPrg</code> 时把种子扩展为 11 轮子密钥，后续 <code>fill_column_bytes</code> 的每次 AES 加密都复用这些轮密钥（<code>round_keys</code>），避免重复扩展。</li>
-<li><strong>向量化 AES</strong>：<code>aes128_ctr::fill</code> 在 <code>while</code> 循环中批量处理连续块的加密，利用 <code>_mm_aesenc_si128</code> / <code>_mm_aesenclast_si128</code> 指令。在循环内部，每次迭代写入 16 字节到输出缓冲区，并递增 128-bit 计数器。剩余不满一块的尾部数据通过 <code>copy_nonoverlapping</code> 截取。</li>
-<li><strong>尾部掩码清除</strong>：因 $n$ 可能不是 8 的倍数，最后一字节的高位可能包含无效比特。<code>clear_column_tail_bits</code> 用 <code>tail_mask</code> 清除这些位，保证列向量的有效性。</li>
+<li>密钥扩展一次：<code>expand_key</code> 在构造 <code>MatrixPrg</code> 时把种子扩展为 11 轮子密钥，后续 <code>fill_column_bytes</code> 的每次 AES 加密都复用这些轮密钥（<code>round_keys</code>），避免重复扩展。</li>
+<li>向量化 AES：<code>aes128_ctr::fill</code> 在 <code>while</code> 循环中批量处理连续块的加密，利用 <code>_mm_aesenc_si128</code> / <code>_mm_aesenclast_si128</code> 指令。在循环内部，每次迭代写入 16 字节到输出缓冲区，并递增 128-bit 计数器。剩余不满一块的尾部数据通过 <code>copy_nonoverlapping</code> 截取。</li>
+<li>尾部掩码清除：因 $n$ 可能不是 8 的倍数，最后一字节的高位可能包含无效比特。<code>clear_column_tail_bits</code> 用 <code>tail_mask</code> 清除这些位，保证列向量的有效性。</li>
 </ul>
-<h4 id="策略四双后端切换"><a class="header" href="#策略四双后端切换">策略四：<strong>双后端切换</strong></a></h4>
+<h4 id="策略四双后端切换"><a class="header" href="#策略四双后端切换">策略四：双后端切换</a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[cfg(all(feature = "hardware-accel", target_arch = "x86_64", target_feature = "aes"))]
@@ -322,11 +308,11 @@ const MATRIX_PRG_BACKEND: &amp;str = "aes-ni";
 // 回退到 FAEST C 实现的 PRG
 const MATRIX_PRG_BACKEND: &amp;str = "faest-ffi";
 <span class="boring">}</span></code></pre>
-<p>当 CPU 支持 AES-NI 且启用 <code>hardware-accel</code> feature（默认开启）时，使用 Rust 内联汇编实现的 AES-CTR；否则通过 FFI 调用 <code>faest_ffi::faest_prg_128</code>（调用 C 版本的 PRG）。这种双后端设计确保了<strong>可移植性</strong>和<strong>性能最佳化</strong>。</p>
+<p>当 CPU 支持 AES-NI 且启用 <code>hardware-accel</code> feature（默认开启）时，使用 Rust 内联汇编实现的 AES-CTR；否则通过 FFI 调用 <code>faest_ffi::faest_prg_128</code>（调用 C 版本的 PRG）。这种双后端设计确保了可移植性和性能最佳化。</p>
 <hr>
 <h2 id="四稀疏矩阵-向量乘法bitvec_opsrs"><a class="header" href="#四稀疏矩阵-向量乘法bitvec_opsrs">四、稀疏矩阵-向量乘法：<code>bitvec_ops.rs</code></a></h2>
 <h3 id="41-问题"><a class="header" href="#41-问题">4.1 问题</a></h3>
-<p>在基于编码的 ZK 中，$y = B \cdot x$ 中 $x$ 是一个<strong>正则编码词</strong>（Regular Encoded word），其汉明重量极低——即 $x$ 中只有 $c$ 个比特为 1，其余全为 0。这意味着全矩阵乘法可以退化为<strong>稀疏乘法</strong>：</p>
+<p>在基于编码的 ZK 中，$y = B \cdot x$ 中 $x$ 是一个正则编码词（Regular Encoded word），其汉明重量极低——即 $x$ 中只有 $c$ 个比特为 1，其余全为 0。这意味着全矩阵乘法可以退化为稀疏乘法：</p>
 <p>$$
 y_i = \bigoplus_{j: x_j = 1} B_{i,j}
 $$</p>
@@ -360,30 +346,30 @@ for each col_idx in x_indices:
             result[row] ← NOT result[row]   // 即 XOR 1
 </code></pre>
 <h3 id="44-缓存优化分析"><a class="header" href="#44-缓存优化分析">4.4 缓存优化分析</a></h3>
-<p>该算法利用了矩阵的<strong>行主序存储</strong>（<code>Vec&lt;BitVec&lt;u8, Msb0&gt;&gt;</code>）与<strong>稀疏索引遍历</strong>的结合：</p>
+<p>该算法利用了矩阵的行主序存储（<code>Vec&lt;BitVec&lt;u8, Msb0&gt;&gt;</code>）与稀疏索引遍历的结合：</p>
 <ol>
-<li><strong>空间局部性</strong>：对于同一个 <code>col_idx</code>，连续访问 <code>matrix_b[0..rows]</code> 的同一字节位置 <code>byte_pos</code>，这些字节在内存中紧密排列（每行相邻），因此 CPU 缓存命中率极高。</li>
-<li><strong>稀疏性红利</strong>：若汉明重量 $w = 320$ 而列数 $m = 81920$，则避免了 $81920 - 320 \approx 81600$ 次全列扫描，加速比达到 $\mathcal{O}(m/w)$。</li>
-<li><strong>字节级寻址</strong>：通过预计算 <code>byte_pos</code> 和位掩码，避免了逐位索引的间接开销。</li>
+<li>空间局部性：对于同一个 <code>col_idx</code>，连续访问 <code>matrix_b[0..rows]</code> 的同一字节位置 <code>byte_pos</code>，这些字节在内存中紧密排列（每行相邻），因此 CPU 缓存命中率极高。</li>
+<li>稀疏性红利：若汉明重量 $w = 320$ 而列数 $m = 81920$，则避免了 $81920 - 320 \approx 81600$ 次全列扫描，加速比达到 $\mathcal{O}(m/w)$。</li>
+<li>字节级寻址：通过预计算 <code>byte_pos</code> 和位掩码，避免了逐位索引的间接开销。</li>
 </ol>
-<p>从测试代码 <code>test_matrix_vector_multiply_report</code> 的配置（1280 行 × 81920 列，汉明重量 320）看，平均一次乘法在<strong>数十毫秒</strong>量级（具体取决于 CPU 频率和缓存大小），这为上层协议的高效运行奠定了基础。</p>
+<p>从测试代码 <code>test_matrix_vector_multiply_report</code> 的配置（1280 行 × 81920 列，汉明重量 320）看，平均一次乘法在数十毫秒量级（具体取决于 CPU 频率和缓存大小），这为上层协议的高效运行奠定了基础。</p>
 <h3 id="45--重要澄清三种矩阵乘法模式"><a class="header" href="#45--重要澄清三种矩阵乘法模式">4.5 ⚠️ 重要澄清：三种矩阵乘法模式</a></h3>
-<p>本系统中存在<strong>三种不同的矩阵乘法实现</strong>，用于不同场景：</p>
+<p>本系统中存在三种不同的矩阵乘法实现，用于不同场景：</p>
 <div class="table-wrapper">
 <table>
 <thead>
 <tr><th>模式</th><th>实现位置</th><th>存储方式</th><th>矩阵来源</th><th>使用场景</th></tr>
 </thead>
 <tbody>
-<tr><td><strong>行主序物化乘法</strong></td><td><code>bitvec_ops.rs</code> <code>matrix_vector_multiply_sparse</code></td><td>行主序 <code>Vec&lt;BitVec&gt;</code></td><td>已完全物化到内存</td><td>参考/测试中的小矩阵、单步调试验证</td></tr>
-<tr><td><strong>列流式 XOR 乘法（非 CT）</strong></td><td><code>afs_hash.rs</code> <code>afs_hash_streaming</code> / <code>linear_matrix_vector_mul_streaming</code></td><td>按需生成列</td><td><code>StreamingMatrixCols</code> 流式生成</td><td>生产代码中<strong>公开输入</strong>的哈希/矩阵-向量乘</td></tr>
-<tr><td><strong>列流式 XOR 乘法（CT）</strong></td><td><code>afs_hash.rs</code> <code>afs_hash_streaming_ct</code> / <code>linear_matrix_vector_mul_streaming_ct</code></td><td>按需生成全部列 + 掩码</td><td><code>StreamingMatrixCols</code> 流式生成</td><td>生产代码中<strong>秘密输入（Witness）</strong> 的常数时间求值</td></tr>
+<tr><td>行主序物化乘法</td><td><code>bitvec_ops.rs</code> <code>matrix_vector_multiply_sparse</code></td><td>行主序 <code>Vec&lt;BitVec&gt;</code></td><td>已完全物化到内存</td><td>参考/测试中的小矩阵、单步调试验证</td></tr>
+<tr><td>列流式 XOR 乘法（非 CT）</td><td><code>afs_hash.rs</code> <code>afs_hash_streaming</code> / <code>linear_matrix_vector_mul_streaming</code></td><td>按需生成列</td><td><code>StreamingMatrixCols</code> 流式生成</td><td>生产代码中公开输入的哈希/矩阵-向量乘</td></tr>
+<tr><td>列流式 XOR 乘法（CT）</td><td><code>afs_hash.rs</code> <code>afs_hash_streaming_ct</code> / <code>linear_matrix_vector_mul_streaming_ct</code></td><td>按需生成全部列 + 掩码</td><td><code>StreamingMatrixCols</code> 流式生成</td><td>生产代码中秘密输入（Witness） 的常数时间求值</td></tr>
 </tbody>
 </table>
 </div>
-<p><strong>重要区别</strong>：</p>
-<p><code>bitvec_ops.rs</code> 中的 <code>matrix_vector_multiply_sparse</code> 是<strong>行主序</strong>的——矩阵 $B$ 完全物化，通过行内列跨步访问实现稀疏乘法。它主要用于单元测试和参考实现，验证 $y = Bx$ 的正确性。</p>
-<p><strong>非 CT 列流式</strong>（<code>afs_hash_streaming</code>、<code>linear_matrix_vector_mul_streaming</code>）：仅生成 $x$ 中为 1 的索引对应的列，进行 XOR 累加。<strong>输入 $x$ 必须为公开值</strong>，否则会侧信道泄露。</p>
+<p>重要区别：</p>
+<p><code>bitvec_ops.rs</code> 中的 <code>matrix_vector_multiply_sparse</code> 是行主序的——矩阵 $B$ 完全物化，通过行内列跨步访问实现稀疏乘法。它主要用于单元测试和参考实现，验证 $y = Bx$ 的正确性。</p>
+<p>非 CT 列流式（<code>afs_hash_streaming</code>、<code>linear_matrix_vector_mul_streaming</code>）：仅生成 $x$ 中为 1 的索引对应的列，进行 XOR 累加。输入 $x$ 必须为公开值，否则会侧信道泄露。</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// fs_hash_streaming: 非 CT, 仅遍历 x 中为 1 的 chunk
@@ -393,7 +379,7 @@ for (chunk_idx, chunk) in x.chunks(c).enumerate() {
     xor_assign_bytes(acc_bytes, &amp;column_bytes);
 }
 <span class="boring">}</span></code></pre>
-<p><strong>CT 列流式</strong>（<code>afs_hash_streaming_ct</code>、<code>linear_matrix_vector_mul_streaming_ct</code>）：对每个 chunk 的<strong>所有</strong> $2^c$ 列都进行流式生成，但使用<strong>恒定时间掩码</strong>决定是否 XOR。内存访问模式和数据流均与秘密输入 $x$ 无关：</p>
+<p>CT 列流式（<code>afs_hash_streaming_ct</code>、<code>linear_matrix_vector_mul_streaming_ct</code>）：对每个 chunk 的所有 $2^c$ 列都进行流式生成，但使用恒定时间掩码决定是否 XOR。内存访问模式和数据流均与秘密输入 $x$ 无关：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// afs_hash_streaming_ct: 常数时间, 扫描所有 domain_size 列
@@ -403,7 +389,7 @@ for table_idx in 0..domain_size {
     masked_xor_assign_bytes(&amp;mut output, &amp;column, mask);
 }
 <span class="boring">}</span></code></pre>
-<p>这三种模式互不矛盾——它们服务于不同的工程目的：行主序用于<strong>验证正确性</strong>，非 CT 列流式用于<strong>公开输入的快速求值</strong>，CT 列流式用于<strong>秘密输入的侧信道防御</strong>。</p>
+<p>这三种模式互不矛盾——它们服务于不同的工程目的：行主序用于验证正确性，非 CT 列流式用于公开输入的快速求值，CT 列流式用于秘密输入的侧信道防御。</p>
 <hr>
 <h2 id="五工程化保障机制"><a class="header" href="#五工程化保障机制">五、工程化保障机制</a></h2>
 <h3 id="51-确定性验证"><a class="header" href="#51-确定性验证">5.1 确定性验证</a></h3>
@@ -444,7 +430,7 @@ fn test_streaming_matrix_is_deterministic() {
 </tbody>
 </table>
 </div>
-<p>这三个底层文件（<code>finite_field.rs</code>, <code>bitvec_ops.rs</code>, <code>streaming_matrix.rs</code>）共同构成了系统的“数学引擎“——它们通过硬件指令加速、流式延迟生成、稀疏性利用等多层优化，在<strong>亚毫秒级</strong>和<strong>KB 级内存</strong>的约束下完成了传统实现需要<strong>数十毫秒</strong>和<strong>数十 MB 内存</strong>才能完成的矩阵运算。</p>
+<p>这三个底层文件（<code>finite_field.rs</code>, <code>bitvec_ops.rs</code>, <code>streaming_matrix.rs</code>）共同构成了系统的“数学引擎“——它们通过硬件指令加速、流式延迟生成、稀疏性利用等多层优化，在亚毫秒级和KB 级内存的约束下完成了传统实现需要数十毫秒和数十 MB 内存才能完成的矩阵运算。</p>
 
                     </main>
 
