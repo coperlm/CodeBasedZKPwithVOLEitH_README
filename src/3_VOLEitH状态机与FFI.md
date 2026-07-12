@@ -1,15 +1,11 @@
 # 模块三：VOLEitH 状态机与跨语言 FFI
 
----
-
 ## 一、概述
 
 本模块是整个 ZKP 系统的核心引擎——它负责将密码学约束系统与底层的延迟 VOLE 功能（Delayed VOLE functionality, $\mathcal{F}_{\text{sVOLE}}$）衔接起来。架构上采用两层级联设计：
 
 1. C 层（FAEST）：提供高效的 GGM 树形向量承诺（BAVC - Binary Auxiliary Vector Commitment），处理 $\tau$ 棵 $\lambda$ 深度的 GGM 树的构建、打开和验证。这是密码学计算密集部分。
 2. Rust 层：通过 FFI 安全封装 C 层状态机，并在此基础上实现 Prover/Verifier 的协议状态机，负责挑战生成、相关性提取（correlation extraction）、约束绑定等高层协议逻辑。
-
----
 
 ## 二、为什么需要 FFI 复用 FAEST 的 C 代码？
 
@@ -47,8 +43,6 @@ src/
   ├── core/voleith.rs ← 高层 Prover/Verifier 状态机
   └── core/wire.rs    ← 序列化/反序列化
 ```
-
----
 
 ## 三、FFI 绑定的安全封装：`faest_ffi.rs`
 
@@ -215,8 +209,6 @@ low ^ high ^ (high << 1) ^ (high << 3) ^ (high << 4)
 
 正确性保障：`test_rust_vole_hash_matches_faest_c_reference` 在多种输入长度（0 ~ 28176 比特）和多种随机种子下，逐字节比对 Rust 实现与 C 参考实现的输出，确保完全一致。
 
----
-
 ## 四、状态机设计：`voleith.rs`
 
 ### 4.1 延迟 VOLE 功能（Delayed VOLE）
@@ -244,7 +236,7 @@ $$
 
 
 ```mermaid
-graph LR
+graph TD
     A([commit]) -->|生成 key, iv| B[faest_vole_commit]
     B --> C[推导 challenge_1]
     C --> D[计算 u/v_tilde]
@@ -350,8 +342,6 @@ fn challenge_has_required_grind_bits(challenge, w_grind) -> bool {
 
 这要求 Prover 在最终确定签名前，平均需要进行 $2^{w_\text{grind}}$ 次尝试。对于 $w_\text{grind} = 8$（ReSolveD+ 的默认参数），Prover 需尝试约 256 次。这保证了 Verifier 对证明的非平凡性（non-triviality）有 $\lambda + w_\text{grind}$ 比特的置信度。
 
----
-
 ## 五、线缆编码：`wire.rs`
 
 ### 5.1 版本化规范格式
@@ -403,8 +393,6 @@ Payload 包含三个主要部分：
 2. 唯一定义性：所有变长字段使用精确长度前缀，任何非规范编码（如尾部未使用比特非零）被拒绝
 3. F128 值的规范反序列化：使用 `F128b::from_bytes` 而非 `from_uniform_bytes`，拒绝非规范的域元素表示
 4. 集合大小上限：`MAX_COLLECTION_ITEMS = 1,000,000` 防止拒绝服务攻击
-
----
 
 ## 六、跨语言调用架构总结
 

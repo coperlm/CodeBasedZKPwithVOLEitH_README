@@ -1,33 +1,29 @@
 # 模块五：$\Pi^t_{dD-Rep}$ 核心协议与 NIZK 变换
 
----
-
 ## 一、概述
 
 $\Pi^t_{dD-Rep}$（degree-$d$ Representation）协议是整个 ZK 系统的核心。它解决的核心问题是：
 
-> 给定一个由 $t$ 个 degree-$d$ 布尔多项式组成的约束系统 $\{g_i(X) = 0\}_{i=1}^t$，Prover 如何在不泄露 witness $w \in \mathbb{F}_2^k$ 的前提下，让 Verifier 确信 $w$ 满足所有约束？
+> 给定一个由 $t$ 个 degree-$d$ 布尔多项式组成的约束系统 $\{g_i(X) = 0\}\_{i=1}^t$，Prover 如何在不泄露 witness $w \in \mathbb{F}\_2^k$ 的前提下，让 Verifier 确信 $w$ 满足所有约束？
 
 本模块包含两个层面：
 1. `protocol_dd_rep.rs` — $\Pi^t_{dD-Rep}$ 协议的三步实现（承诺 → 挑战 → 响应/验证）
 2. `transcript.rs` — Fiat-Shamir 变换的 Random Oracle 实例化（SHA-3 Keccak-256）
 
----
-
 ## 二、$\Pi^t_{dD-Rep}$ 协议三步曲
 
 ### 2.1 协议概览
 
-$\Pi^t_{dD-Rep}$ 建立在 VOLE 相关性之上。回顾 Prover 和 Verifier 通过延迟 VOLE 功能 $\mathcal{F}_{\text{sVOLE}}$ 建立的关系：
+$\Pi^t_{dD-Rep}$ 建立在 VOLE 相关性之上。回顾 Prover 和 Verifier 通过延迟 VOLE 功能 $\mathcal{F}\_{\text{sVOLE}}$ 建立的关系：
 
 $$
 \begin{aligned}
-\text{Prover: } &(u, \mathbf{v}) \in \mathbb{F}_2^k \times \mathbb{F}_{2^{128}}^k \\
-\text{Verifier: } &(\Delta, \mathbf{q}) \in \mathbb{F}_{2^{128}} \times \mathbb{F}_{2^{128}}^k
+\text{Prover: } &(u, \mathbf{v}) \in \mathbb{F}\_2^k \times \mathbb{F}\_{2^{128}}^k \\
+\text{Verifier: } &(\Delta, \mathbf{q}) \in \mathbb{F}\_{2^{128}} \times \mathbb{F}\_{2^{128}}^k
 \end{aligned}
 $$
 
-满足 $\mathbf{v} = \mathbf{q} + \Delta \cdot u$。Prover 拥有 witness $w \in \mathbb{F}_2^k$，公开约束系统为 $\{g_i(X)\}_{i=1}^t$。
+满足 $\mathbf{v} = \mathbf{q} + \Delta \cdot u$。Prover 拥有 witness $w \in \mathbb{F}\_2^k$，公开约束系统为 $\{g_i(X)\}\_{i=1}^t$。
 
 ```mermaid
 sequenceDiagram
@@ -54,10 +50,10 @@ sequenceDiagram
 
 ### 2.2 Step 1：Witness 承诺（`commit`）
 
-代数动机：Prover 不能直接发送 $w$（会泄露 witness），也不能发送 $u$（Verifier 已通过 $\mathcal{F}_{\text{sVOLE}}$ 部分知道 $u$）。解决方案是发送校正子（correction）：
+代数动机：Prover 不能直接发送 $w$（会泄露 witness），也不能发送 $u$（Verifier 已通过 $\mathcal{F}\_{\text{sVOLE}}$ 部分知道 $u$）。解决方案是发送校正子（correction）：
 
 $$
-\text{corr} = w \oplus u \in \mathbb{F}_2^k
+\text{corr} = w \oplus u \in \mathbb{F}\_2^k
 $$
 
 ```rust
@@ -77,17 +73,17 @@ pub fn commit(&self) -> CommitmentMessage {
 Verifier 端的吸收：Verifier 利用校正子修正自己的 $q$：
 
 $$
-\tilde{q}_i = q_i + \text{corr}_i \cdot \Delta \in \mathbb{F}_{2^{128}}
+\tilde{q}\_i = q_i + \text{corr}\_i \cdot \Delta \in \mathbb{F}\_{2^{128}}
 $$
 
 由于 $\mathbf{v} = \mathbf{q} + \Delta \cdot u$，且 $\text{corr} = w \oplus u$，验证：
 
 $$
-\tilde{q}_i = q_i + (w_i \oplus u_i) \cdot \Delta
+\tilde{q}\_i = q_i + (w_i \oplus u_i) \cdot \Delta
 $$
 
-当 $w_i = u_i$ 时，$\text{corr}_i = 0$，$\tilde{q}_i = q_i = v_i$
-当 $w_i \neq u_i$ 时，$\text{corr}_i = 1$，$\tilde{q}_i = q_i + \Delta = v_i$
+当 $w_i = u_i$ 时，$\text{corr}\_i = 0$，$\tilde{q}\_i = q_i = v_i$
+当 $w_i \neq u_i$ 时，$\text{corr}\_i = 1$，$\tilde{q}\_i = q_i + \Delta = v_i$
 
 因此 $\tilde{q} = \mathbf{v}$ 当且仅当校正子正确。Verifier 在不知道 $u$ 和 $v$ 的情况下，获得了正确 witness 所对应的 VOLE 关系。
 
@@ -113,7 +109,7 @@ ChallengeMessage { challenges: f128_challenges_from_seed(seed, challenge_count) 
 
 ### 2.4 Step 3：Prover 响应（`respond` / `respond_resolved_plus_implicit`）
 
-Prover 面对的核心任务是：计算 $\tilde{G}(Y) = \sum_{i=1}^t \chi_i \cdot \tilde{g}_i(Y)$ 在 $c+1$ 个插值点上的值，然后插值恢复多项式系数，最后用辅助 VOLE 进行盲化。
+Prover 面对的核心任务是：计算 $\tilde{G}(Y) = \sum_{i=1}^t \chi_i \cdot \tilde{g}\_i(Y)$ 在 $c+1$ 个插值点上的值，然后插值恢复多项式系数，最后用辅助 VOLE 进行盲化。
 
 代码提供三种响应模式：
 
@@ -157,7 +153,7 @@ pub(crate) fn evaluate_ck_at_point_precomputed<F: FiniteRing>(
 这里的数学是：对于 ANF 单项式 $X_{i_1} X_{i_2} \cdots X_{i_d}$，其在仿射基下的求值为：
 
 $$
-\tilde{X}_i = v_i + w_i \cdot p \quad\Rightarrow\quad \prod_{j=1}^{\text{deg}} \tilde{X}_{i_j}
+\tilde{X}\_i = v_i + w_i \cdot p \quad\Rightarrow\quad \prod_{j=1}^{\text{deg}} \tilde{X}\_{i_j}
 $$
 
 然后乘以 $p^{d - \text{deg}}$ 补偿度数，使所有单项式对齐到同一度数 $d$。
@@ -189,10 +185,10 @@ Algorithm: respond_resolved_plus_implicit(challenge, chi_prime, const_term, c)
 核心验证等式：
 
 $$
-\sum_{i=1}^t \chi_i \cdot g_i(\tilde{q}) + \prod_{h=1}^{d-1} q_{\text{aux}, h} \stackrel{?}{=} \sum_{j=0}^{d-1} \tilde{a}_j \cdot \Delta^j
+\sum_{i=1}^t \chi_i \cdot g_i(\tilde{q}) + \prod_{h=1}^{d-1} q_{\text{aux}, h} \stackrel{?}{=} \sum_{j=0}^{d-1} \tilde{a}\_j \cdot \Delta^j
 $$
 
-其中 $\tilde{q} = \mathbf{v}$（校正后），$g_i$ 是约束多项式，$\tilde{a}_j$ 是盲化系数。
+其中 $\tilde{q} = \mathbf{v}$（校正后），$g_i$ 是约束多项式，$\tilde{a}\_j$ 是盲化系数。
 
 Verifier 验证代码：
 
@@ -213,7 +209,7 @@ pub fn verify_resolved_plus_implicit(..., chi_prime, const_term, c, ...) -> Resu
 |----|---------|------|
 | $\sum_i \chi_i \cdot g_i(\tilde{q})$ | 约束加权和 | `implicit_evaluate_polynomials_from_affine(chi_prime, const_term, corrected_q, c, delta)` |
 | $\prod_h q_{\text{aux}, h}$ | 辅助 VOLE 乘积 | `self.packed_aux_q.iter().copied().product::<F>()` |
-| $\sum_j \tilde{a}_j \cdot \Delta^j$ | 单变量多项式求值 | `evaluate_univariate(&proof.blinded_coeffs, self.delta)` |
+| $\sum_j \tilde{a}\_j \cdot \Delta^j$ | 单变量多项式求值 | `evaluate_univariate(&proof.blinded_coeffs, self.delta)` |
 
 `evaluate_univariate` 使用 Horner 法则：
 
@@ -223,7 +219,7 @@ fn evaluate_univariate<F>(coeffs: &[F], point: F) -> F {
 }
 ```
 
-等价于 $\tilde{a}_0 + \tilde{a}_1 \cdot \Delta + \tilde{a}_2 \cdot \Delta^2 + \cdots$，使用 Horner 法需要 $d$ 次乘法和 $d$ 次加法。
+等价于 $\tilde{a}\_0 + \tilde{a}\_1 \cdot \Delta + \tilde{a}\_2 \cdot \Delta^2 + \cdots$，使用 Horner 法需要 $d$ 次乘法和 $d$ 次加法。
 
 为什么 $\prod_h q_{\text{aux}, h}$ 会出现？ 
 
@@ -233,12 +229,12 @@ fn evaluate_univariate<F>(coeffs: &[F], point: F) -> F {
 
 Prover 计算盲化系数：
 $$
-\tilde{a}_j = a_j + \sum_{h: \text{组合}} (\text{来自线性因子乘积的 } Y^j \text{ 系数})
+\tilde{a}\_j = a_j + \sum_{h: \text{组合}} (\text{来自线性因子乘积的 } Y^j \text{ 系数})
 $$
 
 Verifier 验证：
 $$
-\sum_i \chi_i g_i(\tilde{q}) + \prod_h q_{\text{aux},h} = \sum_j \tilde{a}_j \cdot \Delta^j
+\sum_i \chi_i g_i(\tilde{q}) + \prod_h q_{\text{aux},h} = \sum_j \tilde{a}\_j \cdot \Delta^j
 $$
 
 当 $\tilde{q} = \mathbf{v}$ 且 witness 正确时，$\sum_i \chi_i g_i(\tilde{q}) = \sum_j a_j \cdot \Delta^j$，而线性因子乘积的盲化在两侧相等，从而在不泄露原多项式系数 $a_j$ 的情况下完成了等式的代数校验。。
@@ -257,30 +253,26 @@ fn fill_interpolation_points<F: FiniteField>(points: &mut [F]) {
 }
 ```
 
-即 $P = \{0, 1, g, g^2, \dots, g^{d-1}\}$，其中 $g$ 是 $\mathbb{F}_{2^{128}}$ 的乘法生成元。这保证了所有插值点互不相同（因为 $g$ 的阶为 $2^{128}-1$）。
+即 $P = \{0, 1, g, g^2, \dots, g^{d-1}\}$，其中 $g$ 是 $\mathbb{F}\_{2^{128}}$ 的乘法生成元。这保证了所有插值点互不相同（因为 $g$ 的阶为 $2^{128}-1$）。
 
 当度数 $d \le 15$ 时（`STACK_POLY_COEFFS = 16`），插值工作缓冲区使用栈分配，避免堆分配的开销。
-
----
 
 ## 三、完整的数据流公式-代码映射
 
 | 概念 | 公式 | 代码 |
 |------|------|------|
 | Witness 承诺 | $\text{corr} = w \oplus u$ | `commit() -> CommitmentMessage { correction }` |
-| 校正子吸收 | $\tilde{q}_i = q_i + \text{corr}_i \cdot \Delta$ | `absorb_commitment_vec()` → `corrected_q_from_bitvec()` |
+| 校正子吸收 | $\tilde{q}\_i = q_i + \text{corr}\_i \cdot \Delta$ | `absorb_commitment_vec()` → `corrected_q_from_bitvec()` |
 | 挑战值 | $\chi_1, \dots, \chi_t$ | `ChallengeMessage { challenges }` |
 | 插值点 | $p_0, \dots, p_d$ | `interpolation_point_storage(degree+1)` |
 | 仿射基 | $x_i(p) = v_i + w_i \cdot p$ | `fill_affine_bases(out, v, witness, point)` |
 | 约束多项式 | $g_i(X) = \sum b_{i,j} f_j(X) + y_i$ | `AnfConstraintSystem = Vec<Vec<Monomial>>` |
-| 约束求值 | $\tilde{g}_i(p) = g_i(\{x_i(p)\})$ | `evaluate_ck_at_point_precomputed()` |
-| 隐式约束求值 | $\sum_i \chi_i \cdot \tilde{g}_i(p)$ | `implicit_evaluate_polynomials_from_affine()` |
-| 盲化系数 | $\tilde{a}_0, \dots, \tilde{a}_{d-1}$ | `ProofMessage { blinded_coeffs }` |
-| 辅助 VOLE 盲化 | $\tilde{a}_j = a_j + \text{product term}_j$ | `add_linear_factor_product_into()` |
-| Verifier 验证 | $\sum \chi_i g_i(\tilde{q}) + \Pi q_{\text{aux}} \stackrel{?}{=} \sum \tilde{a}_j \Delta^j$ | `verify()` / `verify_resolved_plus_implicit()` |
-| 单变量求值 | $P(\Delta) = \sum \tilde{a}_j \Delta^j$ | `evaluate_univariate(coeffs, delta)` |
-
----
+| 约束求值 | $\tilde{g}\_i(p) = g_i(\{x_i(p)\})$ | `evaluate_ck_at_point_precomputed()` |
+| 隐式约束求值 | $\sum_i \chi_i \cdot \tilde{g}\_i(p)$ | `implicit_evaluate_polynomials_from_affine()` |
+| 盲化系数 | $\tilde{a}\_0, \dots, \tilde{a}\_{d-1}$ | `ProofMessage { blinded_coeffs }` |
+| 辅助 VOLE 盲化 | $\tilde{a}\_j = a_j + \text{product term}\_j$ | `add_linear_factor_product_into()` |
+| Verifier 验证 | $\sum \chi_i g_i(\tilde{q}) + \Pi q_{\text{aux}} \stackrel{?}{=} \sum \tilde{a}\_j \Delta^j$ | `verify()` / `verify_resolved_plus_implicit()` |
+| 单变量求值 | $P(\Delta) = \sum \tilde{a}\_j \Delta^j$ | `evaluate_univariate(coeffs, delta)` |
 
 ## 四、Fiat-Shamir 变换：`transcript.rs`
 
@@ -380,7 +372,7 @@ pub fn finalize_seed(self) -> [u8; 32] {
 }
 ```
 
-`challenge_f128_vec(count)` — 从种子展开 $\mathbb{F}_{2^{128}}$ 挑战值序列：
+`challenge_f128_vec(count)` — 从种子展开 $\mathbb{F}\_{2^{128}}$ 挑战值序列：
 
 ```rust
 pub fn challenge_f128_vec(self, count: usize) -> Vec<F128b> {
@@ -436,8 +428,6 @@ const FS_DOMAIN_SEPARATOR: &[u8] = b"RingSig_v1.0";
 
 单元测试 `transcript_is_deterministic` 验证相同 absorb 输入产生相同挑战，`transcript_is_order_sensitive` 验证 absorb 顺序影响输出——满足 Random Oracle 的 一致性 和 敏感性。
 
----
-
 ## 五、完整非交互式协议流程
 
 结合 VOLEitH 状态机（模块三）、隐式求值引擎（模块四）和 $\Pi^t_{dD-Rep}$（本模块），完整的非交互式签名流程为：
@@ -483,7 +473,7 @@ Verifier:
 
 | 安全属性 | 实现机制 |
 |---------|---------|
-| 零知识性 | VOLE 校正子 $w \oplus u$ 隐藏 witness；盲化系数 $\tilde{a}_j$ 隐藏多项式系数 |
-| 可靠性 | 验证等式 $\sum \chi_i g_i(\tilde{q}) + \Pi q_{\text{aux}} = \sum \tilde{a}_j \Delta^j$ 在违规 witness 下成立的概率 $\le 2^{-\lambda}$ |
+| 零知识性 | VOLE 校正子 $w \oplus u$ 隐藏 witness；盲化系数 $\tilde{a}\_j$ 隐藏多项式系数 |
+| 可靠性 | 验证等式 $\sum \chi_i g_i(\tilde{q}) + \Pi q_{\text{aux}} = \sum \tilde{a}\_j \Delta^j$ 在违规 witness 下成立的概率 $\le 2^{-\lambda}$ |
 | 非交互性 | Fiat-Shamir 变换将 Verifier 的随机挑战替换为 SHA-3 哈希输出 |
 | 抗碰撞 | Fiat-Shamir 挑战域分离 + Keccak-256 抗碰撞保证 |
