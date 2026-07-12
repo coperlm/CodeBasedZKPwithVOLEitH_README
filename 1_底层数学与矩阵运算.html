@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-42b95759.js";
+            window.path_to_searchindex_js = "searchindex-be48b045.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-61c3e6e9.js"></script>
@@ -264,25 +264,19 @@ $$</p>
         direction TB
         A[seed: 16 Bytes] --&gt;|初始化 MatrixPrg| B(AES-128 密钥扩展)
         B --&gt; C[(round_keys 11轮子密钥)]
-        
         C --&gt;|全局复用密钥| E{AES-CTR 生成器}
-        
         Req[外部按需请求 column j] -.-&gt;|传入 col_idx = j| E
-        
         E --&gt; |"counter = j&lt;br&gt;nonce = 0"| F[fill_column_bytes]
-        
         F --&gt;|生成 n/8 字节&lt;br&gt;并清除尾部无效比特| G[/BitVec 列向量/]
     end
-    
-    %% 样式优化：去掉了刺眼的亮色背景，改为只使用彩色边框（完美适配暗色/亮色模式）
-    style SMC fill:transparent,stroke:#666,stroke-width:2px,stroke-dasharray: 5 5
-    style E fill:transparent,stroke:#e06c75,stroke-width:3px  %% 红色边框突出生成器
-    style G fill:transparent,stroke:#61afef,stroke-width:3px  %% 蓝色边框突出最终产物
+    style SMC fill:none,stroke:#666,stroke-width:2px,stroke-dasharray:5,5
+    style E fill:none,stroke:#e06c75,stroke-width:3px
+    style G fill:none,stroke:#61afef,stroke-width:3px
 </pre>
 
 <h3 id="34-内存管理策略详解"><a class="header" href="#34-内存管理策略详解">3.4 内存管理策略详解</a></h3>
 <h4 id="策略一零物化zero-materialization"><a class="header" href="#策略一零物化zero-materialization">策略一：零物化（Zero Materialization）</a></h4>
-<p>矩阵从未完整存储在内存中。<code>StreamingMatrixCols</code> 仅持有 32 字节的状态信息（16 字节种子 + 部分元数据）。每次调用 <code>column(j)</code> 生成一列的 <code>n</code> 个比特（约 $n/8$ 字节），用完即丢弃。这使得 $1280 \times 81920$ 的矩阵实际占用从约 $12.5\text{ MB}$ 降至约 $0.00003\text{ MB}$。</p>
+<p>矩阵从未完整存储在内存中。<code>StreamingMatrixCols</code> 仅持有 32 字节的状态信息（16 字节种子 + 部分元数据）。每次调用 <code>column(j)</code> 生成一列的 <code>n</code> 个比特（约 $n/8$ 字节），用完即丢弃。这使得 $1280 \times 81920$ 的矩阵实际占用从约 $12.5\text{ MB}$ 降至约 $0.00003\text{MB}$。</p>
 <h4 id="策略二延迟生成lazy-generation"><a class="header" href="#策略二延迟生成lazy-generation">策略二：延迟生成（Lazy Generation）</a></h4>
 <p><code>fill_column_bytes</code> 使用按需填充模式。只有 <code>column(j)</code> 或 <code>fill_column_bytes</code> 被显式调用时，数据才被生成。<code>materialize()</code> 方法虽然提供了全矩阵物化的接口（用于测试），但在生产代码中不使用——生产中使用 <code>iter()</code> 逐个消费列。</p>
 <h4 id="策略三aes-ctr-作为向量-prg"><a class="header" href="#策略三aes-ctr-作为向量-prg">策略三：AES-CTR 作为向量 PRG</a></h4>
