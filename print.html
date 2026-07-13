@@ -58,10 +58,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-aa703bc9.js";
+            window.path_to_searchindex_js = "searchindex-ed11918e.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-61c3e6e9.js"></script>
+        <script src="toc-513cb83f.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -223,9 +223,9 @@
 <p>核心亮点：</p>
 <ul>
 <li>跨语言 FFI 安全封装：安全地集成了 FAEST 的 C 代码，复用其经过 NIST 审查的高效 GGM-based 树承诺。</li>
-<li>严格的状态机生命周期：通过 Rust 的所有权模型安全管理 C 层的 Prover/Verifier 证明树状态，避免内存泄漏。
-👉 <a href="#模块三voleith-状态机与跨语言-ffi">点击查看：3_VOLEitH状态机与FFI.md</a></li>
+<li>严格的状态机生命周期：通过 Rust 的所有权模型安全管理 C 层的 Prover/Verifier 证明树状态，避免内存泄漏。</li>
 </ul>
+<p>👉 <a href="#模块三voleith-状态机与跨语言-ffi">点击查看：3_VOLEitH状态机与FFI.md</a></p>
 <h3 id="模块四多项式约束生成"><a class="header" href="#模块四多项式约束生成">模块四：多项式约束生成</a></h3>
 <p>模块概述：系统的理论创新核心，负责将正则编码等操作编译为布尔多项式，并进行极速求值。</p>
 <p>核心亮点：</p>
@@ -267,6 +267,9 @@
 <li>多核并发榨取：大量使用 <code>rayon</code> 数据并行化框架，在哈希树计算和多项式求值上实现接近线性的加速比。</li>
 </ul>
 <p>👉 <a href="#模块八参数配置工程优化与基准测试安全分析与性能报告">点击查看：8_参数优化与基准测试.md</a></p>
+<h3 id="模块九十创新点对接与原始数据"><a class="header" href="#模块九十创新点对接与原始数据">模块九、十：创新点对接与原始数据</a></h3>
+<p>👉 <a href="#模块九理论创新点的工程落地与未来工作">点击查看：9_创新点对接.md</a></p>
+<p>👉 <a href="#10_codebasedzkp-性能测试原始数据">点击查看：10_原始数据.md</a></p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="模块一底层数学与内存优化gf2128-域运算与大矩阵流式计算"><a class="header" href="#模块一底层数学与内存优化gf2128-域运算与大矩阵流式计算">模块一：底层数学与内存优化——GF(2^128) 域运算与大矩阵流式计算</a></h1>
 <h2 id="一概述"><a class="header" href="#一概述">一、概述</a></h2>
@@ -770,15 +773,6 @@ $$</p>
 c_{2,i} = \left(\bigoplus_{j: G_{2,i,j}=1} (r_2 ;|; \text{bin}(\text{msg}))_j\right) \oplus \text{RE}(e’_2)_i
 $$</p>
 <p>这精确实现了 $c = G \cdot \binom{u}{m} \oplus \text{RE}(e’)$，其中 $G_1, G_2$ 是两个独立的 McEliece 生成矩阵。</p>
-<h3 id="34-验证数据"><a class="header" href="#34-验证数据">3.4 验证数据</a></h3>
-<p>从测试报告中可以看到：</p>
-<pre><code>[+] 公钥大小: 524160 字节 (~512 KB)
-[+] 矩阵密度: ~0.5000 (验证伪随机性)
-[+] 密钥生成: ~XX ms
-[+] 公钥解析: ~XX ms
-[+] 矩阵乘法: ~XX ms
-</code></pre>
-<p>矩阵密度接近 0.5 是 Goppa 码生成矩阵为伪随机矩阵的统计证据。</p>
 <h2 id="四afs-哈希在-merkle-树中的应用环签名上下文"><a class="header" href="#四afs-哈希在-merkle-树中的应用环签名上下文">四、AFS 哈希在 Merkle 树中的应用（环签名上下文）</a></h2>
 <p>为阐明这两个密码学原语在系统中的协作关系，以下简述其在上层协议中的调用方式：</p>
 <p>环签名的 Merkle 树每一层使用 AFS 双矩阵哈希：</p>
@@ -2568,8 +2562,8 @@ constraints.push(leaf_parity.into_iter().collect());
 \left(\bigoplus_{i=0}^{n-1} v_{\ell,i}\right) + 1 = 0 \quad\Longleftrightarrow\quad \text{wt}(v_\ell) \equiv 1 \pmod{2}
 $$</p>
 <p>测试 <code>test_fdabs_constraints_reject_even_leaf_weight</code> 验证了当叶哈希的汉明重量为偶数时约束被违反。</p>
-<h3 id="36-nand-门二次约束名为-andgate实际上实现-nand"><a class="header" href="#36-nand-门二次约束名为-andgate实际上实现-nand">3.6 NAND 门二次约束（名为 <code>AndGate</code>，实际上实现 NAND）</a></h3>
-<p>代码中的门使用结构体名 <code>AndGate</code>，但约束实际实现的是 NAND（与非）门。对于每个门，要求 $x_{\text{out}} = \neg(x_{\text{in1}} \land x_{\text{in2}})$，在 $\mathbb{F}_2$ 上的 ANF 约束为：</p>
+<h3 id="36-nand-门二次约束"><a class="header" href="#36-nand-门二次约束">3.6 NAND 门二次约束</a></h3>
+<p>任何布尔电路都可以用 NAND 门单独构建。代码中的门使用结构体名 <code>AndGate</code>，但约束实际实现的是 NAND（与非）门，对应论文里的 <code>multiplication gates</code>（乘法门），数学本质上是与非门。对于每个门，要求 $x_{\text{out}} = \neg(x_{\text{in1}} \land x_{\text{in2}})$，在 $\mathbb{F}_2$ 上的 ANF 约束为：</p>
 <p>$$
 x_{\text{out}} + x_{\text{in1}} \cdot x_{\text{in2}} + 1 = 0
 $$</p>
@@ -2580,7 +2574,6 @@ $$</p>
 <li>$x_{\text{in1}} = 0, x_{\text{in2}} = 1$ 时：$x_{\text{out}} = 1$ ✓ (NAND)</li>
 <li>$x_{\text{in1}} = 0, x_{\text{in2}} = 0$ 时：$x_{\text{out}} = 1$ ✓ (NAND)</li>
 </ul>
-<p>（注意：NAND 门构成的电路与 AND 门一样具有表达能力——任何布尔电路都可以用 NAND 门单独构建。<code>AndGate</code> 结构体名反映了论文中的记法，但约束的实际代数实现是 NAND。）</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// fdabs.rs 中 AND 门约束
@@ -3026,21 +3019,7 @@ const DOMAIN_SIZE: usize = 1 &lt;&lt; C;  // 域大小 = 256
 const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 <span class="boring">}</span></code></pre>
 <h3 id="47-性能对比"><a class="header" href="#47-性能对比">4.7 性能对比</a></h3>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>方案</th><th style="text-align: center">签名时间 (ms)</th><th style="text-align: center">验证时间 (ms)</th><th style="text-align: center">签名大小</th></tr>
-</thead>
-<tbody>
-<tr><td>ReSolveD+ (n=453, c=3)</td><td style="text-align: center">—</td><td style="text-align: center">—</td><td style="text-align: center">~3.1 KB</td></tr>
-<tr><td>环签名 ($\ell=5$)</td><td style="text-align: center">—</td><td style="text-align: center">—</td><td style="text-align: center">~4 KB</td></tr>
-<tr><td>环签名 ($\ell=10$)</td><td style="text-align: center">—</td><td style="text-align: center">—</td><td style="text-align: center">~4 KB</td></tr>
-<tr><td>群签名 ($\ell=5$)</td><td style="text-align: center">—</td><td style="text-align: center">—</td><td style="text-align: center">~8 KB</td></tr>
-<tr><td>FDABS ($\ell=5$, K=512)</td><td style="text-align: center">—</td><td style="text-align: center">—</td><td style="text-align: center">~4 KB</td></tr>
-<tr><td>批量化 LRS (10×)</td><td style="text-align: center">—</td><td style="text-align: center">—</td><td style="text-align: center">~25 KB（摊销 ~2.5 KB/个）</td></tr>
-</tbody>
-</table>
-</div>
+<p>详见 <a href="#10_codebasedzkp-性能测试原始数据">10_原始数据.md</a></p>
 <p>（具体毫秒值可通过 <code>just bench-paper</code> 或 <code>just speed-table</code> 运行获取）</p>
 <h2 id="五工程优化总结"><a class="header" href="#五工程优化总结">五、工程优化总结</a></h2>
 <div class="table-wrapper">
@@ -3066,7 +3045,7 @@ const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 <h2 id="一已在代码中落地的理论创新"><a class="header" href="#一已在代码中落地的理论创新">一、已在代码中落地的理论创新</a></h2>
 <h3 id="1-多线性扩展折叠与求和交换打破大域乘法瓶颈"><a class="header" href="#1-多线性扩展折叠与求和交换打破大域乘法瓶颈">1. 多线性扩展折叠与求和交换（打破大域乘法瓶颈）</a></h3>
 <ul>
-<li>理论设计：针对协议中的大数乘法瓶颈，提出两步优化：第一步通过交换求和顺序 $\chi’<em>h = \sum \chi_i b</em>{i,h}$ 消除大数乘法；第二步利用拉格朗日多线性扩展的蝶形网络（Tree-evaluation）将复杂度从 $\mathcal{O}(2^c \cdot c^2)$ 降为 $\mathcal{O}(2^c)$。</li>
+<li>理论设计：针对协议中的大数乘法瓶颈，提出两步优化：第一步通过交换求和顺序 $\chi’_h = \sum \chi_i b_{i,h}$ 消除大数乘法；第二步利用拉格朗日多线性扩展的蝶形网络（Tree-evaluation）将复杂度从 $\mathcal{O}(2^c \cdot c^2)$ 降为 $\mathcal{O}(2^c)$。</li>
 <li>工程落地：在 <code>implicit_eval.rs</code> 中完整实现了上述逻辑。
 <ul>
 <li>第一步，利用 Gray 码预计算字节子集 XOR 表（<code>build_byte_subset_xor_table</code>），将 $\chi’_h$ 的计算转化为纯查表与异或操作。</li>
@@ -3106,6 +3085,82 @@ const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 <li>优化构想：引入抗量子随机预言机模型（QROM）的变动（如 Unruh 变换等），以及防多目标攻击的 Salted-RSD。</li>
 <li>当前状态：当前的 <code>security.rs</code> 遵循 128-bit 经典安全参数及 8-bit Grinding，以对齐现有的 VOLEitH 论文基准。QROM 兼容的哈希吸收变体将作为未来协议升级的重点方向。</li>
 </ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="10_codebasedzkp-性能测试原始数据"><a class="header" href="#10_codebasedzkp-性能测试原始数据">10_CodeBasedZKP 性能测试原始数据</a></h1>
+<ul>
+<li>论文名称：Code-Based Zero-Knowledge from VOLE-in-the-Head and Their Applications: Simpler, Faster, and Smaller</li>
+<li>更新日期：2026-07-11</li>
+</ul>
+<h2 id="声明"><a class="header" href="#声明">声明</a></h2>
+<ol>
+<li>当前签名使用的参数和论文基本一致，但是经初步分析，算法的实际安全等级不是严格 128 bits，具体安全等级需要进一步确认；</li>
+<li>本仓库的实际签名体积和论文存在出入，但在实际的可接受范围内，详见性能测试部分；</li>
+<li>本文实现端到端签名与证明的代码，但不保证可以用于工业生产，该版本仅用于算法正确性和效率的初步验证；</li>
+<li>该仓库代码的全部实现，理论安全等级均为 128 bits；256-bit 参数只有公式和表格复现，没有可执行实现；</li>
+<li>本仓库使用 ChatGPT 5.5 和 ChatGPT5.6 Sol 辅助编程，未经过专业代码审计，但代码自身断言和验签可以确保基本正确</li>
+</ol>
+<h2 id="测试环境"><a class="header" href="#测试环境">测试环境</a></h2>
+<h3 id="硬件配置"><a class="header" href="#硬件配置">硬件配置</a></h3>
+<ul>
+<li>主机型号：联想小新 Pro 16 IRH8 (Lenovo 83AQ)</li>
+<li>处理器：第 13 代英特尔酷睿 Intel Core i5-13500H</li>
+<li>核心/线程：12 核 16 线程 (4 个性能核/双线程 + 8 个能效核/单线程)</li>
+<li>时钟频率：基础频率 400 MHz，最大睿频 4.70 GHz</li>
+<li>缓存架构：L1 1.1 MiB，L2 9 MiB，L3 18 MiB</li>
+<li>内存：32 GB LPDDR5</li>
+<li>配置频率：5200 MT/s，硬件最高支持 6400 MT/s</li>
+<li>通道模式：8 块 4 GiB 内存颗粒组成的密集多通道架构</li>
+<li>存储: 联想 UMIS 1TB NVMe PCIe SSD (<code>/dev/nvme0n1</code>)</li>
+</ul>
+<h3 id="软件与操作系统配置-software--os-configuration"><a class="header" href="#软件与操作系统配置-software--os-configuration">软件与操作系统配置 (Software &amp; OS Configuration)</a></h3>
+<ul>
+<li>操作系统：CachyOS</li>
+<li>桌面环境：KDE Plasma 6.7.2</li>
+<li>系统内核：Linux-CachyOS 7.1.3-2-cachyos</li>
+<li>微架构编译层级：x86-64-v3</li>
+<li>核心编译器：Clang/LLVM: v22.1.6，GCC: v16.1.1；rust版本为 cargo 1.96.1 (356927216 2026-06-26) (Arch Linux rust 1:1.96.1-1.1)，其他依赖环境详见 <code>Cargo.toml</code></li>
+</ul>
+<h2 id="测试结果"><a class="header" href="#测试结果">测试结果</a></h2>
+<p>下面内容为测试十次取平均值（删除最低和最高各 1 次，报告中间 8 次的平均值）；其中 l 代表 Witness 比特长度，t 代表多项式约束数量，d 代表关系多项式的最高次数；测试阶段启用了硬件加速并优化了工程实现。</p>
+<h3 id="单核运行结果"><a class="header" href="#单核运行结果">单核运行结果</a></h3>
+<p>（旨在对齐 Stern 协议，同样运行在单核处理器上）</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>方案</th><th>参数</th><th style="text-align: right">Sign</th><th style="text-align: right">verify</th><th style="text-align: right">签名体积</th></tr>
+</thead>
+<tbody>
+<tr><td>ReSolveD+</td><td><code>n=453,c=3</code>, <code>l=453</code>, <code>t=453</code>, <code>d=3</code></td><td style="text-align: right">24.303 ms</td><td style="text-align: right">11.494 ms</td><td style="text-align: right">3.08 KiB</td></tr>
+<tr><td>RingSig</td><td><code>n=1280,ell=5,c=8</code>, <code>l=15365</code>, <code>t=7680</code>, <code>d=9</code></td><td style="text-align: right">194.156 ms</td><td style="text-align: right">131.733 ms</td><td style="text-align: right">34.90 KiB</td></tr>
+<tr><td>RingSig</td><td><code>n=1280,ell=10,c=8</code>, <code>l=28170</code>, <code>t=14080</code>, <code>d=9</code></td><td style="text-align: right">366.457 ms</td><td style="text-align: right">233.974 ms</td><td style="text-align: right">59.92 KiB</td></tr>
+<tr><td>Scope-LRS</td><td><code>n=1280,ell=5,c=8</code>, <code>l=15365</code>, <code>t=8960</code>, <code>d=9</code></td><td style="text-align: right">221.053 ms</td><td style="text-align: right">145.913 ms</td><td style="text-align: right">35.06 KiB</td></tr>
+<tr><td>Scope-LRS</td><td><code>n=1280,ell=10,c=8</code>, <code>l=28170</code>, <code>t=15360</code>, <code>d=9</code></td><td style="text-align: right">390.338 ms</td><td style="text-align: right">232.530 ms</td><td style="text-align: right">60.08 KiB</td></tr>
+<tr><td>GroupSig</td><td><code>n=1280,ell=5,c_hash=8,c_e=6</code>, <code>l=22779</code>, <code>t=15872</code>, <code>d=9</code></td><td style="text-align: right">214.564 ms</td><td style="text-align: right">153.355 ms</td><td style="text-align: right">50.40 KiB</td></tr>
+<tr><td>GroupSig</td><td><code>n=1280,ell=10,c_hash=8,c_e=6</code>, <code>l=35574</code>, <code>t=22272</code>, <code>d=9</code></td><td style="text-align: right">380.978 ms</td><td style="text-align: right">258.342 ms</td><td style="text-align: right">75.38 KiB</td></tr>
+<tr><td>FDABS</td><td><code>n=1280,ell=5,L=128,K=512</code>, <code>l=14981</code>, <code>t=8194</code>, <code>d=9</code></td><td style="text-align: right">183.634 ms</td><td style="text-align: right">126.490 ms</td><td style="text-align: right">34.15 KiB</td></tr>
+<tr><td>FDABS</td><td><code>n=1280,ell=10,L=128,K=512</code>, <code>l=27786</code>, <code>t=14594</code>, <code>d=9</code></td><td style="text-align: right">347.470 ms</td><td style="text-align: right">228.504 ms</td><td style="text-align: right">59.17 KiB</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="全部逻辑-cpu-运行结果"><a class="header" href="#全部逻辑-cpu-运行结果">全部逻辑 CPU 运行结果</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>方案</th><th>参数</th><th style="text-align: right">Sign</th><th style="text-align: right">verify</th><th style="text-align: right">签名体积</th></tr>
+</thead>
+<tbody>
+<tr><td>ReSolveD+</td><td><code>n=453,c=3</code>, <code>l=453</code>, <code>t=453</code>, <code>d=3</code></td><td style="text-align: right">18.304 ms</td><td style="text-align: right">9.606 ms</td><td style="text-align: right">3.08 KiB</td></tr>
+<tr><td>RingSig</td><td><code>n=1280,ell=5,c=8</code>, <code>l=15365</code>, <code>t=7680</code>, <code>d=9</code></td><td style="text-align: right">54.288 ms</td><td style="text-align: right">44.020 ms</td><td style="text-align: right">34.90 KiB</td></tr>
+<tr><td>RingSig</td><td><code>n=1280,ell=10,c=8</code>, <code>l=28170</code>, <code>t=14080</code>, <code>d=9</code></td><td style="text-align: right">79.921 ms</td><td style="text-align: right">71.091 ms</td><td style="text-align: right">59.92 KiB</td></tr>
+<tr><td>Scope-LRS</td><td><code>n=1280,ell=5,c=8</code>, <code>l=15365</code>, <code>t=8960</code>, <code>d=9</code></td><td style="text-align: right">51.077 ms</td><td style="text-align: right">50.178 ms</td><td style="text-align: right">35.06 KiB</td></tr>
+<tr><td>Scope-LRS</td><td><code>n=1280,ell=10,c=8</code>, <code>l=28170</code>, <code>t=15360</code>, <code>d=9</code></td><td style="text-align: right">96.943 ms</td><td style="text-align: right">75.939 ms</td><td style="text-align: right">60.08 KiB</td></tr>
+<tr><td>GroupSig</td><td><code>n=1280,ell=5,c_hash=8,c_e=6</code>, <code>l=22779</code>, <code>t=15872</code>, <code>d=9</code></td><td style="text-align: right">61.120 ms</td><td style="text-align: right">63.048 ms</td><td style="text-align: right">50.40 KiB</td></tr>
+<tr><td>GroupSig</td><td><code>n=1280,ell=10,c_hash=8,c_e=6</code>, <code>l=35574</code>, <code>t=22272</code>, <code>d=9</code></td><td style="text-align: right">111.099 ms</td><td style="text-align: right">94.115 ms</td><td style="text-align: right">75.38 KiB</td></tr>
+<tr><td>FDABS</td><td><code>n=1280,ell=5,L=128,K=512</code>, <code>l=14981</code>, <code>t=8194</code>, <code>d=9</code></td><td style="text-align: right">50.508 ms</td><td style="text-align: right">38.476 ms</td><td style="text-align: right">34.15 KiB</td></tr>
+<tr><td>FDABS</td><td><code>n=1280,ell=10,L=128,K=512</code>, <code>l=27786</code>, <code>t=14594</code>, <code>d=9</code></td><td style="text-align: right">74.390 ms</td><td style="text-align: right">66.292 ms</td><td style="text-align: right">59.17 KiB</td></tr>
+</tbody>
+</table>
+</div>
 
                     </main>
 

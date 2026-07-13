@@ -3,8 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Page not found</title>
-        <base href="/">
+        <title>模块十：原始数据</title>
 
 
         <!-- Custom HTML head -->
@@ -197,13 +196,89 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="document-not-found-404"><a class="header" href="#document-not-found-404">Document not found (404)</a></h1>
-<p>This URL is invalid, sorry. Please use the navigation bar or search to continue.</p>
+                        <h1 id="10_codebasedzkp-性能测试原始数据"><a class="header" href="#10_codebasedzkp-性能测试原始数据">10_CodeBasedZKP 性能测试原始数据</a></h1>
+<ul>
+<li>论文名称：Code-Based Zero-Knowledge from VOLE-in-the-Head and Their Applications: Simpler, Faster, and Smaller</li>
+<li>更新日期：2026-07-11</li>
+</ul>
+<h2 id="声明"><a class="header" href="#声明">声明</a></h2>
+<ol>
+<li>当前签名使用的参数和论文基本一致，但是经初步分析，算法的实际安全等级不是严格 128 bits，具体安全等级需要进一步确认；</li>
+<li>本仓库的实际签名体积和论文存在出入，但在实际的可接受范围内，详见性能测试部分；</li>
+<li>本文实现端到端签名与证明的代码，但不保证可以用于工业生产，该版本仅用于算法正确性和效率的初步验证；</li>
+<li>该仓库代码的全部实现，理论安全等级均为 128 bits；256-bit 参数只有公式和表格复现，没有可执行实现；</li>
+<li>本仓库使用 ChatGPT 5.5 和 ChatGPT5.6 Sol 辅助编程，未经过专业代码审计，但代码自身断言和验签可以确保基本正确</li>
+</ol>
+<h2 id="测试环境"><a class="header" href="#测试环境">测试环境</a></h2>
+<h3 id="硬件配置"><a class="header" href="#硬件配置">硬件配置</a></h3>
+<ul>
+<li>主机型号：联想小新 Pro 16 IRH8 (Lenovo 83AQ)</li>
+<li>处理器：第 13 代英特尔酷睿 Intel Core i5-13500H</li>
+<li>核心/线程：12 核 16 线程 (4 个性能核/双线程 + 8 个能效核/单线程)</li>
+<li>时钟频率：基础频率 400 MHz，最大睿频 4.70 GHz</li>
+<li>缓存架构：L1 1.1 MiB，L2 9 MiB，L3 18 MiB</li>
+<li>内存：32 GB LPDDR5</li>
+<li>配置频率：5200 MT/s，硬件最高支持 6400 MT/s</li>
+<li>通道模式：8 块 4 GiB 内存颗粒组成的密集多通道架构</li>
+<li>存储: 联想 UMIS 1TB NVMe PCIe SSD (<code>/dev/nvme0n1</code>)</li>
+</ul>
+<h3 id="软件与操作系统配置-software--os-configuration"><a class="header" href="#软件与操作系统配置-software--os-configuration">软件与操作系统配置 (Software &amp; OS Configuration)</a></h3>
+<ul>
+<li>操作系统：CachyOS</li>
+<li>桌面环境：KDE Plasma 6.7.2</li>
+<li>系统内核：Linux-CachyOS 7.1.3-2-cachyos</li>
+<li>微架构编译层级：x86-64-v3</li>
+<li>核心编译器：Clang/LLVM: v22.1.6，GCC: v16.1.1；rust版本为 cargo 1.96.1 (356927216 2026-06-26) (Arch Linux rust 1:1.96.1-1.1)，其他依赖环境详见 <code>Cargo.toml</code></li>
+</ul>
+<h2 id="测试结果"><a class="header" href="#测试结果">测试结果</a></h2>
+<p>下面内容为测试十次取平均值（删除最低和最高各 1 次，报告中间 8 次的平均值）；其中 l 代表 Witness 比特长度，t 代表多项式约束数量，d 代表关系多项式的最高次数；测试阶段启用了硬件加速并优化了工程实现。</p>
+<h3 id="单核运行结果"><a class="header" href="#单核运行结果">单核运行结果</a></h3>
+<p>（旨在对齐 Stern 协议，同样运行在单核处理器上）</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>方案</th><th>参数</th><th style="text-align: right">Sign</th><th style="text-align: right">verify</th><th style="text-align: right">签名体积</th></tr>
+</thead>
+<tbody>
+<tr><td>ReSolveD+</td><td><code>n=453,c=3</code>, <code>l=453</code>, <code>t=453</code>, <code>d=3</code></td><td style="text-align: right">24.303 ms</td><td style="text-align: right">11.494 ms</td><td style="text-align: right">3.08 KiB</td></tr>
+<tr><td>RingSig</td><td><code>n=1280,ell=5,c=8</code>, <code>l=15365</code>, <code>t=7680</code>, <code>d=9</code></td><td style="text-align: right">194.156 ms</td><td style="text-align: right">131.733 ms</td><td style="text-align: right">34.90 KiB</td></tr>
+<tr><td>RingSig</td><td><code>n=1280,ell=10,c=8</code>, <code>l=28170</code>, <code>t=14080</code>, <code>d=9</code></td><td style="text-align: right">366.457 ms</td><td style="text-align: right">233.974 ms</td><td style="text-align: right">59.92 KiB</td></tr>
+<tr><td>Scope-LRS</td><td><code>n=1280,ell=5,c=8</code>, <code>l=15365</code>, <code>t=8960</code>, <code>d=9</code></td><td style="text-align: right">221.053 ms</td><td style="text-align: right">145.913 ms</td><td style="text-align: right">35.06 KiB</td></tr>
+<tr><td>Scope-LRS</td><td><code>n=1280,ell=10,c=8</code>, <code>l=28170</code>, <code>t=15360</code>, <code>d=9</code></td><td style="text-align: right">390.338 ms</td><td style="text-align: right">232.530 ms</td><td style="text-align: right">60.08 KiB</td></tr>
+<tr><td>GroupSig</td><td><code>n=1280,ell=5,c_hash=8,c_e=6</code>, <code>l=22779</code>, <code>t=15872</code>, <code>d=9</code></td><td style="text-align: right">214.564 ms</td><td style="text-align: right">153.355 ms</td><td style="text-align: right">50.40 KiB</td></tr>
+<tr><td>GroupSig</td><td><code>n=1280,ell=10,c_hash=8,c_e=6</code>, <code>l=35574</code>, <code>t=22272</code>, <code>d=9</code></td><td style="text-align: right">380.978 ms</td><td style="text-align: right">258.342 ms</td><td style="text-align: right">75.38 KiB</td></tr>
+<tr><td>FDABS</td><td><code>n=1280,ell=5,L=128,K=512</code>, <code>l=14981</code>, <code>t=8194</code>, <code>d=9</code></td><td style="text-align: right">183.634 ms</td><td style="text-align: right">126.490 ms</td><td style="text-align: right">34.15 KiB</td></tr>
+<tr><td>FDABS</td><td><code>n=1280,ell=10,L=128,K=512</code>, <code>l=27786</code>, <code>t=14594</code>, <code>d=9</code></td><td style="text-align: right">347.470 ms</td><td style="text-align: right">228.504 ms</td><td style="text-align: right">59.17 KiB</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="全部逻辑-cpu-运行结果"><a class="header" href="#全部逻辑-cpu-运行结果">全部逻辑 CPU 运行结果</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>方案</th><th>参数</th><th style="text-align: right">Sign</th><th style="text-align: right">verify</th><th style="text-align: right">签名体积</th></tr>
+</thead>
+<tbody>
+<tr><td>ReSolveD+</td><td><code>n=453,c=3</code>, <code>l=453</code>, <code>t=453</code>, <code>d=3</code></td><td style="text-align: right">18.304 ms</td><td style="text-align: right">9.606 ms</td><td style="text-align: right">3.08 KiB</td></tr>
+<tr><td>RingSig</td><td><code>n=1280,ell=5,c=8</code>, <code>l=15365</code>, <code>t=7680</code>, <code>d=9</code></td><td style="text-align: right">54.288 ms</td><td style="text-align: right">44.020 ms</td><td style="text-align: right">34.90 KiB</td></tr>
+<tr><td>RingSig</td><td><code>n=1280,ell=10,c=8</code>, <code>l=28170</code>, <code>t=14080</code>, <code>d=9</code></td><td style="text-align: right">79.921 ms</td><td style="text-align: right">71.091 ms</td><td style="text-align: right">59.92 KiB</td></tr>
+<tr><td>Scope-LRS</td><td><code>n=1280,ell=5,c=8</code>, <code>l=15365</code>, <code>t=8960</code>, <code>d=9</code></td><td style="text-align: right">51.077 ms</td><td style="text-align: right">50.178 ms</td><td style="text-align: right">35.06 KiB</td></tr>
+<tr><td>Scope-LRS</td><td><code>n=1280,ell=10,c=8</code>, <code>l=28170</code>, <code>t=15360</code>, <code>d=9</code></td><td style="text-align: right">96.943 ms</td><td style="text-align: right">75.939 ms</td><td style="text-align: right">60.08 KiB</td></tr>
+<tr><td>GroupSig</td><td><code>n=1280,ell=5,c_hash=8,c_e=6</code>, <code>l=22779</code>, <code>t=15872</code>, <code>d=9</code></td><td style="text-align: right">61.120 ms</td><td style="text-align: right">63.048 ms</td><td style="text-align: right">50.40 KiB</td></tr>
+<tr><td>GroupSig</td><td><code>n=1280,ell=10,c_hash=8,c_e=6</code>, <code>l=35574</code>, <code>t=22272</code>, <code>d=9</code></td><td style="text-align: right">111.099 ms</td><td style="text-align: right">94.115 ms</td><td style="text-align: right">75.38 KiB</td></tr>
+<tr><td>FDABS</td><td><code>n=1280,ell=5,L=128,K=512</code>, <code>l=14981</code>, <code>t=8194</code>, <code>d=9</code></td><td style="text-align: right">50.508 ms</td><td style="text-align: right">38.476 ms</td><td style="text-align: right">34.15 KiB</td></tr>
+<tr><td>FDABS</td><td><code>n=1280,ell=10,L=128,K=512</code>, <code>l=27786</code>, <code>t=14594</code>, <code>d=9</code></td><td style="text-align: right">74.390 ms</td><td style="text-align: right">66.292 ms</td><td style="text-align: right">59.17 KiB</td></tr>
+</tbody>
+</table>
+</div>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="9_创新点对接.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
 
 
                         <div style="clear: both"></div>
@@ -212,6 +287,9 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="9_创新点对接.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
 
             </nav>
 

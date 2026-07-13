@@ -57,10 +57,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-aa703bc9.js";
+            window.path_to_searchindex_js = "searchindex-ed11918e.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-61c3e6e9.js"></script>
+        <script src="toc-513cb83f.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -435,8 +435,8 @@ constraints.push(leaf_parity.into_iter().collect());
 \left(\bigoplus_{i=0}^{n-1} v_{\ell,i}\right) + 1 = 0 \quad\Longleftrightarrow\quad \text{wt}(v_\ell) \equiv 1 \pmod{2}
 $$</p>
 <p>测试 <code>test_fdabs_constraints_reject_even_leaf_weight</code> 验证了当叶哈希的汉明重量为偶数时约束被违反。</p>
-<h3 id="36-nand-门二次约束名为-andgate实际上实现-nand"><a class="header" href="#36-nand-门二次约束名为-andgate实际上实现-nand">3.6 NAND 门二次约束（名为 <code>AndGate</code>，实际上实现 NAND）</a></h3>
-<p>代码中的门使用结构体名 <code>AndGate</code>，但约束实际实现的是 NAND（与非）门。对于每个门，要求 $x_{\text{out}} = \neg(x_{\text{in1}} \land x_{\text{in2}})$，在 $\mathbb{F}_2$ 上的 ANF 约束为：</p>
+<h3 id="36-nand-门二次约束"><a class="header" href="#36-nand-门二次约束">3.6 NAND 门二次约束</a></h3>
+<p>任何布尔电路都可以用 NAND 门单独构建。代码中的门使用结构体名 <code>AndGate</code>，但约束实际实现的是 NAND（与非）门，对应论文里的 <code>multiplication gates</code>（乘法门），数学本质上是与非门。对于每个门，要求 $x_{\text{out}} = \neg(x_{\text{in1}} \land x_{\text{in2}})$，在 $\mathbb{F}_2$ 上的 ANF 约束为：</p>
 <p>$$
 x_{\text{out}} + x_{\text{in1}} \cdot x_{\text{in2}} + 1 = 0
 $$</p>
@@ -447,7 +447,6 @@ $$</p>
 <li>$x_{\text{in1}} = 0, x_{\text{in2}} = 1$ 时：$x_{\text{out}} = 1$ ✓ (NAND)</li>
 <li>$x_{\text{in1}} = 0, x_{\text{in2}} = 0$ 时：$x_{\text{out}} = 1$ ✓ (NAND)</li>
 </ul>
-<p>（注意：NAND 门构成的电路与 AND 门一样具有表达能力——任何布尔电路都可以用 NAND 门单独构建。<code>AndGate</code> 结构体名反映了论文中的记法，但约束的实际代数实现是 NAND。）</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// fdabs.rs 中 AND 门约束

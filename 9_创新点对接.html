@@ -57,10 +57,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-aa703bc9.js";
+            window.path_to_searchindex_js = "searchindex-ed11918e.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-61c3e6e9.js"></script>
+        <script src="toc-513cb83f.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -201,7 +201,7 @@
 <h2 id="一已在代码中落地的理论创新"><a class="header" href="#一已在代码中落地的理论创新">一、已在代码中落地的理论创新</a></h2>
 <h3 id="1-多线性扩展折叠与求和交换打破大域乘法瓶颈"><a class="header" href="#1-多线性扩展折叠与求和交换打破大域乘法瓶颈">1. 多线性扩展折叠与求和交换（打破大域乘法瓶颈）</a></h3>
 <ul>
-<li>理论设计：针对协议中的大数乘法瓶颈，提出两步优化：第一步通过交换求和顺序 $\chi’<em>h = \sum \chi_i b</em>{i,h}$ 消除大数乘法；第二步利用拉格朗日多线性扩展的蝶形网络（Tree-evaluation）将复杂度从 $\mathcal{O}(2^c \cdot c^2)$ 降为 $\mathcal{O}(2^c)$。</li>
+<li>理论设计：针对协议中的大数乘法瓶颈，提出两步优化：第一步通过交换求和顺序 $\chi’_h = \sum \chi_i b_{i,h}$ 消除大数乘法；第二步利用拉格朗日多线性扩展的蝶形网络（Tree-evaluation）将复杂度从 $\mathcal{O}(2^c \cdot c^2)$ 降为 $\mathcal{O}(2^c)$。</li>
 <li>工程落地：在 <code>implicit_eval.rs</code> 中完整实现了上述逻辑。
 <ul>
 <li>第一步，利用 Gray 码预计算字节子集 XOR 表（<code>build_byte_subset_xor_table</code>），将 $\chi’_h$ 的计算转化为纯查表与异或操作。</li>
@@ -250,6 +250,9 @@
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
+                            <a rel="next prefetch" href="10_原始数据.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -261,6 +264,9 @@
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
+                    <a rel="next prefetch" href="10_原始数据.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
             </nav>
 
         </div>
