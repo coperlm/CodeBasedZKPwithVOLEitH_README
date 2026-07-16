@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-532edccc.js";
+            window.path_to_searchindex_js = "searchindex-608260ac.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -353,8 +353,8 @@ if bavc.h.is_null() || bavc.k.is_null() || bavc.com.is_null() || bavc.sd.is_null
 }
 <span class="boring">}</span></code></pre>
 <p>这种防御式编程模式确保即使 C 侧返回异常状态，Rust 侧也不会在空指针上继续操作。</p>
-<h3 id="34-不依赖-c-的-rust-原生实现vole-哈希"><a class="header" href="#34-不依赖-c-的-rust-原生实现vole-哈希">3.4 不依赖 C 的 Rust 原生实现：VOLE 哈希</a></h3>
-<p>为减少 C FFI 调用的性能开销和跨语言维护负担，FAEST 的 VOLE 哈希函数（<code>vole_hash</code>）在 Rust 中完整重新实现：</p>
+<h3 id="34-vole-哈希同一算法的两种实现"><a class="header" href="#34-vole-哈希同一算法的两种实现">3.4 VOLE 哈希：同一算法的两种实现</a></h3>
+<p>FAEST C 的 <code>universal_hashing.c</code> 已经提供 <code>vole_hash_128</code>，仓库同时保留了一个 Rust 等价实现 <code>vole_hash_128f_rust</code>。运行路径选择 Rust 版本，不是因为 C 版本不可用，而是因为两者的有限域乘法实现不同：Rust 使用 <code>F128b</code> 和可用时的 PCLMULQDQ，C 的 <code>bf128_mul</code>/<code>bf64_mul</code> 是逐 bit 的 shift-and-XOR 实现。</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn vole_hash_128f_rust(seed, input, hash_ell_bits) -&gt; [u8; 18]
@@ -388,7 +388,7 @@ low ^ high ^ (high &lt;&lt; 1) ^ (high &lt;&lt; 3) ^ (high &lt;&lt; 4)
     ^ overflow ^ (overflow &lt;&lt; 1) ^ (overflow &lt;&lt; 3) ^ (overflow &lt;&lt; 4)
 <span class="boring">}</span></code></pre>
 <p>这约简多项式 $x^{64} + x^4 + x^3 + x + 1$。</p>
-<p>正确性保障：<code>test_rust_vole_hash_matches_faest_c_reference</code> 在多种输入长度（0 ~ 28176 比特）和多种随机种子下，逐字节比对 Rust 实现与 C 参考实现的输出，确保完全一致。</p>
+<p>正确性保障：<code>test_rust_vole_hash_matches_faest_c_reference</code> 在多种输入长度（0 ~ 28176 比特）和多种随机种子下，逐字节比对 Rust 实现与 C 参考实现的输出。优化构建的性能审计测试显示，在当前 x86_64 主机上 Rust 版本约为 C 版本的 50–86 倍；因此这里的重复实现是有性能依据的，不应机械替换为 FFI。</p>
 <h2 id="四状态机设计voleithrs"><a class="header" href="#四状态机设计voleithrs">四、状态机设计：<code>voleith.rs</code></a></h2>
 <h3 id="41-延迟-vole-功能delayed-vole"><a class="header" href="#41-延迟-vole-功能delayed-vole">4.1 延迟 VOLE 功能（Delayed VOLE）</a></h3>
 <p>在 VOLEitH 协议中，Prover 和 Verifier 需要建立以下 VOLE 关系：</p>
@@ -594,7 +594,7 @@ squeeze() → opening_challenge
 <tr><th>决策</th><th>理由</th></tr>
 </thead>
 <tbody>
-<tr><td>VOLE 哈希在 Rust 中重写</td><td>减少 FFI 调用频率，利用内联的 PCLMULQDQ/PMULL 加速</td></tr>
+<tr><td>VOLE 哈希保留 Rust 等价实现</td><td>C 版本可作参考校验，但其有限域乘法为逐 bit 实现；Rust 路径可利用 PCLMULQDQ/PMULL</td></tr>
 <tr><td>BAVC 树承诺保留在 C 侧</td><td>GGM 树构建涉及大量递归内存分配，C 的 <code>malloc/free</code> 更高效</td></tr>
 <tr><td>列转置在 Rust 侧执行</td><td>需要 Rust 的 <code>rayon</code> 并行框架；使用 BMI2 <code>PEXT</code> 指令优化逐位列提取</td></tr>
 <tr><td>Grinding 在 Rust 侧完成</td><td>纯数学运算，不依赖 C 状态；可利用 <code>rayon</code> 并行搜索</td></tr>

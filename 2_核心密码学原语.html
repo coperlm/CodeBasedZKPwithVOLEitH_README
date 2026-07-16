@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-532edccc.js";
+            window.path_to_searchindex_js = "searchindex-608260ac.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -471,6 +471,22 @@ $$</p>
 c_{2,i} = \left(\bigoplus_{j: G_{2,i,j}=1} (r_2 ;|; \text{bin}(\text{msg}))_j\right) \oplus \text{RE}(e’_2)_i
 $$</p>
 <p>这精确实现了 $c = G \cdot \binom{u}{m} \oplus \text{RE}(e’)$，其中 $G_1, G_2$ 是两个独立的 McEliece 生成矩阵。</p>
+<h3 id="34-现在后端设计是两套"><a class="header" href="#34-现在后端设计是两套">3.4 现在后端设计是两套</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[cfg(all(feature = "hardware-accel", target_arch = "x86_64", target_feature = "aes"))]
+// 使用 AES-NI 本机加速路径
+const MATRIX_PRG_BACKEND: &amp;str = "aes-ni";
+
+#[cfg(not(...))]
+// 回退到 FAEST C 实现的 PRG
+const MATRIX_PRG_BACKEND: &amp;str = "faest-ffi";
+<span class="boring">}</span></code></pre>
+<p>当编译目标启用了 <code>target_feature = "aes"</code> 且打开 <code>hardware-accel</code> feature（默认开启）时，使用 Rust AES-NI intrinsic 实现的 AES-CTR；否则通过 FFI 调用 <code>faest_ffi::faest_prg_128</code>（调用 C 版本的 PRG）。仅有 CPU 支持 AES-NI 并不会改变编译期 <code>cfg</code>；通用构建需要显式使用 <code>-C target-cpu=native</code> 或 <code>-C target-feature=+aes</code> 才会进入 Rust 路径。</p>
+<p>在当前 i5-13500H 测试机上，Rust 路径在 1280 bit、4096 列的微基准中约为 86.98 µs，FAEST C 路径约为 165.44 µs，Rust 约快 1.9 倍。主要原因是 Rust 的 <code>MatrixPrg</code> 会缓存 round keys，而 FAEST 的 <code>prg()</code> 每次按列调用都会重新展开 key；当前矩阵接口正是逐列调用。协议级 Sign 的差异较小，Verify 则 Rust 略快，因此保留 Rust 默认路径。
+协议级 ReSolveD+ 测试结果：
+Rust：Sign 约 17.34 ms，Verify 约 9.47 ms
+FAEST C：Sign 约 16.77 ms，Verify 约 9.73 ms</p>
 <h2 id="四afs-哈希在-merkle-树中的应用环签名上下文"><a class="header" href="#四afs-哈希在-merkle-树中的应用环签名上下文">四、AFS 哈希在 Merkle 树中的应用（环签名上下文）</a></h2>
 <p>为阐明这两个密码学原语在系统中的协作关系，以下简述其在上层协议中的调用方式：</p>
 <p>环签名的 Merkle 树每一层使用 AFS 双矩阵哈希：</p>
