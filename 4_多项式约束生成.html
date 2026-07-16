@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-0b48fbb8.js";
+            window.path_to_searchindex_js = "searchindex-4dd76be5.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -198,13 +198,13 @@
                     <main>
                         <h1 id="模块四正则编码到多项式约束的转化anf-约束编译与蝴蝶隐式求值"><a class="header" href="#模块四正则编码到多项式约束的转化anf-约束编译与蝴蝶隐式求值">模块四：正则编码到多项式约束的转化——ANF 约束编译与蝴蝶隐式求值</a></h1>
 <h2 id="一概述"><a class="header" href="#一概述">一、概述</a></h2>
-<p>本模块是系统中最具理论创新性的部分。它解决的核心问题是：</p>
+<p>本模块把论文 §3 的正则编码代数化方法落实为约束编译和隐式求值代码。它解决的核心问题是：</p>
 <blockquote>
 <p>如何将正则编码函数（Regular Encoding）——一个看似非线性的、基于查表的操作——转化为 degree-$c$ 的布尔多项式（ANF），然后在 ZK 协议的“隐式空间“中高效地安全求值？</p>
 </blockquote>
 <p>这分为两个阶段：</p>
 <ol>
-<li><code>constraint_gen.rs</code> — 编译阶段：离线预计算正则编码的 ANF 系数表</li>
+<li><code>constraint_gen.rs</code> — 编译阶段：离线预计算正则编码的 ANF 系数表。论文 §3.2 将每个正则编码输出位表示为次数至多为 $c$ 的布尔多项式。</li>
 <li><code>implicit_eval.rs</code> — 求值阶段：在线计算 χ-加权隐式多项式，利用求和交换和蝴蝶折叠减少重复的 ANF 求值；具体循环仍需按块大小 $2^c$ 计量，不能简单写成与 $c$ 线性。</li>
 </ol>
 <h2 id="二正则编码的代数化从独热向量到-anf-多项式"><a class="header" href="#二正则编码的代数化从独热向量到-anf-多项式">二、正则编码的代数化——从独热向量到 ANF 多项式</a></h2>

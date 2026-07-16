@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-0b48fbb8.js";
+            window.path_to_searchindex_js = "searchindex-4dd76be5.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -198,7 +198,7 @@
                     <main>
                         <h1 id="模块五pit_dd-rep-核心协议与-nizk-变换"><a class="header" href="#模块五pit_dd-rep-核心协议与-nizk-变换">模块五：$\Pi^t_{dD-Rep}$ 核心协议与 NIZK 变换</a></h1>
 <h2 id="一概述"><a class="header" href="#一概述">一、概述</a></h2>
-<p>$\Pi^t_{dD-Rep}$（degree-$d$ Representation）协议是整个 ZK 系统的核心。它解决的核心问题是：</p>
+<p>$\Pi^t_{dD-Rep}$（degree-$d$ Representation）协议是关系证明的核心。论文定理 1 给出它在延迟 sVOLE 混合模型中的安全结论；本章说明当前仓库如何实现该关系与 Fiat-Shamir 链。</p>
 <blockquote>
 <p>给定一个由 $t$ 个 degree-$d$ 布尔多项式组成的约束系统 ${g_i(X) = 0}_{i=1}^t$，Prover 如何在不泄露 witness $w \in \mathbb{F}_2^k$ 的前提下，让 Verifier 确信 $w$ 满足所有约束？</p>
 </blockquote>
@@ -263,13 +263,11 @@ $$</p>
 <p>$$
 \tilde{q}_i = q_i + (w_i \oplus u_i) \cdot \Delta
 $$</p>
-<p>当 $w_i = u_i$ 时，$\text{corr}_i = 0$，$\tilde{q}_i = q_i = v_i$
-当 $w_i \neq u_i$ 时，$\text{corr}_i = 1$，$\tilde{q}_i = q_i + \Delta = v_i$</p>
-<p>因此当 correction 为 $w\oplus u$ 时，代码得到的是
+<p>由 $v_i=q_i+u_i\Delta$ 可得校正后的量为
 [
 \tilde q_i=q_i+(w_i\oplus u_i)\Delta=v_i+w_i\Delta,
 ]
-而不是单独的 $v_i$。这正是后续在点 $\Delta$ 上评价 witness 约束所需的 affine 视图。Verifier 不需要恢复 $u$ 或 $v$ 的明文向量，只需检查该视图与响应多项式相符。</p>
+而不是单独的 $v_i$。这正是后续在点 $\Delta$ 上评价 witness 约束所需的 affine 视图。它对应论文验证步骤中的 $Q^\star=Q_{[1,l]}+d\cdot GC\cdot\operatorname{diag}(\Delta)$；Verifier 不需要恢复 $u$ 或 $v$ 的明文向量，只需检查该视图与响应多项式相符。</p>
 <p>常数时间实现：<code>corrected_q_from_bitvec</code> 使用 <code>conditional_select</code>（来自 <code>subtle</code> crate）逐字节展开校正子位，避免秘密依赖的分支。</p>
 <h3 id="23-step-2挑战生成challengemessage"><a class="header" href="#23-step-2挑战生成challengemessage">2.3 Step 2：挑战生成（<code>ChallengeMessage</code>）</a></h3>
 <p>在交互式版本中，Verifier 采样随机域元素：</p>
@@ -327,7 +325,7 @@ ChallengeMessage { challenges: f128_challenges_from_seed(seed, challenge_count) 
 $$</p>
 <p>然后乘以 $p^{d - \text{deg}}$ 补偿度数，使所有单项式对齐到同一度数 $d$。</p>
 <h4 id="模式-b隐式求值respond_resolved_plus_implicit"><a class="header" href="#模式-b隐式求值respond_resolved_plus_implicit">模式 B：隐式求值（<code>respond_resolved_plus_implicit</code>）</a></h4>
-<p>对于使用正则编码的系统（ReSolveD+、环签名等），利用前文第四章的隐式求值引擎：</p>
+<p>该专用接口用于 ReSolveD+ 的单矩阵正则编码关系：</p>
 <pre><code>Algorithm: respond_resolved_plus_implicit(challenge, chi_prime, const_term, c)
 1. 选择 c+1 个插值点 p_0, ..., p_c
 2. 对每个 p:
@@ -338,7 +336,7 @@ $$</p>
 4. 加上辅助 VOLE 盲化
 5. 返回 ProofMessage { blinded_coeffs }
 </code></pre>
-<p>这里使用了第四章的蝴蝶折叠算法，复杂度为 $\mathcal{O}(k \cdot c)$ 而非 $\mathcal{O}(t \cdot 2^c)$。</p>
+<p>这里使用了第四章的蝴蝶折叠算法。每个块仍处理 $2^c$ 个系数；优势在于先聚合挑战并避免逐约束重复求值，成本应结合块数、矩阵扫描和 $2^c$ 计量。RingSig、GroupSig 和 FDABS 使用下述 <code>respond_advanced_implicit</code> 自定义求值器。</p>
 <h4 id="模式-c自定义求值器respond_advanced_implicit"><a class="header" href="#模式-c自定义求值器respond_advanced_implicit">模式 C：自定义求值器（<code>respond_advanced_implicit</code>）</a></h4>
 <p>允许应用层提供自定义求值函数 <code>evaluator: Fn(&amp;[F], F) -&gt; F</code>，用于环签名中需要同时求值两个矩阵的复杂场景。</p>
 <h3 id="25-verifier-验证verify--verify_resolved_plus_implicit"><a class="header" href="#25-verifier-验证verify--verify_resolved_plus_implicit">2.5 Verifier 验证（<code>verify</code> / <code>verify_resolved_plus_implicit</code>）</a></h3>
@@ -346,7 +344,7 @@ $$</p>
 <p>$$
 \sum_{i=1}^t \chi_i \cdot g_i(\tilde{q}) + \prod_{h=1}^{d-1} q_{\text{aux}, h} \stackrel{?}{=} \sum_{j=0}^{d-1} \tilde{a}_j \cdot \Delta^j
 $$</p>
-<p>其中 $\tilde{q} = \mathbf{v}$（校正后），$g_i$ 是约束多项式，$\tilde{a}_j$ 是盲化系数。</p>
+<p>其中 $\tilde{q}$ 是上节定义的校正后仿射视图 $v+w\Delta$，$g_i$ 是约束多项式，$\tilde{a}_j$ 是盲化系数。</p>
 <p>Verifier 验证代码：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -391,7 +389,7 @@ $$</p>
 $$
 \sum_i \chi_i g_i(\tilde{q}) + \prod_h q_{\text{aux},h} = \sum_j \tilde{a}_j \cdot \Delta^j
 $$</p>
-<p>当 $\tilde{q} = \mathbf{v}$ 且 witness 正确时，$\sum_i \chi_i g_i(\tilde{q}) = \sum_j a_j \cdot \Delta^j$，而线性因子乘积的盲化在两侧相等，从而在不泄露原多项式系数 $a_j$ 的情况下完成了等式的代数校验。。</p>
+<p>当 witness 正确时，校正后仿射视图在 $\Delta$ 的求值与响应多项式相符，而线性因子乘积的盲化在两侧相等，从而在不泄露原多项式系数 $a_j$ 的情况下完成代数校验。</p>
 <h3 id="26-插值细节"><a class="header" href="#26-插值细节">2.6 插值细节</a></h3>
 <p><code>interpolate_polynomial_prefix_into</code> 实现标准拉格朗日插值。插值点选择：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -603,7 +601,7 @@ Verifier:
 </thead>
 <tbody>
 <tr><td>零知识性</td><td>VOLE 校正子 $w \oplus u$ 隐藏 witness；盲化系数 $\tilde{a}_j$ 隐藏多项式系数</td></tr>
-<tr><td>可靠性</td><td>验证等式 $\sum \chi_i g_i(\tilde{q}) + \Pi q_{\text{aux}} = \sum \tilde{a}_j \Delta^j$ 在违规 witness 下成立的概率 $\le 2^{-\lambda}$</td></tr>
+<tr><td>可靠性</td><td>论文定理 1 的界为 $1/p^{r\tau}+d/</td></tr>
 <tr><td>非交互性</td><td>Fiat-Shamir 变换将 Verifier 的随机挑战替换为 SHA-3 哈希输出</td></tr>
 <tr><td>transcript 绑定</td><td>带标签吸收、域分离和确定性重算；哈希抗碰撞假设属于安全模型</td></tr>
 </tbody>

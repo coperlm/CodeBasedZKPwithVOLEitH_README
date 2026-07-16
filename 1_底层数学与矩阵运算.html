@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-0b48fbb8.js";
+            window.path_to_searchindex_js = "searchindex-4dd76be5.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -196,13 +196,13 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="模块一底层数学与内存优化"><a class="header" href="#模块一底层数学与内存优化">模块一：底层数学与内存优化</a></h1>
+                        <h1 id="模块一底层数学与流式矩阵"><a class="header" href="#模块一底层数学与流式矩阵">模块一：底层数学与流式矩阵</a></h1>
 <p>有限域表示、比特向量与大矩阵流式计算</p>
 <h2 id="一概述"><a class="header" href="#一概述">一、概述</a></h2>
-<p>本模块是整个 ZKP 系统的基石，也是性能瓶颈突破口。它解决两个根本问题：</p>
+<p>本模块为上层关系证明提供有限域和二元矩阵操作。它解决两个根本问题：</p>
 <ol>
 <li>如何在 $\mathbb{F}_{2^{128}}$ 上表示和计算关系证明所需的域元素；</li>
-<li>如何在更快速地操作 $\mathbb{F}_2^{n \times m}$（$n \approx 10^4, m \approx 10^5$）量级的二元矩阵，基于编码的 ZK 协议需要大量的随机矩阵（如 $B \in \mathbb{F}_2^{n \times m}$），同时增大 cache 命中率。</li>
+<li>基于编码的 ZK 协议需要大量的随机矩阵（如 $B \in \mathbb{F}_2^{n \times m}$），如何快速操作 $\mathbb{F}_2^{n \times m}$（$n \approx 10^4, m \approx 10^5$）量级的二元矩阵，同时增大 cache 命中率。</li>
 </ol>
 <h2 id="二gf2128-有限域运算finite_fieldrs"><a class="header" href="#二gf2128-有限域运算finite_fieldrs">二、GF(2^128) 有限域运算：<code>finite_field.rs</code></a></h2>
 <h3 id="21-数学背景"><a class="header" href="#21-数学背景">2.1 数学背景</a></h3>
@@ -210,7 +210,7 @@
 <p>$$
 a(x) = a_{127}x^{127} + a_{126}x^{126} + \cdots + a_1x + a_0, \quad a_i \in \mathbb{F}_2
 $$</p>
-<p>加法即按位 XOR；乘法是多项式乘法再模实现所选的 128 次不可约多项式。具体表示由 <code>swanky_field</code> 的 <code>F128b</code> 实现决定，本文不把底层表示常数当作协议参数。</p>
+<p>加法即按位 XOR；乘法是多项式乘法再模实现所选的 128 次不可约多项式。具体表示由 <code>swanky_field</code> 的 <code>F128b</code> 实现决定。</p>
 <h3 id="22-代码实现方式"><a class="header" href="#22-代码实现方式">2.2 代码实现方式</a></h3>
 <div class="table-wrapper">
 <table>
@@ -219,8 +219,8 @@ $$</p>
 </thead>
 <tbody>
 <tr><td>$\mathbb{F}_{2^{128}}$ 元素</td><td><code>F128b</code> (来自 <code>swanky-field-binary</code>)</td><td>128-bit 有限域元素的封装</td></tr>
-<tr><td>域加法 $a + b$</td><td><code>a + b</code></td><td>直接编译为 <code>XOR</code> 指令，常数时间</td></tr>
-<tr><td>域乘法 $a \cdot b$</td><td><code>a * b</code></td><td>底层调用 PCLMULQDQ / PMULL 硬件指令</td></tr>
+<tr><td>域加法 $a + b$</td><td><code>a + b</code></td><td>特征 2 域上的加法；具体机器指令由编译器决定</td></tr>
+<tr><td>域乘法 $a \cdot b$</td><td><code>a * b</code></td><td>由 <code>swanky-field-binary</code> 提供；可用时可走硬件加速路径</td></tr>
 <tr><td>零元</td><td><code>F128b::ZERO</code></td><td>$a + 0 = a$</td></tr>
 <tr><td>单位元</td><td><code>F128b::ONE</code></td><td>$a \cdot 1 = a$</td></tr>
 </tbody>
@@ -233,12 +233,12 @@ $$</p>
 <p>有限域函数的实现路径避免了显式的秘密相关分支，但完整侧信道安全仍取决于编译器、硬件、调用上下文和整个协议，不能仅由使用硬件指令推出。</p>
 <h2 id="三大矩阵流式计算streaming_matrixrs"><a class="header" href="#三大矩阵流式计算streaming_matrixrs">三、大矩阵流式计算：<code>streaming_matrix.rs</code></a></h2>
 <h3 id="31-问题与设计思想"><a class="header" href="#31-问题与设计思想">3.1 问题与设计思想</a></h3>
-<p>在基于编码的 ZK 协议中（AFC 哈希、VOLE 承诺等），需要大量使用伪随机矩阵：</p>
+<p>在基于编码的 ZK 协议中（AFS 哈希和相关线性关系），需要使用伪随机矩阵。以 RingSig/GroupSig/FDABS 的单个哈希矩阵为例：</p>
 <p>$$
-B \in \mathbb{F}_2^{n \times m}, \quad n = 1280,\ m = 81920
+B \in \mathbb{F}_2^{n \times m}, \quad n = 1280,\ m = (1280/8)\cdot 2^8 = 40960
 $$</p>
-<p>若直接物化，$1280 \times 81920 \text{ bits}\approx 12.5 \text{ MB}$。对于单张矩阵尚且可控，但协议运行中会生成许多张这样的矩阵，加上中间变量的暂存，一方面会增大内存的占用，另一方面会降低 cache 的命中率。但是VOLE 树的叶子承诺需要用到种子衍生的矩阵只在求值时用一次，无需常驻内存。</p>
-<p>所以最佳实现方案是列式伪随机流式生成。我们不存储整个矩阵，而是存储一个 128-bit 种子，在需要某一列时即时计算。</p>
+<p>若直接物化，该单个矩阵约为 $1280 \times 40960\text{ bits}=6.25\text{ MiB}$（不计容器开销）。对于单张矩阵尚且可控，但协议运行中会生成许多张这样的矩阵，加上中间变量的暂存，一方面会增大内存的占用，另一方面会降低 cache 的命中率。但是VOLE 树的叶子承诺需要用到种子衍生的矩阵只在求值时用一次，无需常驻内存。</p>
+<p>本实现采用列式伪随机流式生成，不存储整个矩阵，而是存储一个 128-bit 种子，在需要某一列时即时计算。</p>
 <h3 id="32-核心数据结构与公式-代码映射"><a class="header" href="#32-核心数据结构与公式-代码映射">3.2 核心数据结构与公式-代码映射</a></h3>
 <div class="table-wrapper">
 <table>
@@ -285,12 +285,12 @@ $$</p>
 <p>关键优化细节：</p>
 <ul>
 <li>密钥扩展一次：<code>expand_key</code> 在构造 <code>MatrixPrg</code> 时把种子扩展为 11 轮子密钥，后续 <code>fill_column_bytes</code> 的每次 AES 加密都复用这些轮密钥，避免重复扩展。</li>
-<li>向量化 AES：<code>aes128_ctr::fill</code> 在 <code>while</code> 循环中批量处理连续块的加密，利用 <code>_mm_aesenc_si128</code> / <code>_mm_aesenclast_si128</code> 指令。在循环内部，每次迭代写入 16 字节到输出缓冲区，并递增 128-bit 计数器。剩余不满一块的尾部数据通过 <code>copy_nonoverlapping</code> 截取。</li>
+<li>AES 路径：满足编译条件时，<code>aes128_ctr::fill</code> 使用 <code>_mm_aesenc_si128</code> / <code>_mm_aesenclast_si128</code> 处理连续块，并以列索引作为 PRG 的 tweak。其字节级输出由与 FAEST PRG 的回归测试校验。</li>
 <li>尾部掩码清除：因 $n$ 可能不是 8 的倍数，最后一字节的高位可能包含无效比特。<code>clear_column_tail_bits</code> 用 <code>tail_mask</code> 清除这些位，保证列向量的有效性。</li>
 </ul>
 <h2 id="四稀疏矩阵-向量乘法bitvec_opsrs"><a class="header" href="#四稀疏矩阵-向量乘法bitvec_opsrs">四、稀疏矩阵-向量乘法：<code>bitvec_ops.rs</code></a></h2>
 <h3 id="41-问题"><a class="header" href="#41-问题">4.1 问题</a></h3>
-<p>在基于编码的 ZK 中，$y = B \cdot x$ 中 $x$ 是一个正则编码词，其汉明重量极低，$x$ 中只有 $c$ 个比特为 1，其余全为 0。这意味着全矩阵乘法可以退化为稀疏乘法：</p>
+<p>在基于编码的 ZK 中，$y=B\cdot\operatorname{RE}(x)$ 的输入是正则编码词。若原始输入长度为 $n$、分块大小为 $c$，则 $\operatorname{RE}(x)$ 恰有 $n/c$ 个 1；因此矩阵乘法可退化为只累加被选中的列：</p>
 <p>$$
 y_i = \bigoplus_{j: x_j = 1} B_{i,j}
 $$</p>
@@ -406,7 +406,7 @@ fn test_streaming_matrix_is_deterministic() {
 </tbody>
 </table>
 </div>
-<p>这三个底层文件（<code>finite_field.rs</code>, <code>bitvec_ops.rs</code>, <code>streaming_matrix.rs</code>）共同构成了系统的“数学引擎“——它们通过硬件指令加速、流式延迟生成、稀疏性利用等多层优化，在亚毫秒级和KB 级内存的约束下完成了传统实现需要数十毫秒和数十 MB 内存才能完成的矩阵运算。</p>
+<p>这三个底层文件（<code>finite_field.rs</code>, <code>bitvec_ops.rs</code>, <code>streaming_matrix.rs</code>）共同提供了域运算、参考矩阵乘法和流式矩阵展开。端到端性能与内存结果应使用模块十所述脚本、metadata 和原始样本报告。</p>
 
                     </main>
 

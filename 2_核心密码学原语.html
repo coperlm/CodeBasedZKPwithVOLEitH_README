@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-0b48fbb8.js";
+            window.path_to_searchindex_js = "searchindex-4dd76be5.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -196,12 +196,12 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="模块二核心密码学原语afs-哈希与-mceliece-加密"><a class="header" href="#模块二核心密码学原语afs-哈希与-mceliece-加密">模块二：核心密码学原语——AFS 哈希与 McEliece 加密</a></h1>
+                        <h1 id="模块二核心密码学原语afs-哈希与-mceliece-关系"><a class="header" href="#模块二核心密码学原语afs-哈希与-mceliece-关系">模块二：核心密码学原语——AFS 哈希与 McEliece 关系</a></h1>
 <h2 id="一概述"><a class="header" href="#一概述">一、概述</a></h2>
 <p>本模块介绍上层关系实际使用的两类编码型对象。它们提供的是代数关系和求值接口；安全性结论仍需回到相应的编码问题和完整方案证明：</p>
 <ol>
-<li>AFS 哈希关系——由 regular encoding 和二元矩阵乘法构成，用于把输入关系写成低次数布尔多项式。</li>
-<li>McEliece 相关对象——<code>mceliece.rs</code> 和 GroupSig 使用的编码、矩阵及密文运算，用于构造可证明的加密一致性关系；本仓库文档不把它扩写成一个独立的身份加密方案。</li>
+<li>AFS 哈希关系：由 regular encoding 和二元矩阵乘法构成，用于把输入关系写成低次数布尔多项式。</li>
+<li>McEliece 相关关系：GroupSig 用两个公开矩阵和正则噪声构造两个密文确实加密同一身份的可证明关系。论文 §5.3、式 (19) 的完整方案另含密钥生成与开封算法。</li>
 </ol>
 <h2 id="二afs-哈希函数afs_hashrs"><a class="header" href="#二afs-哈希函数afs_hashrs">二、AFS 哈希函数：<code>afs_hash.rs</code></a></h2>
 <h3 id="21-数学定义"><a class="header" href="#21-数学定义">2.1 数学定义</a></h3>
@@ -356,20 +356,20 @@ $$</p>
 </tbody>
 </table>
 </div>
-<h2 id="三mceliece-加密与随机线性码mceliecers"><a class="header" href="#三mceliece-加密与随机线性码mceliecers">三、McEliece 加密与随机线性码：<code>mceliece.rs</code></a></h2>
+<h2 id="三mceliece-关系与随机线性码"><a class="header" href="#三mceliece-关系与随机线性码">三、McEliece 关系与随机线性码</a></h2>
 <h3 id="31-数学背景"><a class="header" href="#31-数学背景">3.1 数学背景</a></h3>
-<p>Classic McEliece 使用 不可约 Goppa 码。公钥是一个伪随机的 $k \times (n-k)$ 二元生成矩阵 $G$。加密公式为：</p>
+<p>论文 §2.5 回顾了随机化 McEliece：密钥生成输出公钥 $G$ 和私钥 $(S,G’,P)$，而解密需使用该私钥。论文的 GroupSig（§5.3、式 (19)）进一步采用正则噪声，并对同一身份 $\operatorname{bin}(j)$ 生成两个密文：</p>
 <p>$$
-c = G \cdot \binom{u}{m} \oplus \text{RE}(e’)
+c_\theta = G_\theta \cdot \binom{r_\theta}{\operatorname{bin}(j)} \oplus \operatorname{RE}(e’_\theta),\qquad \theta\in{1,2}.
 $$</p>
 <p>其中：</p>
 <ul>
-<li>$G \in \mathbb{F}_2^{(n-k) \times k}$ 是 McEliece 生成矩阵（公钥）</li>
-<li>$u \in \mathbb{F}_2^{k - \ell}$ 是随机数</li>
-<li>$m \in \mathbb{F}_2^{\ell}$ 是明文（对于群签名场景，$\ell$ 是用户索引的比特长度）</li>
-<li>$e’ \in \mathbb{F}_2^{k’}$ 是噪声种子</li>
-<li>$\text{RE}(e’)$ 是正则编码后的噪声向量（汉明重量极低）</li>
+<li>$G_1,G_2\in\mathbb{F}_2^{n_e\times k_e}$ 是两个公开矩阵；</li>
+<li>$r_1,r_2\in\mathbb{F}_2^{k_e-\ell}$ 是每次签名新采样的随机数；</li>
+<li>$\operatorname{bin}(j)\in\mathbb{F}_2^\ell$ 是同一个签名者身份的二进制表示；</li>
+<li>$e’_1,e’_2\in\mathbb{F}<em>2^k$ 是正则噪声种子，$\operatorname{RE}(e’</em>\theta)$ 是相应的噪声向量。</li>
 </ul>
+<p>消息 $M$ 不作为 $c_1,c_2$ 的明文写入上述关系；它由签名 API 的 statement digest 吸收并绑定到 Fiat-Shamir transcript。</p>
 <h3 id="32-参数配置"><a class="header" href="#32-参数配置">3.2 参数配置</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -381,8 +381,8 @@ pub const PK_NCOLS: usize = 3360;   // 公钥列数 = k
 pub const PK_ROW_BYTES: usize = 420;// 每行的字节数
 pub const PK_BYTES: usize = 524160; // 公钥总字节数 (~512 KB)
 <span class="boring">}</span></code></pre>
-<p>这些参数对应 Classic McEliece-460896f（NIST 第三轮候选参数集），提供 128-bit 安全强度。</p>
-<p>注：虽然 <code>mceliece.rs</code> 封装了 NIST 标准参数以供提取公钥结构，但在本系统实际的群签名应用中，为了满足正则噪声输出维度与密文维度严格对齐的要求，实际实例化的参数调整为 $n_e = 4096, k_e = 3328, t_e = 64$。</p>
+<p>这些常量只用于 <code>mceliece.rs</code> 的测试代码：它调用 <code>pqcrypto-classicmceliece</code> 生成并解析一个 Classic McEliece-460896f 公钥。</p>
+<p>当前 GroupSig 关系使用论文 §5.4 的文本一致参数：$n_e=4096,k_e=3328,t_e=64,c_e=6,k=c_et_e=384$。论文表 4 的 128-bit 行隐含使用 $c_e=8,k=128$，与正文不一致；仓库保留该表作复现，同时将可执行参数与该差异写入 <code>LIMITATIONS.md</code>。</p>
 <h3 id="33-公式-代码映射"><a class="header" href="#33-公式-代码映射">3.3 公式-代码映射</a></h3>
 <h4 id="331-生成矩阵提取"><a class="header" href="#331-生成矩阵提取">3.3.1 生成矩阵提取</a></h4>
 <p>在 <code>run_matrix_validation</code> 测试函数中，公钥的字节流被解析为 $G’$ 矩阵：</p>
@@ -424,7 +424,7 @@ for (row_idx, x_bit) in x.iter().enumerate() {
 <li>$x$ 的每个为 1 的位置对应 $G’$ 的一行</li>
 <li>该行所有为 1 的列对输出做 XOR 翻转</li>
 </ul>
-<h4 id="333-在群签名中的完整加密应用"><a class="header" href="#333-在群签名中的完整加密应用">3.3.3 在群签名中的完整加密应用</a></h4>
+<h4 id="333-当前群签名中的可证明密文关系"><a class="header" href="#333-当前群签名中的可证明密文关系">3.3.3 当前群签名中的可证明密文关系</a></h4>
 <p>群签名约束生成函数 <code>build_group_signature_constraints</code> 中将 McEliece 加密拆解为两个部分：</p>
 <p>第一部分 —— 线性组合：$G \cdot \binom{r}{\text{bin}(j)}$</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -463,14 +463,14 @@ $$</p>
 }
 <span class="boring">}</span></code></pre>
 <p>这为密文的第 $i$ 位添加 $\text{RE}(e’)$ 贡献的噪声多项式。</p>
-<p>完整密文约束：</p>
+<p>完整密文约束（与论文式 (19) 一致）：</p>
 <p>$$
 c_{1,i} = \left(\bigoplus_{j: G_{1,i,j}=1} (r_1 ;|; \text{bin}(j))_j\right) \oplus \text{RE}(e’_1)_i
 $$</p>
 <p>$$
-c_{2,i} = \left(\bigoplus_{j: G_{2,i,j}=1} (r_2 ;|; \text{bin}(\text{msg}))_j\right) \oplus \text{RE}(e’_2)_i
+c_{2,i} = \left(\bigoplus_{j: G_{2,i,j}=1} (r_2 ;|; \text{bin}(j))_j\right) \oplus \text{RE}(e’_2)_i
 $$</p>
-<p>这精确实现了 $c = G \cdot \binom{u}{m} \oplus \text{RE}(e’)$，其中 $G_1, G_2$ 是两个独立的 McEliece 生成矩阵。</p>
+<p>这实现了论文要求的“$c_1,c_2$ 是同一 $\operatorname{bin}(j)$ 的两次随机化加密”这一代数关系。</p>
 <h3 id="34-现在后端设计是两套"><a class="header" href="#34-现在后端设计是两套">3.4 现在后端设计是两套</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -498,7 +498,7 @@ $$</p>
 <li>$B_0$ 编码左子节点的影响，$B_1$ 编码右子节点的影响</li>
 <li>最终根哈希 $u_0 = v_0$ 被公开作为哈希链承诺</li>
 </ul>
-<p>而 McEliece 加密则在群签名中提供追踪机制：管理方可利用私钥解密密文 $(c_1, c_2)$ 获取签名者的身份索引 $j$ 与消息 $m$，实现匿名性中的可控可追踪。</p>
+<p>而 McEliece 加密则在群签名中提供追踪机制：管理方可利用私钥解密密文 $(c_1, c_2)$ 获取签名者的身份索引 $j$ 与消息 $m$，实现匿名性中的可控可追踪。追踪部分代码暂未实现</p>
 <h2 id="五工程要点总结"><a class="header" href="#五工程要点总结">五、工程要点总结</a></h2>
 <div class="table-wrapper">
 <table>

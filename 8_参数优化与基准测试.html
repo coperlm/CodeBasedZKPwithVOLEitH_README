@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-0b48fbb8.js";
+            window.path_to_searchindex_js = "searchindex-4dd76be5.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -236,7 +236,7 @@ $$</p>
 <span class="boring">}</span></code></pre>
 <p>使用数值稳定的 LogSumExp 技巧避免直接计算 $2^{-128} + d \cdot 2^{-128}$ 时的浮点下溢。</p>
 <h3 id="23-关键安全参数"><a class="header" href="#23-关键安全参数">2.3 关键安全参数</a></h3>
-<p><code>polynomial_soundness_bound</code> 确认了严格 128-bit 安全性无法达到——即使在理想情况下（两个域都是 128 比特），Forster 的上界也给出了约 124.68 比特的安全强度：</p>
+<p><code>polynomial_soundness_bound</code> 按论文定理 1 的界 $1/p^{r\tau}+d/|S_\Delta|$ 进行具体计算。即使按完整 128-bit $\Delta$ 域估算，degree-9 关系有约 124.68 bit的安全强度：</p>
 <pre><code>degree=9, combination=128, delta=128 → bit_security ≈ 124.678
 degree=9, combination=128, delta=120 → bit_security ≈ 116.829
 </code></pre>
@@ -262,9 +262,9 @@ degree=9, combination=128, delta=120 → bit_security ≈ 116.829
 </table>
 </div>
 <p>环签名等方案度数 $d = c+1 = 9$（因方向比特多一度），但安全分析仍适用相同的 bound 公式。</p>
-<h2 id="三极紧凑序列化artifact_bundlers"><a class="header" href="#三极紧凑序列化artifact_bundlers">三、极紧凑序列化：<code>artifact_bundle.rs</code></a></h2>
+<h2 id="三resolved-紧凑序列化artifact_bundlers"><a class="header" href="#三resolved-紧凑序列化artifact_bundlers">三、ReSolveD+ 紧凑序列化：<code>artifact_bundle.rs</code></a></h2>
 <h3 id="31-签名体积的理论基础"><a class="header" href="#31-签名体积的理论基础">3.1 签名体积的理论基础</a></h3>
-<p>传统基于 Stern 协议的 ZKP 签名：每次 repetition 需要约 $k$ 比特的承诺 + 打开数据，重复 $\lambda$ 次（$\lambda = 128$），总签名体积通常在 兆字节（MB）级别。</p>
+<p>论文表 7 的优化 ReSolveD+ 条目为 3054 B；本仓库的可独立解码 ReSolveD+ wire bundle 为 3159 B。传统基于 Stern 协议的 ZKP 签名：每次 repetition 需要约 $k$ 比特的承诺 + 打开数据，重复 $\lambda$ 次（$\lambda = 128$），总签名体积通常在 兆字节（MB）级别。</p>
 <p>VOLEitH 方法：通过 $\tau$ 棵 GGM 树并行承诺 + 选择性打开，签名体积压缩到 KB 级别。核心压缩机制：</p>
 <div class="table-wrapper">
 <table>
@@ -282,20 +282,20 @@ degree=9, combination=128, delta=120 → bit_security ≈ 116.829
 <tr><td>VOLE subtotal</td><td></td><td>~3 KB</td></tr>
 <tr><td>Correction</td><td>$k$ 比特</td><td>~56 B</td></tr>
 <tr><td>Proof Coeffs</td><td>$d$ 个 $\mathbb{F}_{2^{128}}$ 元素</td><td>$d \times 16$ B</td></tr>
-<tr><td>Signature total</td><td></td><td>~3159 B</td></tr>
+<tr><td>ReSolveD+ bundle total</td><td></td><td>3159 B</td></tr>
 </tbody>
 </table>
 </div>
-<p><code>artifact_bundle.rs</code> 中的常量：</p>
+<p><code>artifact_bundle.rs</code> 中的固定 ReSolveD+ 常量：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub const ARTIFACT_K: usize = 453;
 pub const ARTIFACT_C: usize = 3;
 pub const ARTIFACT_ROWS: usize = 453;
-pub const ARTIFACT_SIGNATURE_BYTES: usize = 3159;  // 仅 3.1 KB!
+pub const ARTIFACT_SIGNATURE_BYTES: usize = 3159;
 <span class="boring">}</span></code></pre>
 <h3 id="32-压缩策略详解"><a class="header" href="#32-压缩策略详解">3.2 压缩策略详解</a></h3>
-<h4 id="策略一种子代替矩阵"><a class="header" href="#策略一种子代替矩阵">策略一：种子代替矩阵</a></h4>
+<h4 id="策略一resolved-bundle-以种子代替矩阵"><a class="header" href="#策略一resolved-bundle-以种子代替矩阵">策略一：ReSolveD+ bundle 以种子代替矩阵</a></h4>
 <p>公钥中的 $B$ 矩阵不序列化 $n \times m$ 比特（$453 \times 1208 \approx 547$ Kb $\approx 68$ KB），而是仅序列化 16 字节的种子 $\sigma$：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -322,7 +322,7 @@ pub const ARTIFACT_SIGNATURE_BYTES: usize = 3159;  // 仅 3.1 KB!
 </span>pub(crate) const FAEST_VOLE_HASH_OUTPUT_BYTES: usize = 18; // 128 + 16 比特
 <span class="boring">}</span></code></pre>
 <h4 id="策略四固定且极少的盲化系数"><a class="header" href="#策略四固定且极少的盲化系数">策略四：固定且极少的盲化系数</a></h4>
-<p>不同方案的 proof 系数数量：</p>
+<p>不同关系的 proof 系数数量由关系最高次数决定；下表为系数载荷。</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -336,7 +336,7 @@ pub const ARTIFACT_SIGNATURE_BYTES: usize = 3159;  // 仅 3.1 KB!
 </tbody>
 </table>
 </div>
-<p>相比传统方法中每个约束都需要一个系数，这里仅需要 $d$ 个 $\mathbb{F}_{2^{128}}$ 元素。</p>
+<p>当前协议响应携带 $d$ 个 $\mathbb{F}_{2^{128}}$ 系数；完整大小还包含 correction、VOLE transcript、应用公开数据和 wire framing。</p>
 <h3 id="33-格式版本化和严格验证"><a class="header" href="#33-格式版本化和严格验证">3.3 格式版本化和严格验证</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -349,7 +349,8 @@ const VERSION: u16 = 1;
 <li>尾部拒绝：<code>decoder.finish()</code> 检查无多余字节，防止格式混淆攻击</li>
 <li>参数硬编码检查：解码时验证 <code>(k, c, rows, cols, y_bits)</code> 必须匹配常量，防止跨参数集误用</li>
 </ul>
-<h3 id="34-签名总大小实测"><a class="header" href="#34-签名总大小实测">3.4 签名总大小实测</a></h3>
+<h3 id="34-当前-wire-体积与论文分析值"><a class="header" href="#34-当前-wire-体积与论文分析值">3.4 当前 wire 体积与论文分析值</a></h3>
+<p>论文表 3–5 的 KB 数是参数化通信量分析；当前实现的版本化 wire 体积必须以模块十及 <code>just speed-table</code> 输出为准。历史单线程记录中，$\ell=5$ 的 RingSig、GroupSig、FDABS 分别为 34.90 KiB、50.40 KiB、34.15 KiB；它们不能写成 4–8 KB。Scope-LRS 和 batch Scope-LRS 是仓库扩展，不应混入论文方案体积比较。</p>
 <p>从 <code>justfile</code> 的 report 测试可观察到（以 $\ell=5$ 的环签名和群签名为例）：</p>
 <div class="table-wrapper">
 <table>
