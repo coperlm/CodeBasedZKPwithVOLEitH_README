@@ -68,7 +68,7 @@ pub fn commit(&self) -> CommitmentMessage {
 }
 ```
 
-校正子的信息论安全性：由于 $u$ 是 Prover 私有的秘密向量（Verifier 只知道 $q$ 和 $\Delta$，但 $u$ 对 Verifier 具有 $-\log_2(\text{Pr}[u=0]) = k$ 比特的熵），$w \oplus u$ 完美隐藏了 $w$。
+在理想化的均匀 VOLE 相关模型中，$u$ 对观察者是均匀的，因此 $w \oplus u$ 对固定的 $w$ 不提供额外信息。这里的隐藏性依赖 VOLE 相关量的分布和协议组合，不能仅凭 `commit` 函数单独宣称完整零知识性。
 
 Verifier 端的吸收：Verifier 利用校正子修正自己的 $q$：
 
@@ -85,7 +85,11 @@ $$
 当 $w_i = u_i$ 时，$\text{corr}\_i = 0$，$\tilde{q}\_i = q_i = v_i$
 当 $w_i \neq u_i$ 时，$\text{corr}\_i = 1$，$\tilde{q}\_i = q_i + \Delta = v_i$
 
-因此 $\tilde{q} = \mathbf{v}$ 当且仅当校正子正确。Verifier 在不知道 $u$ 和 $v$ 的情况下，获得了正确 witness 所对应的 VOLE 关系。
+因此当 correction 为 $w\oplus u$ 时，代码得到的是
+\[
+\tilde q_i=q_i+(w_i\oplus u_i)\Delta=v_i+w_i\Delta,
+\]
+而不是单独的 $v_i$。这正是后续在点 $\Delta$ 上评价 witness 约束所需的 affine 视图。Verifier 不需要恢复 $u$ 或 $v$ 的明文向量，只需检查该视图与响应多项式相符。
 
 常数时间实现：`corrected_q_from_bitvec` 使用 `conditional_select`（来自 `subtle` crate）逐字节展开校正子位，避免秘密依赖的分支。
 
@@ -253,7 +257,7 @@ fn fill_interpolation_points<F: FiniteField>(points: &mut [F]) {
 }
 ```
 
-即 $P = \{0, 1, g, g^2, \dots, g^{d-1}\}$，其中 $g$ 是 $\mathbb{F}\_{2^{128}}$ 的乘法生成元。这保证了所有插值点互不相同（因为 $g$ 的阶为 $2^{128}-1$）。
+即从 $0$ 开始取 `d+1` 个点，并令后续点按 `F::GENERATOR` 递乘。代码依赖有限域实现提供的 generator；测试只要求实际取到的点互不相同，不在文档中额外宣称其阶的具体证明。
 
 当度数 $d \le 15$ 时（`STACK_POLY_COEFFS = 16`），插值工作缓冲区使用栈分配，避免堆分配的开销。
 
@@ -476,4 +480,5 @@ Verifier:
 | 零知识性 | VOLE 校正子 $w \oplus u$ 隐藏 witness；盲化系数 $\tilde{a}\_j$ 隐藏多项式系数 |
 | 可靠性 | 验证等式 $\sum \chi_i g_i(\tilde{q}) + \Pi q_{\text{aux}} = \sum \tilde{a}\_j \Delta^j$ 在违规 witness 下成立的概率 $\le 2^{-\lambda}$ |
 | 非交互性 | Fiat-Shamir 变换将 Verifier 的随机挑战替换为 SHA-3 哈希输出 |
-| 抗碰撞 | Fiat-Shamir 挑战域分离 + Keccak-256 抗碰撞保证 |
+| transcript 绑定 | 带标签吸收、域分离和确定性重算；哈希抗碰撞假设属于安全模型 |
+

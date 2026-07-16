@@ -27,7 +27,7 @@ BAVC（Binary Auxiliary Vector Commitment）是 FAEST 使用的一种优化的 G
 如果完全用 Rust 重新实现 BAVC：
 - 需要重新实现 $\tau$ 棵 GGM 树的构建、密钥扩展、Merkle 哈希聚合——这是数千行经过审计的 C 代码
 - 需要保证与 FAEST 规范的行为完全一致（包括常数时间执行、字节序、SHA-3 用法等）
-- FAEST 的 C 代码经历了 NIST 后量子密码标准化过程的严格审查，复用它直接继承了其安全保证
+- 复用固定参考实现可以避免在本仓库重新定义 BAVC 的字节级行为，但不能把 FFI 接入自动解释为继承完整安全保证；参数、组合方式和本地关系证明仍需单独分析。
 
 ### 2.3 代码组织
 
@@ -340,7 +340,7 @@ fn challenge_has_required_grind_bits(challenge, w_grind) -> bool {
 }
 ```
 
-这要求 Prover 在最终确定签名前，平均需要进行 $2^{w_\text{grind}}$ 次尝试。对于 $w_\text{grind} = 8$（ReSolveD+ 的默认参数），Prover 需尝试约 256 次。这保证了 Verifier 对证明的非平凡性（non-triviality）有 $\lambda + w_\text{grind}$ 比特的置信度。
+这要求 Prover 在最终确定签名前，平均需要约 $2^{w_\text{grind}}$ 次尝试。对于当前 `w_grind = 8` 的 profile，平均工作量约为 256 次。该工作量是 FAEST opening 规则的一部分；`security.rs` 将其作为单独的工作因子记录，不把它直接加到关系证明的统计 soundness bound 中。
 
 ## 五、线缆编码：`wire.rs`
 
