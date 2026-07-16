@@ -2,7 +2,7 @@
 
 ## 一、概述
 
-$\Pi^t_{dD-Rep}$（degree-$d$ Representation）协议是整个 ZK 系统的核心。它解决的核心问题是：
+$\Pi^t_{dD-Rep}$（degree-$d$ Representation）协议是关系证明的核心。论文定理 1 给出它在延迟 sVOLE 混合模型中的安全结论；本章说明当前仓库如何实现该关系与 Fiat-Shamir 链。
 
 > 给定一个由 $t$ 个 degree-$d$ 布尔多项式组成的约束系统 $\{g_i(X) = 0\}\_{i=1}^t$，Prover 如何在不泄露 witness $w \in \mathbb{F}\_2^k$ 的前提下，让 Verifier 确信 $w$ 满足所有约束？
 
@@ -82,14 +82,11 @@ $$
 \tilde{q}\_i = q_i + (w_i \oplus u_i) \cdot \Delta
 $$
 
-当 $w_i = u_i$ 时，$\text{corr}\_i = 0$，$\tilde{q}\_i = q_i = v_i$
-当 $w_i \neq u_i$ 时，$\text{corr}\_i = 1$，$\tilde{q}\_i = q_i + \Delta = v_i$
-
-因此当 correction 为 $w\oplus u$ 时，代码得到的是
+由 $v_i=q_i+u_i\Delta$ 可得校正后的量为
 \[
 \tilde q_i=q_i+(w_i\oplus u_i)\Delta=v_i+w_i\Delta,
 \]
-而不是单独的 $v_i$。这正是后续在点 $\Delta$ 上评价 witness 约束所需的 affine 视图。Verifier 不需要恢复 $u$ 或 $v$ 的明文向量，只需检查该视图与响应多项式相符。
+而不是单独的 $v_i$。这正是后续在点 $\Delta$ 上评价 witness 约束所需的 affine 视图。它对应论文验证步骤中的 $Q^\star=Q_{[1,l]}+d\cdot GC\cdot\operatorname{diag}(\Delta)$；Verifier 不需要恢复 $u$ 或 $v$ 的明文向量，只需检查该视图与响应多项式相符。
 
 常数时间实现：`corrected_q_from_bitvec` 使用 `conditional_select`（来自 `subtle` crate）逐字节展开校正子位，避免秘密依赖的分支。
 
@@ -164,7 +161,7 @@ $$
 
 #### 模式 B：隐式求值（`respond_resolved_plus_implicit`）
 
-对于使用正则编码的系统（ReSolveD+、环签名等），利用前文第四章的隐式求值引擎：
+该专用接口用于 ReSolveD+ 的单矩阵正则编码关系：
 
 ```
 Algorithm: respond_resolved_plus_implicit(challenge, chi_prime, const_term, c)
@@ -178,7 +175,7 @@ Algorithm: respond_resolved_plus_implicit(challenge, chi_prime, const_term, c)
 5. 返回 ProofMessage { blinded_coeffs }
 ```
 
-这里使用了第四章的蝴蝶折叠算法，复杂度为 $\mathcal{O}(k \cdot c)$ 而非 $\mathcal{O}(t \cdot 2^c)$。
+这里使用了第四章的蝴蝶折叠算法。每个块仍处理 $2^c$ 个系数；优势在于先聚合挑战并避免逐约束重复求值，成本应结合块数、矩阵扫描和 $2^c$ 计量。RingSig、GroupSig 和 FDABS 使用下述 `respond_advanced_implicit` 自定义求值器。
 
 #### 模式 C：自定义求值器（`respond_advanced_implicit`）
 
@@ -192,7 +189,7 @@ $$
 \sum_{i=1}^t \chi_i \cdot g_i(\tilde{q}) + \prod_{h=1}^{d-1} q_{\text{aux}, h} \stackrel{?}{=} \sum_{j=0}^{d-1} \tilde{a}\_j \cdot \Delta^j
 $$
 
-其中 $\tilde{q} = \mathbf{v}$（校正后），$g_i$ 是约束多项式，$\tilde{a}\_j$ 是盲化系数。
+其中 $\tilde{q}$ 是上节定义的校正后仿射视图 $v+w\Delta$，$g_i$ 是约束多项式，$\tilde{a}\_j$ 是盲化系数。
 
 Verifier 验证代码：
 
@@ -241,7 +238,7 @@ $$
 \sum_i \chi_i g_i(\tilde{q}) + \prod_h q_{\text{aux},h} = \sum_j \tilde{a}\_j \cdot \Delta^j
 $$
 
-当 $\tilde{q} = \mathbf{v}$ 且 witness 正确时，$\sum_i \chi_i g_i(\tilde{q}) = \sum_j a_j \cdot \Delta^j$，而线性因子乘积的盲化在两侧相等，从而在不泄露原多项式系数 $a_j$ 的情况下完成了等式的代数校验。。
+当 witness 正确时，校正后仿射视图在 $\Delta$ 的求值与响应多项式相符，而线性因子乘积的盲化在两侧相等，从而在不泄露原多项式系数 $a_j$ 的情况下完成代数校验。
 
 ### 2.6 插值细节
 
@@ -478,7 +475,6 @@ Verifier:
 | 安全属性 | 实现机制 |
 |---------|---------|
 | 零知识性 | VOLE 校正子 $w \oplus u$ 隐藏 witness；盲化系数 $\tilde{a}\_j$ 隐藏多项式系数 |
-| 可靠性 | 验证等式 $\sum \chi_i g_i(\tilde{q}) + \Pi q_{\text{aux}} = \sum \tilde{a}\_j \Delta^j$ 在违规 witness 下成立的概率 $\le 2^{-\lambda}$ |
+| 可靠性 | 论文定理 1 的界为 $1/p^{r\tau}+d/|S_\Delta|$；当前 `F128b` profile 的具体数值和 grinding 解释见模块八，不能简写为严格的 $2^{-\lambda}$ |
 | 非交互性 | Fiat-Shamir 变换将 Verifier 的随机挑战替换为 SHA-3 哈希输出 |
 | transcript 绑定 | 带标签吸收、域分离和确定性重算；哈希抗碰撞假设属于安全模型 |
-

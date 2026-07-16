@@ -4,7 +4,7 @@
 
 本模块是整个 ZKP 系统的核心引擎——它负责将密码学约束系统与底层的延迟 VOLE 功能（Delayed VOLE functionality, $\mathcal{F}\_{\text{sVOLE}}$）衔接起来。架构上采用两层级联设计：
 
-1. C 层（FAEST）：提供高效的 GGM 树形向量承诺（BAVC - Binary Auxiliary Vector Commitment），处理 $\tau$ 棵 $\lambda$ 深度的 GGM 树的构建、打开和验证。这是密码学计算密集部分。
+1. C 层（FAEST）：提供 GGM/BAVC 所需的承诺、打开和重构例程。$\tau$ 是并行重复数，$\lambda$ 是安全参数；树的形状由 FAEST profile 中的树参数决定，不能把 $\lambda$ 直接称为树深度。
 2. Rust 层：通过 FFI 安全封装 C 层状态机，并在此基础上实现 Prover/Verifier 的协议状态机，负责挑战生成、相关性提取（correlation extraction）、约束绑定等高层协议逻辑。
 
 ## 二、为什么需要 FFI 复用 FAEST 的 C 代码？
@@ -140,9 +140,8 @@ impl Drop for FaestVoleCommitmentState {
 }
 ```
 
-安全性担保：
 - `params` 使用 `Box<FaestParamset>` 堆分配，确保 `vole_commit` 写入时指针稳定性
-- `Drop` trait 在对象销毁时自动调用 `bavc_clear` 释放 C 侧堆内存，防止内存泄漏
+- `Drop` trait 在对象销毁时调用 `bavc_clear` 释放 C 侧堆内存
 - 双重 null 检查防止重复释放
 
 #### 3.3.2 行指针数组的拼接
@@ -324,9 +323,9 @@ absorb(profile, statement, witness_bits, degree, relation_bits,
 squeeze() → relation_seed
 ```
 
-第 3 轮打开挑战 `opening_challenge`：源自 relation_seed + 证明系数
+第 3 轮打开挑战 `opening_challenge`：源自 relation_seed、证明系数和 grinding counter
 ```
-absorb(relation_seed, proof.blinded_coeffs[0..d])
+absorb(relation_seed, proof.blinded_coeffs[0..d], counter)
 squeeze() → opening_challenge
 ```
 然后通过 Grinding（递增 counter 使挑战值的后 `w_grind` 位为零）增加协议的安全性。
@@ -423,7 +422,7 @@ graph TD
 | 决策 | 理由 |
 |------|------|
 | VOLE 哈希保留 Rust 等价实现 | C 版本可作参考校验，但其有限域乘法为逐 bit 实现；Rust 路径可利用 PCLMULQDQ/PMULL |
-| BAVC 树承诺保留在 C 侧 | GGM 树构建涉及大量递归内存分配，C 的 `malloc/free` 更高效 |
+| BAVC 树承诺保留在 C 侧 | 复用 FAEST 参考实现的字节级承诺/打开行为，并由 Rust 包装层管理其资源 |
 | 列转置在 Rust 侧执行 | 需要 Rust 的 `rayon` 并行框架；使用 BMI2 `PEXT` 指令优化逐位列提取 |
-| Grinding 在 Rust 侧完成 | 纯数学运算，不依赖 C 状态；可利用 `rayon` 并行搜索 |
+| Grinding 在 Rust 侧完成 | 不依赖 C 状态；当前实现逐个 counter 搜索满足 profile 要求的挑战 |
 | 序列化手动编码 | 避免通用序列化框架的开销和版本漂移；精确的位紧凑编码 |
