@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-608260ac.js";
+            window.path_to_searchindex_js = "searchindex-0b48fbb8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -196,71 +196,52 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="code-based-zero-knowledge-from-vole-in-the-head-核心代码与架构解析报告"><a class="header" href="#code-based-zero-knowledge-from-vole-in-the-head-核心代码与架构解析报告">Code-Based Zero-Knowledge from VOLE-in-the-Head: 核心代码与架构解析报告</a></h1>
-<h2 id="报告导读"><a class="header" href="#报告导读">报告导读</a></h2>
-<p>本报告从数学关系、证明协议和应用语句三个层面解释实现。代码采用 Rust 编写，FAEST 的 VOLE/BAVC 部分通过固定的 C 参考实现接入。全文以源码、测试和仓库中的论文复现实验说明为依据；未在这些材料中确认的安全结论不在此处外推。</p>
-<h3 id="模块一底层数学与矩阵运算"><a class="header" href="#模块一底层数学与矩阵运算">模块一：底层数学与矩阵运算</a></h3>
-<p>本模块是整个 ZKP 系统的数学基石与性能瓶颈突破口。</p>
+                        <h1 id="code-based-zk--voleith-代码与协议说明"><a class="header" href="#code-based-zk--voleith-代码与协议说明">Code-Based ZK / VOLEitH 代码与协议说明</a></h1>
+<p>本文档只记录两类可以从源码或论文直接核对的事实：</p>
+<ol>
+<li>源码实际执行的数学关系、证明流程和数据布局；</li>
+<li>论文 <em>Code-Based Zero-Knowledge from VOLE-in-the-Head and Their Applications: Simpler, Faster, and Smaller</em> 中与这些实现对应的协议设计。</li>
+</ol>
+<p>源码优先。论文中的安全定理、参数表和应用生命周期不能自动视为本仓库已经实现的功能。特别是，当前仓库的可执行证明域为 <code>F128b = GF(2^128)</code>，256-bit 论文表格没有对应的可执行 profile。</p>
+<h2 id="证明对象的共同形式"><a class="header" href="#证明对象的共同形式">证明对象的共同形式</a></h2>
+<p>应用层最终都把待证明语句写成</p>
+<p>[
+f_i(w)=0,\qquad i=1,\ldots,t,
+]</p>
+<p>其中 (w\in\mathbb F_2^l) 是秘密比特 witness，(f_i) 是在 <code>F128b</code> 上计算的、次数至多为 (d) 的多项式。VOLEitH 为 (w) 提供认证式隐藏，<code>protocol_dd_rep.rs</code> 将全部约束折叠为一个关于 (Y) 的低次数多项式，再在 verifier 的 (\Delta) 点检查。</p>
+<p>源码中的关键恒等式是：</p>
+<p>[
+q_i+(w_i\oplus u_i)\Delta
+=v_i+w_i\Delta,
+]</p>
+<p>因为 FAEST 重构得到的相关量满足 (q_i=v_i+u_i\Delta)。右侧正是 prover 在插值点上使用的仿射变量。</p>
+<h2 id="阅读顺序"><a class="header" href="#阅读顺序">阅读顺序</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>文档</th><th>重点</th></tr>
+</thead>
+<tbody>
+<tr><td><a href="./1_底层数学与矩阵运算.html">1_底层数学与矩阵运算</a></td><td>(\mathbb F_{2^{128}})、正则编码输入的位表示、流式矩阵</td></tr>
+<tr><td><a href="./2_核心密码学原语.html">2_核心密码学原语</a></td><td>AFS 双输入哈希、正则噪声型 McEliece 关系</td></tr>
+<tr><td><a href="./3_VOLEitH状态机与FFI.html">3_VOLEitH状态机与FFI</a></td><td>FAEST commit/reconstruct、BAVC opening、Fiat-Shamir 绑定</td></tr>
+<tr><td><a href="./4_多项式约束生成.html">4_多项式约束生成</a></td><td>ANF、正则编码约束和各应用的关系方程</td></tr>
+<tr><td><a href="./5_ZK核心证明协议.html">5_ZK核心证明协议</a></td><td>(\Pi^t_{dD\text{-}Rep}) 的 prover/verifier 数学流程</td></tr>
+<tr><td><a href="./6_基础应用层签名.html">6_基础应用层签名</a></td><td>ReSolveD+ 与论文环签名关系</td></tr>
+<tr><td><a href="./7_高级应用层签名.html">7_高级应用层签名</a></td><td>GroupSig、FDABS、Scope-LRS 扩展</td></tr>
+<tr><td><a href="./8_参数优化与基准测试.html">8_参数优化与基准测试</a></td><td>soundness 计算、序列化和实验口径</td></tr>
+<tr><td><a href="./9_创新点对接.html">9_创新点对接</a></td><td>论文/实现差异与当前边界</td></tr>
+<tr><td><a href="./10_原始数据.html">10_原始数据</a></td><td>当前实验记录的参数与结果索引</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="不应从本文档推出的结论"><a class="header" href="#不应从本文档推出的结论">不应从本文档推出的结论</a></h2>
 <ul>
-<li>$GF(2^{128})$ 运算：通过 <code>swanky_field</code> 的 <code>F128b</code> 表示有限域元素，硬件路径可使用 CLMUL/PMULL。</li>
-<li>列流式矩阵：对由种子确定的矩阵按列生成，避免默认物化整个矩阵。</li>
+<li>单元测试通过不等于完成密码学安全证明或生产审计。</li>
+<li>使用 <code>F128b</code> 不等于当前实现具有严格 128-bit soundness；具体上界见模块八和模块九。</li>
+<li><code>GroupSig</code>、<code>FDABS</code> 的签名验证路径不等于已经实现注册、撤销、开示、解密或机构管理。</li>
+<li>Scope-LRS 和 batch Scope-LRS 是源码扩展，不是论文主方案。</li>
 </ul>
-<p>👉 <a href="./1_底层数学与矩阵运算.html">点击查看：1_底层数学与矩阵运算.md</a></p>
-<h3 id="模块二核心密码学原语"><a class="header" href="#模块二核心密码学原语">模块二：核心密码学原语</a></h3>
-<p>提供两种基于编码的密码学原语，它们是构建上层 ZK 签名系统的代数骨架。</p>
-<ul>
-<li>AFS 哈希：以 regular encoding 和二元矩阵乘法为核心的编码型哈希关系，并提供流式/掩码求值路径。</li>
-<li>McEliece 关系：为 GroupSig 的加密一致性提供约束所需的编码、矩阵和密文操作。</li>
-</ul>
-<p>👉 <a href="./2_核心密码学原语.html">点击查看：2_核心密码学原语.md</a></p>
-<h3 id="模块三voleith-状态机与-ffi"><a class="header" href="#模块三voleith-状态机与-ffi">模块三：VOLEitH 状态机与 FFI</a></h3>
-<p>实现了 VOLE-in-the-Head 范式所需的功能，并负责跨语言的安全集成。</p>
-<ul>
-<li>跨语言接口：接入 FAEST 的 VOLE commit/open/reconstruct 和 BAVC/GGM 状态。</li>
-<li>Rust 封装：负责长度、返回状态、资源释放和结构布局检查；这些检查不等同于独立安全证明。</li>
-</ul>
-<p>👉 <a href="./3_VOLEitH状态机与FFI.html">点击查看：3_VOLEitH状态机与FFI.md</a></p>
-<h3 id="模块四多项式约束生成"><a class="header" href="#模块四多项式约束生成">模块四：多项式约束生成</a></h3>
-<p>系统的理论创新核心，将正则编码等操作编译为布尔多项式，并进行极速求值。</p>
-<ul>
-<li>非线性正则编码代数化：利用布尔立方体上的子集关系，将 regular encoding 写成 degree-$c$ 的 ANF 约束。</li>
-<li>蝴蝶隐式求值：利用求和交换和多线性折叠，避免显式展开每个 regular-encoding 输出。</li>
-</ul>
-<p>👉 <a href="./4_多项式约束生成.html">点击查看：4_多项式约束生成.md</a></p>
-<h3 id="模块五zk-核心证明协议"><a class="header" href="#模块五zk-核心证明协议">模块五：ZK 核心证明协议</a></h3>
-<p>实现 $\Pi^t_{dD-Rep}$ 核心协议，负责具体的零知识证明与验证逻辑。</p>
-<ul>
-<li>线性因子乘积盲化：将 packed auxiliary 的线性因子乘积加入响应多项式。</li>
-<li>Fiat-Shamir 变换：以带标签的 Keccak-256 transcript 派生关系挑战和 opening challenge；其安全性仍需结合协议模型分析。</li>
-</ul>
-<p>👉 <a href="./5_ZK核心证明协议.html">点击查看：5_ZK核心证明协议.md</a></p>
-<h3 id="模块六基础应用层签名"><a class="header" href="#模块六基础应用层签名">模块六：基础应用层签名</a></h3>
-<p>将底层协议转化为具体的密码学签名方案，包含两种基础签名。</p>
-<ul>
-<li>ReSolveD+ 标准签名：基于 RSD 困难问题，证明正则编码约束。</li>
-<li>环签名 (RS)：通过证明双矩阵 AFS 哈希链方程，完成 Merkle 树累加器的成员资格匿名认证。</li>
-</ul>
-<p>👉 <a href="./6_基础应用层签名.html">点击查看：6_基础应用层签名.md</a></p>
-<h3 id="模块七高级应用层签名"><a class="header" href="#模块七高级应用层签名">模块七：高级应用层签名</a></h3>
-<p>在环签名基础上，引入加密与电路约束，实现具有复杂访问控制的顶级签名方案。</p>
-<ul>
-<li>群签名 (GS)：将 McEliece 相关密文一致性写入 ANF 约束系统。</li>
-<li>属性基签名 (FDABS)：将布尔电路中的门关系和属性关系写入约束系统；具体的生命周期管理不属于在线证明路径。</li>
-</ul>
-<p>👉 <a href="./7_高级应用层签名.html">点击查看：7_高级应用层签名.md</a></p>
-<h3 id="模块八参数优化与基准测试"><a class="header" href="#模块八参数优化与基准测试">模块八：参数优化与基准测试</a></h3>
-<p>系统在参数选择、序列化体积及并发执行上的工程优化。</p>
-<ul>
-<li>安全评估：显式计算组合挑战项和 Delta 挑战项，记录 grinding 对工作因子的影响，但不把它直接当作 soundness bit 数。</li>
-<li>并发与序列化：只作为实现层优化，具体速度和签名大小以实验记录为准。</li>
-</ul>
-<p>👉 <a href="./8_参数优化与基准测试.html">点击查看：8_参数优化与基准测试.md</a></p>
-<h3 id="模块九创新点对接"><a class="header" href="#模块九创新点对接">模块九：创新点对接</a></h3>
-<p>对接此前讨论的诸多创新点和当前完成情况</p>
-<p>👉 <a href="./9_创新点对接.html">点击查看：9_创新点对接.md</a></p>
-<h3 id="模块十原始数据"><a class="header" href="#模块十原始数据">模块十：原始数据</a></h3>
-<p>包括实验环境和原始数据</p>
-<p>👉 <a href="./10_原始数据.html">点击查看：10_原始数据.md</a></p>
 
                     </main>
 
