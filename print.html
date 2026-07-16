@@ -58,7 +58,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-ed11918e.js";
+            window.path_to_searchindex_js = "searchindex-6f4e895a.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -199,84 +199,77 @@
                     <main>
                         <h1 id="code-based-zero-knowledge-from-vole-in-the-head-核心代码与架构解析报告"><a class="header" href="#code-based-zero-knowledge-from-vole-in-the-head-核心代码与架构解析报告">Code-Based Zero-Knowledge from VOLE-in-the-Head: 核心代码与架构解析报告</a></h1>
 <h2 id="报告导读"><a class="header" href="#报告导读">报告导读</a></h2>
-<p>本报告旨在详细解析本项目在代码工程层面对 “基于 VOLE-in-the-Head (VOLEitH) 范式的码基零知识证明及其高级隐私保护应用” 的完整实现。</p>
-<p>由于本项目采用 Rust 编写，包含约上万行代码，为便于您审查理论公式与代码逻辑的准确映射，本报告分为 8 个核心逻辑模块。</p>
-<p>报告尽可能剥离了编程语言的繁文缛节，聚焦于密码学理论、代数约束的构建、以及底层数学公式的代码级映射，并全面阐述了为达到极优 Benchmark 数据所做出的硬件加速与并发工程优化。</p>
+<p>本报告旨在解析项目代码在 CodeBased ZKP及其高级隐私保护应用的实现；代码采用 Rust 编写，共计约 1.5w 行（不包含子模块和其他依赖）。本报告分为十个部分。</p>
 <h3 id="模块一底层数学与矩阵运算"><a class="header" href="#模块一底层数学与矩阵运算">模块一：底层数学与矩阵运算</a></h3>
-<p>模块概述：本模块是整个 ZKP 系统的数学基石与性能瓶颈突破口。实现了极其高效的底层有限域算术，以及防 OOM 的超大矩阵处理。</p>
-<p>核心亮点：</p>
+<p>本模块是整个 ZKP 系统的数学基石与性能瓶颈突破口。</p>
 <ul>
 <li>$GF(2^{128})$ 硬件加速：利用 CPU 的 CLMUL/PMULL 指令，实现亚纳秒级域乘法。</li>
-<li>列流式零物化矩阵：对于极庞大的公开矩阵 $B$，采用按需列流式（Column-streaming）生成与掩码 XOR，彻底消除内存溢出风险并防御侧信道泄漏。</li>
+<li>列流式零物化矩阵：对于极庞大的公开矩阵 $B$，采用按需列流式（Column-streaming）生成与掩码 XOR，有效增大 cache 命中率。</li>
 </ul>
-<p>👉 <a href="#模块一底层数学与内存优化gf2128-域运算与大矩阵流式计算">点击查看：1_底层数学与矩阵运算.md</a></p>
+<p>👉 <a href="#模块一底层数学与内存优化">点击查看：1_底层数学与矩阵运算.md</a></p>
 <h3 id="模块二核心密码学原语"><a class="header" href="#模块二核心密码学原语">模块二：核心密码学原语</a></h3>
-<p>模块概述：提供两种基于编码的密码学原语，它们是构建上层 ZK 签名系统的代数骨架。</p>
-<p>核心亮点：</p>
+<p>提供两种基于编码的密码学原语，它们是构建上层 ZK 签名系统的代数骨架。</p>
 <ul>
-<li>AFS 哈希：基于 2-RNSD 问题构建的抗碰撞哈希函数，提供了极其精妙的常数时间（Constant-time）流式求值实现。</li>
-<li>McEliece 加密：精准实现带正则噪声的 McEliece 身份加密算法，为群签名提供可控追踪能力。</li>
+<li>AFS 哈希：基于 2-RNSD 问题构建的抗碰撞哈希函数，提供了常数时间流式求值实现。</li>
+<li>McEliece 加密：实现带正则噪声的 McEliece 身份加密算法，为群签名提供可控追踪能力。</li>
 </ul>
 <p>👉 <a href="#模块二核心密码学原语afs-哈希与-mceliece-加密">点击查看：2_核心密码学原语.md</a></p>
 <h3 id="模块三voleith-状态机与-ffi"><a class="header" href="#模块三voleith-状态机与-ffi">模块三：VOLEitH 状态机与 FFI</a></h3>
-<p>模块概述：实现了 VOLE-in-the-Head 范式所需的延迟 VOLE 功能，并负责跨语言的安全集成。</p>
-<p>核心亮点：</p>
+<p>实现了 VOLE-in-the-Head 范式所需的功能，并负责跨语言的安全集成。</p>
 <ul>
-<li>跨语言 FFI 安全封装：安全地集成了 FAEST 的 C 代码，复用其经过 NIST 审查的高效 GGM-based 树承诺。</li>
+<li>跨语言 FFI 安全封装：集成 FAEST 的 C 代码，复用其经过 NIST 审查的高效 GGM-based 树承诺。</li>
 <li>严格的状态机生命周期：通过 Rust 的所有权模型安全管理 C 层的 Prover/Verifier 证明树状态，避免内存泄漏。</li>
 </ul>
 <p>👉 <a href="#模块三voleith-状态机与跨语言-ffi">点击查看：3_VOLEitH状态机与FFI.md</a></p>
 <h3 id="模块四多项式约束生成"><a class="header" href="#模块四多项式约束生成">模块四：多项式约束生成</a></h3>
-<p>模块概述：系统的理论创新核心，负责将正则编码等操作编译为布尔多项式，并进行极速求值。</p>
-<p>核心亮点：</p>
+<p>系统的理论创新核心，将正则编码等操作编译为布尔多项式，并进行极速求值。</p>
 <ul>
 <li>非线性正则编码代数化：利用 Möbius 变换，将非线性的正则编码巧妙转化为 degree-$c$ 的 ANF 约束系统。</li>
-<li>蝴蝶隐式求值引擎：借鉴 FFT 蝶形结构，将约束求值的计算复杂度从 $\mathcal{O}(m \cdot 2^c)$ 极致压缩到 $\mathcal{O}(m \cdot c)$。</li>
+<li>蝴蝶隐式求值引擎：借鉴 FFT 蝶形结构，将约束求值的计算复杂度从 $\mathcal{O}(m \cdot 2^c)$ 压缩到 $\mathcal{O}(m \cdot c)$。</li>
 </ul>
 <p>👉 <a href="#模块四正则编码到多项式约束的转化anf-约束编译与蝴蝶隐式求值">点击查看：4_多项式约束生成.md</a></p>
 <h3 id="模块五zk-核心证明协议"><a class="header" href="#模块五zk-核心证明协议">模块五：ZK 核心证明协议</a></h3>
-<p>模块概述：实现 $\Pi^t_{dD-Rep}$ 核心协议，负责具体的零知识证明与验证逻辑。</p>
-<p>核心亮点：</p>
+<p>实现 $\Pi^t_{dD-Rep}$ 核心协议，负责具体的零知识证明与验证逻辑。</p>
 <ul>
-<li>线性因子乘积盲化：巧妙利用辅助 VOLE 的线性乘积，对约束求值后的多项式系数进行安全盲化。</li>
+<li>线性因子乘积盲化：利用 VOLE 的线性乘积，对约束求值后的多项式系数进行安全盲化。</li>
 <li>Fiat-Shamir 变换：基于 SHA-3 Keccak-256 海绵结构吸收承诺并挤出挑战值，实现完美的 NIZK 交互转换。</li>
 </ul>
 <p>👉 <a href="#模块五pit_dd-rep-核心协议与-nizk-变换">点击查看：5_ZK核心证明协议.md</a></p>
 <h3 id="模块六基础应用层签名"><a class="header" href="#模块六基础应用层签名">模块六：基础应用层签名</a></h3>
-<p>模块概述：将底层协议转化为具体的密码学签名方案，包含两种基础签名。</p>
-<p>核心亮点：</p>
+<p>将底层协议转化为具体的密码学签名方案，包含两种基础签名。</p>
 <ul>
-<li>ReSolveD+ 标准签名：基于 RSD 困难问题，直接证明正则编码约束。</li>
-<li>零知识环签名 (RS)：通过证明双矩阵 AFS 哈希链方程，完成 Merkle 树累加器的成员资格匿名认证。</li>
+<li>ReSolveD+ 标准签名：基于 RSD 困难问题，证明正则编码约束。</li>
+<li>环签名 (RS)：通过证明双矩阵 AFS 哈希链方程，完成 Merkle 树累加器的成员资格匿名认证。</li>
 </ul>
 <p>👉 <a href="#模块六基础应用层resolved-与环签名">点击查看：6_基础应用层签名.md</a></p>
 <h3 id="模块七高级应用层签名"><a class="header" href="#模块七高级应用层签名">模块七：高级应用层签名</a></h3>
-<p>模块概述：在环签名基础上，引入加密与电路约束，实现具有复杂访问控制的顶级签名方案。</p>
-<p>核心亮点：</p>
+<p>在环签名基础上，引入加密与电路约束，实现具有复杂访问控制的顶级签名方案。</p>
 <ul>
 <li>群签名 (GS)：将 McEliece 身份密文运算注入 ANF 约束系统，实现匿名性下的“管理员可控追踪”。</li>
 <li>属性基签名 (FDABS)：极具创新地使用 NAND 门约束表达任意布尔电路策略，并用叶子节点奇偶性校验防止欺骗。</li>
 </ul>
 <p>👉 <a href="#模块七高级应用层群签名与全动态属性基签名-fdabs">点击查看：7_高级应用层签名.md</a></p>
 <h3 id="模块八参数优化与基准测试"><a class="header" href="#模块八参数优化与基准测试">模块八：参数优化与基准测试</a></h3>
-<p>模块概述：汇报系统在参数选择、序列化体积及并发执行上的极致工程优化。</p>
-<p>核心亮点：</p>
+<p>系统在参数选择、序列化体积及并发执行上的工程优化。</p>
 <ul>
-<li>严格的安全评估：结合 8-bit Grinding 工作量证明，在兼顾性能的同时死守 128-bit 等效安全强度。</li>
-<li>KB 级序列化奇迹：通过 PRG 种子替代大矩阵、极致位宽截断，将传统 MB 级的签名体积暴降至几 KB。</li>
-<li>多核并发榨取：大量使用 <code>rayon</code> 数据并行化框架，在哈希树计算和多项式求值上实现接近线性的加速比。</li>
+<li>严格的安全评估：结合 8-bit Grinding 工作量证明，在兼顾性能的同时保证 128-bit 等效安全强度。</li>
+<li>多核并发榨取：大量使用 <code>rayon</code> 数据并行化框架，在哈希树计算和多项式求值等运算大幅加速。</li>
 </ul>
 <p>👉 <a href="#模块八参数配置工程优化与基准测试安全分析与性能报告">点击查看：8_参数优化与基准测试.md</a></p>
-<h3 id="模块九十创新点对接与原始数据"><a class="header" href="#模块九十创新点对接与原始数据">模块九、十：创新点对接与原始数据</a></h3>
+<h3 id="模块九创新点对接"><a class="header" href="#模块九创新点对接">模块九：创新点对接</a></h3>
+<p>对接此前讨论的诸多创新点和当前完成情况</p>
 <p>👉 <a href="#模块九理论创新点的工程落地与未来工作">点击查看：9_创新点对接.md</a></p>
+<h3 id="模块十原始数据"><a class="header" href="#模块十原始数据">模块十：原始数据</a></h3>
+<p>包括实验环境和原始数据</p>
 <p>👉 <a href="#10_codebasedzkp-性能测试原始数据">点击查看：10_原始数据.md</a></p>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="模块一底层数学与内存优化gf2128-域运算与大矩阵流式计算"><a class="header" href="#模块一底层数学与内存优化gf2128-域运算与大矩阵流式计算">模块一：底层数学与内存优化——GF(2^128) 域运算与大矩阵流式计算</a></h1>
+<h1 id="模块一底层数学与内存优化"><a class="header" href="#模块一底层数学与内存优化">模块一：底层数学与内存优化</a></h1>
+<p>128-bits 域运算与大矩阵流式计算</p>
 <h2 id="一概述"><a class="header" href="#一概述">一、概述</a></h2>
-<p>本模块是整个 ZKP 系统的数学基石，也是性能瓶颈突破口。它解决两个根本问题：</p>
+<p>本模块是整个 ZKP 系统的基石，也是性能瓶颈突破口。它解决两个根本问题：</p>
 <ol>
 <li>如何在 $\mathbb{F}_{2^{128}}$ 上尽可能快的做乘法运算，这一点同样也在原论文被提及到。</li>
-<li>如何在内存占用较低的前提下操作 $\mathbb{F}_2^{n \times m}$（$n \approx 10^4, m \approx 10^5$）量级的二元矩阵，这是基于编码的 ZK 协议需要大量的随机矩阵（如 $B \in \mathbb{F}_2^{n \times m}$），直接放进去会导致大量的内存占用。</li>
+<li>如何在更快速地操作 $\mathbb{F}_2^{n \times m}$（$n \approx 10^4, m \approx 10^5$）量级的二元矩阵，基于编码的 ZK 协议需要大量的随机矩阵（如 $B \in \mathbb{F}_2^{n \times m}$），同时增大 cache 命中率。</li>
 </ol>
 <h2 id="二gf2128-有限域运算finite_fieldrs"><a class="header" href="#二gf2128-有限域运算finite_fieldrs">二、GF(2^128) 有限域运算：<code>finite_field.rs</code></a></h2>
 <h3 id="21-数学背景"><a class="header" href="#21-数学背景">2.1 数学背景</a></h3>
@@ -284,7 +277,7 @@
 <p>$$
 a(x) = a_{127}x^{127} + a_{126}x^{126} + \cdots + a_1x + a_0, \quad a_i \in \mathbb{F}_2
 $$</p>
-<p>加法即按位 XOR；乘法是多项式乘法再模一个 128 次不可约多项式（即模 $x^{128} + x^7 + x^2 + x + 1$， GCM 所用的 reduction 多项式）。</p>
+<p>加法即按位 XOR；乘法是多项式乘法再模一个 128 次不可约多项式 $x^{128} + x^7 + x^2 + x + 1$。</p>
 <h3 id="22-代码实现方式"><a class="header" href="#22-代码实现方式">2.2 代码实现方式</a></h3>
 <div class="table-wrapper">
 <table>
@@ -300,23 +293,19 @@ $$</p>
 </tbody>
 </table>
 </div>
-<p>核心实现路径：</p>
 <p>代码没有自己实现域运算，而是复用 Galois Inc. 的 <code>swanky</code> 密码库（原 <code>scuttlebutt</code> 库）。<code>swanky-field-binary</code> 在编译时通过条件编译自动检测目标架构：</p>
-<ul>
-<li>x86_64：使用 <code>PCLMULQDQ</code> 指令 + AES-NI 的 <code>AESDEC</code> 做多项式约简——单条指令在一个时钟周期内完成 64-bit 无进位乘法，约简阶段复用 AES 轮函数加速。</li>
-<li>aarch64/ARM：使用 <code>PMULL</code> 指令做多项式乘法，配合 ARM 的 <code>EOR3</code> 等指令做约简。(我的电脑是 intel 的，所以没有直接测试)</li>
-</ul>
-<p>从 <code>benches/gf128_bench.rs</code> 可以看到，当使用 <code>RUSTFLAGS="-C target-cpu=native"</code> 编译时，微基准测试报告显示平均每次乘法耗时在亚纳秒级（实测 &lt; 0.5 ms / 万次），验证了硬件加速路径被正确激活。</p>
+<p>x86_64 下使用 <code>PCLMULQDQ</code> 指令 + AES-NI 的 <code>AESDEC</code> 做多项式约简，单条指令在一个时钟周期内完成 64-bit 无进位乘法，约简阶段复用 AES 轮函数加速。</p>
+<p>从 <code>benches/gf128_bench.rs</code> 可以看到，当使用 <code>RUSTFLAGS="-C target-cpu=native"</code> 编译时，微基准测试报告显示平均每次乘法耗时在亚纳秒级（ &lt; 0.5 ms / 万次），验证了硬件加速被正确激活。</p>
 <h3 id="23-安全注意事项"><a class="header" href="#23-安全注意事项">2.3 安全注意事项</a></h3>
-<p>整个 <code>finite_field.rs</code> 仅 47 行有效代码（其余为测试），它不做任何内存分配或可变状态操作，因此侧信道攻击面极低。域乘法的常数时间性质由硬件指令（PCLMULQDQ / PMULL）天然保证——这些指令是固定延迟的，不依赖操作数的值。</p>
+<p>域乘法的常数时间性质由硬件指令（PCLMULQDQ / PMULL）天然保证，这些指令固定延迟的，也没有任何内存分配或可变状态操作，因此不受侧信道攻击的风险。</p>
 <h2 id="三大矩阵流式计算streaming_matrixrs"><a class="header" href="#三大矩阵流式计算streaming_matrixrs">三、大矩阵流式计算：<code>streaming_matrix.rs</code></a></h2>
 <h3 id="31-问题与设计思想"><a class="header" href="#31-问题与设计思想">3.1 问题与设计思想</a></h3>
 <p>在基于编码的 ZK 协议中（AFC 哈希、VOLE 承诺等），需要大量使用伪随机矩阵：</p>
 <p>$$
 B \in \mathbb{F}_2^{n \times m}, \quad n = 1280,\ m = 81920
 $$</p>
-<p>若直接物化，$1280 \times 81920 \text{ bits} = 1280 \times 10240 \text{ bytes} \approx 12.5 \text{ MB}$。对于单张矩阵尚且可控，但协议运行中会生成几十到上百张这样的矩阵，加上中间变量的暂存，内存压力急剧上升。更关键的是，VOLE 树的叶子承诺需要用到种子衍生（seed-derived）的矩阵列——大量矩阵只在求值时用一次，无需常驻内存。</p>
-<p>设计思路是 “列式伪随机流式生成”：不存储整个矩阵，而是存储一个 128-bit 种子，在需要某一列时即时计算。</p>
+<p>若直接物化，$1280 \times 81920 \text{ bits}\approx 12.5 \text{ MB}$。对于单张矩阵尚且可控，但协议运行中会生成许多张这样的矩阵，加上中间变量的暂存，一方面会增大内存的占用，另一方面会降低 cache 的命中率。但是VOLE 树的叶子承诺需要用到种子衍生的矩阵只在求值时用一次，无需常驻内存。</p>
+<p>所以最佳实现方案是列式伪随机流式生成。我们不存储整个矩阵，而是存储一个 128-bit 种子，在需要某一列时即时计算。</p>
 <h3 id="32-核心数据结构与公式-代码映射"><a class="header" href="#32-核心数据结构与公式-代码映射">3.2 核心数据结构与公式-代码映射</a></h3>
 <div class="table-wrapper">
 <table>
@@ -350,10 +339,10 @@ $$</p>
 </pre>
 
 <h3 id="34-内存管理策略详解"><a class="header" href="#34-内存管理策略详解">3.4 内存管理策略详解</a></h3>
-<h4 id="策略一零物化zero-materialization"><a class="header" href="#策略一零物化zero-materialization">策略一：零物化（Zero Materialization）</a></h4>
-<p>矩阵从未完整存储在内存中。<code>StreamingMatrixCols</code> 仅持有 32 字节的状态信息（16 字节种子 + 部分元数据）。每次调用 <code>column(j)</code> 生成一列的 <code>n</code> 个比特（约 $n/8$ 字节），用完即丢弃。这使得 $1280 \times 81920$ 的矩阵实际占用从约 $12.5\text{ MB}$ 降至约 $0.00003\text{MB}$。</p>
-<h4 id="策略二延迟生成lazy-generation"><a class="header" href="#策略二延迟生成lazy-generation">策略二：延迟生成（Lazy Generation）</a></h4>
-<p><code>fill_column_bytes</code> 使用按需填充模式。只有 <code>column(j)</code> 或 <code>fill_column_bytes</code> 被显式调用时，数据才被生成。<code>materialize()</code> 方法虽然提供了全矩阵物化的接口（用于测试），但在生产代码中不使用——生产中使用 <code>iter()</code> 逐个消费列。</p>
+<h4 id="策略一零物化"><a class="header" href="#策略一零物化">策略一：零物化</a></h4>
+<p>矩阵从未完整存储在内存中。<code>StreamingMatrixCols</code> 仅持有 32 字节的状态信息（16 字节种子 + 部分元数据）。每次调用 <code>column(j)</code> 生成一列的 <code>n</code> 个比特，用完即丢弃。这使得 $1280 \times 81920$ 的矩阵实际占用从约 $12.5\text{ MB}$ 降至 $32\text{ B}$。</p>
+<h4 id="策略二延迟生成"><a class="header" href="#策略二延迟生成">策略二：延迟生成</a></h4>
+<p><code>fill_column_bytes</code> 使用按需填充模式。只有 <code>column(j)</code> 或 <code>fill_column_bytes</code> 被显式调用时，数据才被生成。<code>materialize()</code> 方法虽然提供了全矩阵物化的接口用于测试，但在正式实验的代码中不使用，正式实验只使用 <code>iter()</code> 逐个消费列。</p>
 <h4 id="策略三aes-ctr-作为向量-prg"><a class="header" href="#策略三aes-ctr-作为向量-prg">策略三：AES-CTR 作为向量 PRG</a></h4>
 <p>每一列 $B_{:,j}$ 通过 AES-128 在 CTR 模式下生成：</p>
 <p>$$
@@ -362,25 +351,13 @@ $$</p>
 <p>其中 $\sigma$ 是 16 字节种子。每个 AES 块产生 128 位伪随机输出，因此生成 $n$ 位列向量需要 $\lceil n/128 \rceil$ 次 AES 加密调用。</p>
 <p>关键优化细节：</p>
 <ul>
-<li>密钥扩展一次：<code>expand_key</code> 在构造 <code>MatrixPrg</code> 时把种子扩展为 11 轮子密钥，后续 <code>fill_column_bytes</code> 的每次 AES 加密都复用这些轮密钥（<code>round_keys</code>），避免重复扩展。</li>
+<li>密钥扩展一次：<code>expand_key</code> 在构造 <code>MatrixPrg</code> 时把种子扩展为 11 轮子密钥，后续 <code>fill_column_bytes</code> 的每次 AES 加密都复用这些轮密钥，避免重复扩展。</li>
 <li>向量化 AES：<code>aes128_ctr::fill</code> 在 <code>while</code> 循环中批量处理连续块的加密，利用 <code>_mm_aesenc_si128</code> / <code>_mm_aesenclast_si128</code> 指令。在循环内部，每次迭代写入 16 字节到输出缓冲区，并递增 128-bit 计数器。剩余不满一块的尾部数据通过 <code>copy_nonoverlapping</code> 截取。</li>
 <li>尾部掩码清除：因 $n$ 可能不是 8 的倍数，最后一字节的高位可能包含无效比特。<code>clear_column_tail_bits</code> 用 <code>tail_mask</code> 清除这些位，保证列向量的有效性。</li>
 </ul>
-<h4 id="策略四双后端切换"><a class="header" href="#策略四双后端切换">策略四：双后端切换</a></h4>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>#[cfg(all(feature = "hardware-accel", target_arch = "x86_64", target_feature = "aes"))]
-// 使用 AES-NI 本机加速路径
-const MATRIX_PRG_BACKEND: &amp;str = "aes-ni";
-
-#[cfg(not(...))]
-// 回退到 FAEST C 实现的 PRG
-const MATRIX_PRG_BACKEND: &amp;str = "faest-ffi";
-<span class="boring">}</span></code></pre>
-<p>当 CPU 支持 AES-NI 且启用 <code>hardware-accel</code> feature（默认开启）时，使用 Rust 内联汇编实现的 AES-CTR；否则通过 FFI 调用 <code>faest_ffi::faest_prg_128</code>（调用 C 版本的 PRG）。这种双后端设计确保了可移植性和性能最佳化。</p>
 <h2 id="四稀疏矩阵-向量乘法bitvec_opsrs"><a class="header" href="#四稀疏矩阵-向量乘法bitvec_opsrs">四、稀疏矩阵-向量乘法：<code>bitvec_ops.rs</code></a></h2>
 <h3 id="41-问题"><a class="header" href="#41-问题">4.1 问题</a></h3>
-<p>在基于编码的 ZK 中，$y = B \cdot x$ 中 $x$ 是一个正则编码词（Regular Encoded word），其汉明重量极低——即 $x$ 中只有 $c$ 个比特为 1，其余全为 0。这意味着全矩阵乘法可以退化为稀疏乘法：</p>
+<p>在基于编码的 ZK 中，$y = B \cdot x$ 中 $x$ 是一个正则编码词，其汉明重量极低，$x$ 中只有 $c$ 个比特为 1，其余全为 0。这意味着全矩阵乘法可以退化为稀疏乘法：</p>
 <p>$$
 y_i = \bigoplus_{j: x_j = 1} B_{i,j}
 $$</p>
@@ -391,7 +368,7 @@ $$</p>
 <tr><th>数学概念</th><th>代码中对应</th></tr>
 </thead>
 <tbody>
-<tr><td>$B_{n \times m}$</td><td><code>matrix_b: &amp;[BitVec&lt;u8, Msb0&gt;]</code> — 行优先 MSB 存储</td></tr>
+<tr><td>$B_{n \times m}$</td><td><code>matrix_b: &amp;[BitVec&lt;u8, Msb0&gt;]</code> 行优先 MSB 存储</td></tr>
 <tr><td>$x$ 中为 1 的索引集合 ${j \mid x_j = 1}$</td><td><code>x_indices: &amp;[usize]</code></td></tr>
 <tr><td>$y_i = \bigoplus_{j: x_j=1} B_{i,j}$</td><td>对每个 <code>col_idx</code>，遍历所有行，异或对应比特</td></tr>
 <tr><td>$\mathbb{F}_2$ 加法（XOR）</td><td><code>result.set(row, !current)</code></td></tr>
@@ -414,7 +391,7 @@ for each col_idx in x_indices:
             result[row] ← NOT result[row]   // 即 XOR 1
 </code></pre>
 <h3 id="44-缓存优化分析"><a class="header" href="#44-缓存优化分析">4.4 缓存优化分析</a></h3>
-<p>该算法利用了矩阵的行主序存储（<code>Vec&lt;BitVec&lt;u8, Msb0&gt;&gt;</code>）与稀疏索引遍历的结合：</p>
+<p>该算法利用了矩阵的行主序存储 <code>Vec&lt;BitVec&lt;u8, Msb0&gt;&gt;</code> 与稀疏索引遍历的结合：</p>
 <ol>
 <li>空间局部性：对于同一个 <code>col_idx</code>，连续访问 <code>matrix_b[0..rows]</code> 的同一字节位置 <code>byte_pos</code>，这些字节在内存中紧密排列（每行相邻），因此 CPU 缓存命中率极高。</li>
 <li>稀疏矩阵的计算优势：若汉明重量 $w = 320$ 而列数 $m = 81920$，则避免了 $81920 - 320 \approx 81600$ 次全列扫描，加速比达到 $\mathcal{O}(m/w)$。</li>
@@ -522,7 +499,7 @@ $$</p>
 <h4 id="221-数学定义"><a class="header" href="#221-数学定义">2.2.1 数学定义</a></h4>
 <p>令 $c$ 为块大小（chunk size），$n$ 必须能被 $c$ 整除。正则编码将输入 $x$ 划分为 $\frac{n}{c}$ 个各长为 $c$ 比特的块。每个块 $x^{(i)} \in \mathbb{F}_2^{c}$ 被映射为一个独热向量（one-hot vector）：</p>
 <p>$$
-\text{RE}(x)<em>i = e</em>{\text{idx}(x^{(i)})} \in \mathbb{F}_2^{2^c}
+\text{RE}(x)_i = e_{\text{idx}(x^{(i)})} \in \mathbb{F}_2^{2^c}
 $$</p>
 <p>其中 $\text{idx}(x^{(i)})$ 是 $c$ 比特的大端（big-endian）整数解释，$e_j$ 是仅在位置 $j$ 处为 1 的单位向量。整体输出由所有独热向量拼接而成：</p>
 <p>$$
@@ -1268,7 +1245,7 @@ $$</p>
 <tr><td>单项式索引 $u$（输入变量的子集指示器）</td><td><code>u: usize</code></td></tr>
 <tr><td>系数 $a_{\text{idx}, u} \in \mathbb{F}_2$</td><td><code>coeffs[u]</code></td></tr>
 <tr><td>$f_{\text{idx}}(X) = \bigoplus_{u} a_{\text{idx}, u} \cdot X^u$</td><td><code>table[idx]</code> 的每一行</td></tr>
-<tr><td>条件 $(idx \mathrel{&amp;} u) == idx$</td><td>子集包含关系</td></tr>
+<tr><td>条件 $idx$&amp;$u==idx$</td><td>子集包含关系</td></tr>
 </tbody>
 </table>
 </div>
@@ -1277,7 +1254,7 @@ $$</p>
 <p>$$
 a_u = \bigoplus_{x: \text{supp}(x) \subseteq u} f(x)
 $$</p>
-<p>对于独热函数 $f_{\text{idx}}$，仅在 $x = \text{idx}$ 时取 1。因此 $a_u = 1$ 当且仅当 $\text{supp}(\text{idx}) \subseteq u$，即 $\text{idx} \mathrel{&amp;} u = \text{idx}$。</p>
+<p>对于独热函数 $f_{\text{idx}}$，仅在 $x = \text{idx}$ 时取 1。因此 $a_u = 1$ 当且仅当 $\text{supp}(\text{idx}) \subseteq u$，即 $\text{idx}$&amp;$u = \text{idx}$。</p>
 <p>例如对于 $c=3$, $\text{idx}=5$（二进制 <code>101</code>）：</p>
 <ul>
 <li>$u=5$（<code>101</code>）：<code>101 &amp; 101 == 101</code> ✅ → 包含单项式 $X_0X_2$</li>
@@ -1324,7 +1301,7 @@ $$</p>
 <h4 id="步骤-1χ-聚合求和交换"><a class="header" href="#步骤-1χ-聚合求和交换">步骤 1：χ’ 聚合（求和交换）</a></h4>
 <p>对于约束系统 $g_i(Y) = \sum_j b_{i,j} f_j(Y) + y_i$，交换求和顺序：</p>
 <p>$$
-\sum_{i=1}^t \chi_i \cdot g_i(Y) = \sum_{j=1}^m \underbrace{\left(\sum_{i=1}^t \chi_i \cdot b_{i,j}\right)}_{\chi’<em>j} \cdot f_j(Y) + \underbrace{\sum</em>{i=1}^t \chi_i \cdot y_i}_{\text{const_term}}
+\sum_{i=1}^t \chi_i \cdot g_i(Y) = \sum_{j=1}^m \underbrace{\left(\sum_{i=1}^t \chi_i \cdot b_{i,j}\right)}_{\chi’_j} \cdot f_j(Y) + \underbrace{\sum_{i=1}^t \chi_i \cdot y_i}_{\text{const_term}}
 $$</p>
 <p><code>compute_chi_prime</code> 的极简实现：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -2074,7 +2051,7 @@ Output: Signature σ
 <tr><td>$x \in \mathbb{F}_2^k$</td><td><code>sk.x: MainBitVec</code></td></tr>
 <tr><td>$y = B \cdot \text{RE}(x)$</td><td><code>afs_hash_streaming(&amp;b_cols, x, c)</code></td></tr>
 <tr><td>$g_i(x) = y_i + \sum_j B_{i,j} f_j(x)$</td><td><code>build_resolved_plus_constraints()</code></td></tr>
-<tr><td>$\chi’<em>j = \sum_i \chi_i \cdot B</em>{i,j}$</td><td><code>compute_chi_prime_streaming_f128()</code></td></tr>
+<tr><td>$\chi’_j = \sum_i \chi_i \cdot B_{i,j}$</td><td><code>compute_chi_prime_streaming_f128()</code></td></tr>
 <tr><td>$\text{const_term} = \sum_{i: y_i=1} \chi_i$</td><td><code>compute_const_term(challenges, y)</code></td></tr>
 <tr><td>签名格式</td><td><code>(CommitmentMessage, ProofMessage&lt;F128b&gt;, VoleitHTranscript)</code></td></tr>
 </tbody>
@@ -2328,7 +2305,7 @@ Output: RingSignature σ
 <p>本模块构建在环签名（模块六）的基础上，增加了两个重要的密码学功能：</p>
 <ol>
 <li>
-<p>群签名（Group Signature, GS）：除了环签名的匿名性外，群签名允许一个群管理员在必要时撤销匿名性，追踪出签名者的身份。这通过 McEliece 加密将身份信息 $j$ 和消息 $m$ 嵌入密文 $(c_1, c_2)$ 实现。</p>
+<p>群签名（Group Signature, GS）：除了环签名的匿名性外，群签名允许一个群管理员在必要时撤销匿名性，追踪出签名者的身份。这通过 McEliece 加密将身份信息 $j$ 和消息 $2m$ 嵌入密文 $(c_1, c_2)$ 实现。</p>
 </li>
 <li>
 <p>全动态属性基签名（Fully Dynamic Attribute-Based Signature, FDABS）：签名者拥有一个属性向量，只有当属性满足某个布尔电路策略（Policy） 时才能生成有效签名。代码将布尔电路编码为 AND 门约束，并利用 Merkle 树累加器证明属性集的有效性。</p>
@@ -3127,18 +3104,18 @@ const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>方案</th><th>参数</th><th style="text-align: right">Sign</th><th style="text-align: right">verify</th><th style="text-align: right">签名体积</th></tr>
+<tr><th>方案</th><th>参数</th><th style="text-align: right">Sign(ms)</th><th style="text-align: right">verify(ms)</th><th style="text-align: right">签名体积(KiB)</th></tr>
 </thead>
 <tbody>
-<tr><td>ReSolveD+</td><td><code>n=453,c=3</code>, <code>l=453</code>, <code>t=453</code>, <code>d=3</code></td><td style="text-align: right">24.303 ms</td><td style="text-align: right">11.494 ms</td><td style="text-align: right">3.08 KiB</td></tr>
-<tr><td>RingSig</td><td><code>n=1280,ell=5,c=8</code>, <code>l=15365</code>, <code>t=7680</code>, <code>d=9</code></td><td style="text-align: right">194.156 ms</td><td style="text-align: right">131.733 ms</td><td style="text-align: right">34.90 KiB</td></tr>
-<tr><td>RingSig</td><td><code>n=1280,ell=10,c=8</code>, <code>l=28170</code>, <code>t=14080</code>, <code>d=9</code></td><td style="text-align: right">366.457 ms</td><td style="text-align: right">233.974 ms</td><td style="text-align: right">59.92 KiB</td></tr>
-<tr><td>Scope-LRS</td><td><code>n=1280,ell=5,c=8</code>, <code>l=15365</code>, <code>t=8960</code>, <code>d=9</code></td><td style="text-align: right">221.053 ms</td><td style="text-align: right">145.913 ms</td><td style="text-align: right">35.06 KiB</td></tr>
-<tr><td>Scope-LRS</td><td><code>n=1280,ell=10,c=8</code>, <code>l=28170</code>, <code>t=15360</code>, <code>d=9</code></td><td style="text-align: right">390.338 ms</td><td style="text-align: right">232.530 ms</td><td style="text-align: right">60.08 KiB</td></tr>
-<tr><td>GroupSig</td><td><code>n=1280,ell=5,c_hash=8,c_e=6</code>, <code>l=22779</code>, <code>t=15872</code>, <code>d=9</code></td><td style="text-align: right">214.564 ms</td><td style="text-align: right">153.355 ms</td><td style="text-align: right">50.40 KiB</td></tr>
-<tr><td>GroupSig</td><td><code>n=1280,ell=10,c_hash=8,c_e=6</code>, <code>l=35574</code>, <code>t=22272</code>, <code>d=9</code></td><td style="text-align: right">380.978 ms</td><td style="text-align: right">258.342 ms</td><td style="text-align: right">75.38 KiB</td></tr>
-<tr><td>FDABS</td><td><code>n=1280,ell=5,L=128,K=512</code>, <code>l=14981</code>, <code>t=8194</code>, <code>d=9</code></td><td style="text-align: right">183.634 ms</td><td style="text-align: right">126.490 ms</td><td style="text-align: right">34.15 KiB</td></tr>
-<tr><td>FDABS</td><td><code>n=1280,ell=10,L=128,K=512</code>, <code>l=27786</code>, <code>t=14594</code>, <code>d=9</code></td><td style="text-align: right">347.470 ms</td><td style="text-align: right">228.504 ms</td><td style="text-align: right">59.17 KiB</td></tr>
+<tr><td>ReSolveD+</td><td><code>n=453,c=3</code>, <code>l=453</code>, <code>t=453</code>, <code>d=3</code></td><td style="text-align: right">24.303</td><td style="text-align: right">11.494</td><td style="text-align: right">3.08</td></tr>
+<tr><td>RingSig</td><td><code>n=1280,ell=5,c=8</code>, <code>l=15365</code>, <code>t=7680</code>, <code>d=9</code></td><td style="text-align: right">194.156</td><td style="text-align: right">131.733</td><td style="text-align: right">34.90</td></tr>
+<tr><td>RingSig</td><td><code>n=1280,ell=10,c=8</code>, <code>l=28170</code>, <code>t=14080</code>, <code>d=9</code></td><td style="text-align: right">366.457</td><td style="text-align: right">233.974</td><td style="text-align: right">59.92</td></tr>
+<tr><td>Scope-LRS</td><td><code>n=1280,ell=5,c=8</code>, <code>l=15365</code>, <code>t=8960</code>, <code>d=9</code></td><td style="text-align: right">221.053</td><td style="text-align: right">145.913</td><td style="text-align: right">35.06</td></tr>
+<tr><td>Scope-LRS</td><td><code>n=1280,ell=10,c=8</code>, <code>l=28170</code>, <code>t=15360</code>, <code>d=9</code></td><td style="text-align: right">390.338</td><td style="text-align: right">232.530</td><td style="text-align: right">60.08</td></tr>
+<tr><td>GroupSig</td><td><code>n=1280,ell=5,c_hash=8,c_e=6</code>, <code>l=22779</code>, <code>t=15872</code>, <code>d=9</code></td><td style="text-align: right">214.564</td><td style="text-align: right">153.355</td><td style="text-align: right">50.40</td></tr>
+<tr><td>GroupSig</td><td><code>n=1280,ell=10,c_hash=8,c_e=6</code>, <code>l=35574</code>, <code>t=22272</code>, <code>d=9</code></td><td style="text-align: right">380.978</td><td style="text-align: right">258.342</td><td style="text-align: right">75.38</td></tr>
+<tr><td>FDABS</td><td><code>n=1280,ell=5,L=128,K=512</code>, <code>l=14981</code>, <code>t=8194</code>, <code>d=9</code></td><td style="text-align: right">183.634</td><td style="text-align: right">126.490</td><td style="text-align: right">34.15</td></tr>
+<tr><td>FDABS</td><td><code>n=1280,ell=10,L=128,K=512</code>, <code>l=27786</code>, <code>t=14594</code>, <code>d=9</code></td><td style="text-align: right">347.470</td><td style="text-align: right">228.504</td><td style="text-align: right">59.17</td></tr>
 </tbody>
 </table>
 </div>
@@ -3146,18 +3123,18 @@ const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>方案</th><th>参数</th><th style="text-align: right">Sign</th><th style="text-align: right">verify</th><th style="text-align: right">签名体积</th></tr>
+<tr><th>方案</th><th>参数</th><th style="text-align: right">Sign(ms)</th><th style="text-align: right">verify(ms)</th><th style="text-align: right">签名体积(KiB)</th></tr>
 </thead>
 <tbody>
-<tr><td>ReSolveD+</td><td><code>n=453,c=3</code>, <code>l=453</code>, <code>t=453</code>, <code>d=3</code></td><td style="text-align: right">18.304 ms</td><td style="text-align: right">9.606 ms</td><td style="text-align: right">3.08 KiB</td></tr>
-<tr><td>RingSig</td><td><code>n=1280,ell=5,c=8</code>, <code>l=15365</code>, <code>t=7680</code>, <code>d=9</code></td><td style="text-align: right">54.288 ms</td><td style="text-align: right">44.020 ms</td><td style="text-align: right">34.90 KiB</td></tr>
-<tr><td>RingSig</td><td><code>n=1280,ell=10,c=8</code>, <code>l=28170</code>, <code>t=14080</code>, <code>d=9</code></td><td style="text-align: right">79.921 ms</td><td style="text-align: right">71.091 ms</td><td style="text-align: right">59.92 KiB</td></tr>
-<tr><td>Scope-LRS</td><td><code>n=1280,ell=5,c=8</code>, <code>l=15365</code>, <code>t=8960</code>, <code>d=9</code></td><td style="text-align: right">51.077 ms</td><td style="text-align: right">50.178 ms</td><td style="text-align: right">35.06 KiB</td></tr>
-<tr><td>Scope-LRS</td><td><code>n=1280,ell=10,c=8</code>, <code>l=28170</code>, <code>t=15360</code>, <code>d=9</code></td><td style="text-align: right">96.943 ms</td><td style="text-align: right">75.939 ms</td><td style="text-align: right">60.08 KiB</td></tr>
-<tr><td>GroupSig</td><td><code>n=1280,ell=5,c_hash=8,c_e=6</code>, <code>l=22779</code>, <code>t=15872</code>, <code>d=9</code></td><td style="text-align: right">61.120 ms</td><td style="text-align: right">63.048 ms</td><td style="text-align: right">50.40 KiB</td></tr>
-<tr><td>GroupSig</td><td><code>n=1280,ell=10,c_hash=8,c_e=6</code>, <code>l=35574</code>, <code>t=22272</code>, <code>d=9</code></td><td style="text-align: right">111.099 ms</td><td style="text-align: right">94.115 ms</td><td style="text-align: right">75.38 KiB</td></tr>
-<tr><td>FDABS</td><td><code>n=1280,ell=5,L=128,K=512</code>, <code>l=14981</code>, <code>t=8194</code>, <code>d=9</code></td><td style="text-align: right">50.508 ms</td><td style="text-align: right">38.476 ms</td><td style="text-align: right">34.15 KiB</td></tr>
-<tr><td>FDABS</td><td><code>n=1280,ell=10,L=128,K=512</code>, <code>l=27786</code>, <code>t=14594</code>, <code>d=9</code></td><td style="text-align: right">74.390 ms</td><td style="text-align: right">66.292 ms</td><td style="text-align: right">59.17 KiB</td></tr>
+<tr><td>ReSolveD+</td><td><code>n=453,c=3</code>, <code>l=453</code>, <code>t=453</code>, <code>d=3</code></td><td style="text-align: right">18.304</td><td style="text-align: right">9.606</td><td style="text-align: right">3.08</td></tr>
+<tr><td>RingSig</td><td><code>n=1280,ell=5,c=8</code>, <code>l=15365</code>, <code>t=7680</code>, <code>d=9</code></td><td style="text-align: right">54.288</td><td style="text-align: right">44.020</td><td style="text-align: right">34.90</td></tr>
+<tr><td>RingSig</td><td><code>n=1280,ell=10,c=8</code>, <code>l=28170</code>, <code>t=14080</code>, <code>d=9</code></td><td style="text-align: right">79.921</td><td style="text-align: right">71.091</td><td style="text-align: right">59.92</td></tr>
+<tr><td>Scope-LRS</td><td><code>n=1280,ell=5,c=8</code>, <code>l=15365</code>, <code>t=8960</code>, <code>d=9</code></td><td style="text-align: right">51.077</td><td style="text-align: right">50.178</td><td style="text-align: right">35.06</td></tr>
+<tr><td>Scope-LRS</td><td><code>n=1280,ell=10,c=8</code>, <code>l=28170</code>, <code>t=15360</code>, <code>d=9</code></td><td style="text-align: right">96.943</td><td style="text-align: right">75.939</td><td style="text-align: right">60.08</td></tr>
+<tr><td>GroupSig</td><td><code>n=1280,ell=5,c_hash=8,c_e=6</code>, <code>l=22779</code>, <code>t=15872</code>, <code>d=9</code></td><td style="text-align: right">61.120</td><td style="text-align: right">63.048</td><td style="text-align: right">50.40</td></tr>
+<tr><td>GroupSig</td><td><code>n=1280,ell=10,c_hash=8,c_e=6</code>, <code>l=35574</code>, <code>t=22272</code>, <code>d=9</code></td><td style="text-align: right">111.099</td><td style="text-align: right">94.115</td><td style="text-align: right">75.38</td></tr>
+<tr><td>FDABS</td><td><code>n=1280,ell=5,L=128,K=512</code>, <code>l=14981</code>, <code>t=8194</code>, <code>d=9</code></td><td style="text-align: right">50.508</td><td style="text-align: right">38.476</td><td style="text-align: right">34.15</td></tr>
+<tr><td>FDABS</td><td><code>n=1280,ell=10,L=128,K=512</code>, <code>l=27786</code>, <code>t=14594</code>, <code>d=9</code></td><td style="text-align: right">74.390</td><td style="text-align: right">66.292</td><td style="text-align: right">59.17</td></tr>
 </tbody>
 </table>
 </div>

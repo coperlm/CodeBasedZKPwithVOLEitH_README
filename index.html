@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-ed11918e.js";
+            window.path_to_searchindex_js = "searchindex-6f4e895a.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -198,76 +198,68 @@
                     <main>
                         <h1 id="code-based-zero-knowledge-from-vole-in-the-head-核心代码与架构解析报告"><a class="header" href="#code-based-zero-knowledge-from-vole-in-the-head-核心代码与架构解析报告">Code-Based Zero-Knowledge from VOLE-in-the-Head: 核心代码与架构解析报告</a></h1>
 <h2 id="报告导读"><a class="header" href="#报告导读">报告导读</a></h2>
-<p>本报告旨在详细解析本项目在代码工程层面对 “基于 VOLE-in-the-Head (VOLEitH) 范式的码基零知识证明及其高级隐私保护应用” 的完整实现。</p>
-<p>由于本项目采用 Rust 编写，包含约上万行代码，为便于您审查理论公式与代码逻辑的准确映射，本报告分为 8 个核心逻辑模块。</p>
-<p>报告尽可能剥离了编程语言的繁文缛节，聚焦于密码学理论、代数约束的构建、以及底层数学公式的代码级映射，并全面阐述了为达到极优 Benchmark 数据所做出的硬件加速与并发工程优化。</p>
+<p>本报告旨在解析项目代码在 CodeBased ZKP及其高级隐私保护应用的实现；代码采用 Rust 编写，共计约 1.5w 行（不包含子模块和其他依赖）。本报告分为十个部分。</p>
 <h3 id="模块一底层数学与矩阵运算"><a class="header" href="#模块一底层数学与矩阵运算">模块一：底层数学与矩阵运算</a></h3>
-<p>模块概述：本模块是整个 ZKP 系统的数学基石与性能瓶颈突破口。实现了极其高效的底层有限域算术，以及防 OOM 的超大矩阵处理。</p>
-<p>核心亮点：</p>
+<p>本模块是整个 ZKP 系统的数学基石与性能瓶颈突破口。</p>
 <ul>
 <li>$GF(2^{128})$ 硬件加速：利用 CPU 的 CLMUL/PMULL 指令，实现亚纳秒级域乘法。</li>
-<li>列流式零物化矩阵：对于极庞大的公开矩阵 $B$，采用按需列流式（Column-streaming）生成与掩码 XOR，彻底消除内存溢出风险并防御侧信道泄漏。</li>
+<li>列流式零物化矩阵：对于极庞大的公开矩阵 $B$，采用按需列流式（Column-streaming）生成与掩码 XOR，有效增大 cache 命中率。</li>
 </ul>
 <p>👉 <a href="./1_底层数学与矩阵运算.html">点击查看：1_底层数学与矩阵运算.md</a></p>
 <h3 id="模块二核心密码学原语"><a class="header" href="#模块二核心密码学原语">模块二：核心密码学原语</a></h3>
-<p>模块概述：提供两种基于编码的密码学原语，它们是构建上层 ZK 签名系统的代数骨架。</p>
-<p>核心亮点：</p>
+<p>提供两种基于编码的密码学原语，它们是构建上层 ZK 签名系统的代数骨架。</p>
 <ul>
-<li>AFS 哈希：基于 2-RNSD 问题构建的抗碰撞哈希函数，提供了极其精妙的常数时间（Constant-time）流式求值实现。</li>
-<li>McEliece 加密：精准实现带正则噪声的 McEliece 身份加密算法，为群签名提供可控追踪能力。</li>
+<li>AFS 哈希：基于 2-RNSD 问题构建的抗碰撞哈希函数，提供了常数时间流式求值实现。</li>
+<li>McEliece 加密：实现带正则噪声的 McEliece 身份加密算法，为群签名提供可控追踪能力。</li>
 </ul>
 <p>👉 <a href="./2_核心密码学原语.html">点击查看：2_核心密码学原语.md</a></p>
 <h3 id="模块三voleith-状态机与-ffi"><a class="header" href="#模块三voleith-状态机与-ffi">模块三：VOLEitH 状态机与 FFI</a></h3>
-<p>模块概述：实现了 VOLE-in-the-Head 范式所需的延迟 VOLE 功能，并负责跨语言的安全集成。</p>
-<p>核心亮点：</p>
+<p>实现了 VOLE-in-the-Head 范式所需的功能，并负责跨语言的安全集成。</p>
 <ul>
-<li>跨语言 FFI 安全封装：安全地集成了 FAEST 的 C 代码，复用其经过 NIST 审查的高效 GGM-based 树承诺。</li>
+<li>跨语言 FFI 安全封装：集成 FAEST 的 C 代码，复用其经过 NIST 审查的高效 GGM-based 树承诺。</li>
 <li>严格的状态机生命周期：通过 Rust 的所有权模型安全管理 C 层的 Prover/Verifier 证明树状态，避免内存泄漏。</li>
 </ul>
 <p>👉 <a href="./3_VOLEitH状态机与FFI.html">点击查看：3_VOLEitH状态机与FFI.md</a></p>
 <h3 id="模块四多项式约束生成"><a class="header" href="#模块四多项式约束生成">模块四：多项式约束生成</a></h3>
-<p>模块概述：系统的理论创新核心，负责将正则编码等操作编译为布尔多项式，并进行极速求值。</p>
-<p>核心亮点：</p>
+<p>系统的理论创新核心，将正则编码等操作编译为布尔多项式，并进行极速求值。</p>
 <ul>
 <li>非线性正则编码代数化：利用 Möbius 变换，将非线性的正则编码巧妙转化为 degree-$c$ 的 ANF 约束系统。</li>
-<li>蝴蝶隐式求值引擎：借鉴 FFT 蝶形结构，将约束求值的计算复杂度从 $\mathcal{O}(m \cdot 2^c)$ 极致压缩到 $\mathcal{O}(m \cdot c)$。</li>
+<li>蝴蝶隐式求值引擎：借鉴 FFT 蝶形结构，将约束求值的计算复杂度从 $\mathcal{O}(m \cdot 2^c)$ 压缩到 $\mathcal{O}(m \cdot c)$。</li>
 </ul>
 <p>👉 <a href="./4_多项式约束生成.html">点击查看：4_多项式约束生成.md</a></p>
 <h3 id="模块五zk-核心证明协议"><a class="header" href="#模块五zk-核心证明协议">模块五：ZK 核心证明协议</a></h3>
-<p>模块概述：实现 $\Pi^t_{dD-Rep}$ 核心协议，负责具体的零知识证明与验证逻辑。</p>
-<p>核心亮点：</p>
+<p>实现 $\Pi^t_{dD-Rep}$ 核心协议，负责具体的零知识证明与验证逻辑。</p>
 <ul>
-<li>线性因子乘积盲化：巧妙利用辅助 VOLE 的线性乘积，对约束求值后的多项式系数进行安全盲化。</li>
+<li>线性因子乘积盲化：利用 VOLE 的线性乘积，对约束求值后的多项式系数进行安全盲化。</li>
 <li>Fiat-Shamir 变换：基于 SHA-3 Keccak-256 海绵结构吸收承诺并挤出挑战值，实现完美的 NIZK 交互转换。</li>
 </ul>
 <p>👉 <a href="./5_ZK核心证明协议.html">点击查看：5_ZK核心证明协议.md</a></p>
 <h3 id="模块六基础应用层签名"><a class="header" href="#模块六基础应用层签名">模块六：基础应用层签名</a></h3>
-<p>模块概述：将底层协议转化为具体的密码学签名方案，包含两种基础签名。</p>
-<p>核心亮点：</p>
+<p>将底层协议转化为具体的密码学签名方案，包含两种基础签名。</p>
 <ul>
-<li>ReSolveD+ 标准签名：基于 RSD 困难问题，直接证明正则编码约束。</li>
-<li>零知识环签名 (RS)：通过证明双矩阵 AFS 哈希链方程，完成 Merkle 树累加器的成员资格匿名认证。</li>
+<li>ReSolveD+ 标准签名：基于 RSD 困难问题，证明正则编码约束。</li>
+<li>环签名 (RS)：通过证明双矩阵 AFS 哈希链方程，完成 Merkle 树累加器的成员资格匿名认证。</li>
 </ul>
 <p>👉 <a href="./6_基础应用层签名.html">点击查看：6_基础应用层签名.md</a></p>
 <h3 id="模块七高级应用层签名"><a class="header" href="#模块七高级应用层签名">模块七：高级应用层签名</a></h3>
-<p>模块概述：在环签名基础上，引入加密与电路约束，实现具有复杂访问控制的顶级签名方案。</p>
-<p>核心亮点：</p>
+<p>在环签名基础上，引入加密与电路约束，实现具有复杂访问控制的顶级签名方案。</p>
 <ul>
 <li>群签名 (GS)：将 McEliece 身份密文运算注入 ANF 约束系统，实现匿名性下的“管理员可控追踪”。</li>
 <li>属性基签名 (FDABS)：极具创新地使用 NAND 门约束表达任意布尔电路策略，并用叶子节点奇偶性校验防止欺骗。</li>
 </ul>
 <p>👉 <a href="./7_高级应用层签名.html">点击查看：7_高级应用层签名.md</a></p>
 <h3 id="模块八参数优化与基准测试"><a class="header" href="#模块八参数优化与基准测试">模块八：参数优化与基准测试</a></h3>
-<p>模块概述：汇报系统在参数选择、序列化体积及并发执行上的极致工程优化。</p>
-<p>核心亮点：</p>
+<p>系统在参数选择、序列化体积及并发执行上的工程优化。</p>
 <ul>
-<li>严格的安全评估：结合 8-bit Grinding 工作量证明，在兼顾性能的同时死守 128-bit 等效安全强度。</li>
-<li>KB 级序列化奇迹：通过 PRG 种子替代大矩阵、极致位宽截断，将传统 MB 级的签名体积暴降至几 KB。</li>
-<li>多核并发榨取：大量使用 <code>rayon</code> 数据并行化框架，在哈希树计算和多项式求值上实现接近线性的加速比。</li>
+<li>严格的安全评估：结合 8-bit Grinding 工作量证明，在兼顾性能的同时保证 128-bit 等效安全强度。</li>
+<li>多核并发榨取：大量使用 <code>rayon</code> 数据并行化框架，在哈希树计算和多项式求值等运算大幅加速。</li>
 </ul>
 <p>👉 <a href="./8_参数优化与基准测试.html">点击查看：8_参数优化与基准测试.md</a></p>
-<h3 id="模块九十创新点对接与原始数据"><a class="header" href="#模块九十创新点对接与原始数据">模块九、十：创新点对接与原始数据</a></h3>
+<h3 id="模块九创新点对接"><a class="header" href="#模块九创新点对接">模块九：创新点对接</a></h3>
+<p>对接此前讨论的诸多创新点和当前完成情况</p>
 <p>👉 <a href="./9_创新点对接.html">点击查看：9_创新点对接.md</a></p>
+<h3 id="模块十原始数据"><a class="header" href="#模块十原始数据">模块十：原始数据</a></h3>
+<p>包括实验环境和原始数据</p>
 <p>👉 <a href="./10_原始数据.html">点击查看：10_原始数据.md</a></p>
 
                     </main>

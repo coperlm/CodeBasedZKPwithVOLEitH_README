@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-ed11918e.js";
+            window.path_to_searchindex_js = "searchindex-6f4e895a.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -255,7 +255,7 @@ $$</p>
 <tr><td>单项式索引 $u$（输入变量的子集指示器）</td><td><code>u: usize</code></td></tr>
 <tr><td>系数 $a_{\text{idx}, u} \in \mathbb{F}_2$</td><td><code>coeffs[u]</code></td></tr>
 <tr><td>$f_{\text{idx}}(X) = \bigoplus_{u} a_{\text{idx}, u} \cdot X^u$</td><td><code>table[idx]</code> 的每一行</td></tr>
-<tr><td>条件 $(idx \mathrel{&amp;} u) == idx$</td><td>子集包含关系</td></tr>
+<tr><td>条件 $idx$&amp;$u==idx$</td><td>子集包含关系</td></tr>
 </tbody>
 </table>
 </div>
@@ -264,7 +264,7 @@ $$</p>
 <p>$$
 a_u = \bigoplus_{x: \text{supp}(x) \subseteq u} f(x)
 $$</p>
-<p>对于独热函数 $f_{\text{idx}}$，仅在 $x = \text{idx}$ 时取 1。因此 $a_u = 1$ 当且仅当 $\text{supp}(\text{idx}) \subseteq u$，即 $\text{idx} \mathrel{&amp;} u = \text{idx}$。</p>
+<p>对于独热函数 $f_{\text{idx}}$，仅在 $x = \text{idx}$ 时取 1。因此 $a_u = 1$ 当且仅当 $\text{supp}(\text{idx}) \subseteq u$，即 $\text{idx}$&amp;$u = \text{idx}$。</p>
 <p>例如对于 $c=3$, $\text{idx}=5$（二进制 <code>101</code>）：</p>
 <ul>
 <li>$u=5$（<code>101</code>）：<code>101 &amp; 101 == 101</code> ✅ → 包含单项式 $X_0X_2$</li>
@@ -311,7 +311,7 @@ $$</p>
 <h4 id="步骤-1χ-聚合求和交换"><a class="header" href="#步骤-1χ-聚合求和交换">步骤 1：χ’ 聚合（求和交换）</a></h4>
 <p>对于约束系统 $g_i(Y) = \sum_j b_{i,j} f_j(Y) + y_i$，交换求和顺序：</p>
 <p>$$
-\sum_{i=1}^t \chi_i \cdot g_i(Y) = \sum_{j=1}^m \underbrace{\left(\sum_{i=1}^t \chi_i \cdot b_{i,j}\right)}_{\chi’<em>j} \cdot f_j(Y) + \underbrace{\sum</em>{i=1}^t \chi_i \cdot y_i}_{\text{const_term}}
+\sum_{i=1}^t \chi_i \cdot g_i(Y) = \sum_{j=1}^m \underbrace{\left(\sum_{i=1}^t \chi_i \cdot b_{i,j}\right)}_{\chi’_j} \cdot f_j(Y) + \underbrace{\sum_{i=1}^t \chi_i \cdot y_i}_{\text{const_term}}
 $$</p>
 <p><code>compute_chi_prime</code> 的极简实现：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
