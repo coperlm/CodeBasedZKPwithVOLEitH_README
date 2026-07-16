@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-6f4e895a.js";
+            window.path_to_searchindex_js = "searchindex-532edccc.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -205,7 +205,7 @@
 <p>这分为两个阶段：</p>
 <ol>
 <li><code>constraint_gen.rs</code> — 编译阶段：离线预计算正则编码的 ANF 系数表</li>
-<li><code>implicit_eval.rs</code> — 求值阶段：在线安全计算 χ-加权隐式多项式，使用蝴蝶折叠算法（Butterfly Evaluation）将复杂度从 $\mathcal{O}(m \cdot 2^c)$ 降至 $\mathcal{O}(m \cdot c)$</li>
+<li><code>implicit_eval.rs</code> — 求值阶段：在线计算 χ-加权隐式多项式，利用求和交换和蝴蝶折叠减少重复的 ANF 求值；具体循环仍需按块大小 $2^c$ 计量，不能简单写成与 $c$ 线性。</li>
 </ol>
 <h2 id="二正则编码的代数化从独热向量到-anf-多项式"><a class="header" href="#二正则编码的代数化从独热向量到-anf-多项式">二、正则编码的代数化——从独热向量到 ANF 多项式</a></h2>
 <h3 id="21-问题重述"><a class="header" href="#21-问题重述">2.1 问题重述</a></h3>
@@ -280,7 +280,7 @@ $$</p>
 <p>$$
 \tilde{G}(Y) = \sum_{i=1}^t \chi_i \cdot \tilde{g}_i(Y)
 $$</p>
-<p>利用这个交换律，可以将求值复杂度从 $\mathcal{O}(t \cdot 2^c)$ 降低到 $\mathcal{O}(m \cdot c)$。</p>
+<p>利用这个交换律，可以先把约束索引 $i$ 的求和折叠成列系数 $\chi’_j$，从而避免对每个约束重复扫描同一组 regular-encoding 项。之后的 <code>evaluate_chunk_butterfly</code> 对每个大小为 $2^c$ 的块做逐层折叠；它的工作量应按实际块数和 $2^c$ 计量，而不是笼统宣称为 $\mathcal{O}(m\cdot c)$。</p>
 <h3 id="32-三步求值流水线"><a class="header" href="#32-三步求值流水线">3.2 三步求值流水线</a></h3>
 <pre class="mermaid">graph TD
     Input[challenges χ&lt;br&gt;t 个 F_128] --&gt; Step1
@@ -369,7 +369,7 @@ $$</p>
 \tilde{F}(p) = \sum_{j=0}^{\text{block_count}-1} \sum_{\text{idx}=0}^{2^c-1} \chi’_{j, \text{idx}} \cdot \tilde{f}_{\text{idx}}(p)
 $$</p>
 <p>其中 $\tilde{f}_{\text{idx}}(p)$ 是正则编码多项式 $f_{\text{idx}}$ 在仿射基 $\text{affine}_{j}$ 上的求值结果。直接展开需要 $\mathcal{O}(2^c)$ 次域乘法和加法。</p>
-<p>蝴蝶算法将复杂度降至 $\mathcal{O}(c)$。它的灵感来自 FFT 的 Cooley-Tukey 蝶形结构：</p>
+<p>蝴蝶算法仍然需要处理输入的 $2^c$ 个系数，但把求值组织为 $c$ 层原地折叠；每层的元素数减半，总工作量仍应按 $\mathcal{O}(2^c)$（每个块）理解。它的优势在于避免逐个输出多项式、单项式地重复求值，而不是把指数规模变成线性规模。它的结构与 FFT 的 Cooley-Tukey 蝶形相似：</p>
 <pre><code>Algorithm: evaluate_chunk_butterfly(chi_prime_chunk[0..2^c),
                                      x_vars[0..c), point)
 
@@ -467,11 +467,11 @@ Input: challenge (χ[0..t]), chi_prime, const_term, c
 <tr><th>优化技术</th><th>位置</th><th>加速比（相对朴素实现）</th></tr>
 </thead>
 <tbody>
-<tr><td>求和交换（χ’ 聚合）</td><td><code>compute_chi_prime</code></td><td>$\mathcal{O}(t \cdot m) \to \mathcal{O}(m)$</td></tr>
+<tr><td>求和交换（χ’ 聚合）</td><td><code>compute_chi_prime</code></td><td>把约束维度的重复求和改为列聚合；实际成本取决于矩阵稀疏性或流式扫描</td></tr>
 <tr><td>字节子集 XOR 表</td><td><code>build_byte_subset_xor_table</code></td><td>$8\times$ 逐位扫描</td></tr>
 <tr><td>手工 160 字节展开</td><td><code>xor_32!</code> / <code>subset_xor_from_bytes</code></td><td>$2\sim 3\times$ 循环</td></tr>
 <tr><td>栈分配工作缓冲区</td><td><code>evaluate_chunk_butterfly</code>（$2^c \le 256$）</td><td>消除堆分配</td></tr>
-<tr><td>Rayon 并行</td><td>列 $\ge 8192$，块 $\ge 128$</td><td>接近核心数线性加速</td></tr>
+<tr><td>Rayon 并行</td><td>由输入规模和线程数触发</td><td>实际加速随 CPU、线程数和内存带宽变化</td></tr>
 <tr><td>配对蝴蝶同时求值</td><td><code>evaluate_pair_*_butterfly</code></td><td>$2\times$（合并左右矩阵）</td></tr>
 </tbody>
 </table>

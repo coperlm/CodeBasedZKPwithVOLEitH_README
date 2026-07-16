@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-6f4e895a.js";
+            window.path_to_searchindex_js = "searchindex-532edccc.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -220,7 +220,7 @@ $$</p>
 <ul>
 <li>需要重新实现 $\tau$ 棵 GGM 树的构建、密钥扩展、Merkle 哈希聚合——这是数千行经过审计的 C 代码</li>
 <li>需要保证与 FAEST 规范的行为完全一致（包括常数时间执行、字节序、SHA-3 用法等）</li>
-<li>FAEST 的 C 代码经历了 NIST 后量子密码标准化过程的严格审查，复用它直接继承了其安全保证</li>
+<li>复用固定参考实现可以避免在本仓库重新定义 BAVC 的字节级行为，但不能把 FFI 接入自动解释为继承完整安全保证；参数、组合方式和本地关系证明仍需单独分析。</li>
 </ul>
 <h3 id="23-代码组织"><a class="header" href="#23-代码组织">2.3 代码组织</a></h3>
 <pre><code>faest-ref/           ← C 源码（子模块）
@@ -503,7 +503,7 @@ squeeze() → opening_challenge
     ((λ - w_grind)..λ).all(|bit| !bit_lsb(challenge, bit))
 }
 <span class="boring">}</span></code></pre>
-<p>这要求 Prover 在最终确定签名前，平均需要进行 $2^{w_\text{grind}}$ 次尝试。对于 $w_\text{grind} = 8$（ReSolveD+ 的默认参数），Prover 需尝试约 256 次。这保证了 Verifier 对证明的非平凡性（non-triviality）有 $\lambda + w_\text{grind}$ 比特的置信度。</p>
+<p>这要求 Prover 在最终确定签名前，平均需要约 $2^{w_\text{grind}}$ 次尝试。对于当前 <code>w_grind = 8</code> 的 profile，平均工作量约为 256 次。该工作量是 FAEST opening 规则的一部分；<code>security.rs</code> 将其作为单独的工作因子记录，不把它直接加到关系证明的统计 soundness bound 中。</p>
 <h2 id="五线缆编码wirers"><a class="header" href="#五线缆编码wirers">五、线缆编码：<code>wire.rs</code></a></h2>
 <h3 id="51-版本化规范格式"><a class="header" href="#51-版本化规范格式">5.1 版本化规范格式</a></h3>
 <p><code>wire.rs</code> 实现了一个自描述、版本化、严格规范的序列化格式，用于所有签名类型的线缆传输。</p>

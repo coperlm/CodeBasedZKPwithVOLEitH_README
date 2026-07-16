@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-6f4e895a.js";
+            window.path_to_searchindex_js = "searchindex-532edccc.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -197,11 +197,11 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="模块九理论创新点的工程落地与未来工作"><a class="header" href="#模块九理论创新点的工程落地与未来工作">模块九：理论创新点的工程落地与未来工作</a></h1>
-<p>有一部分已经有了，因为是纯工程上的优化，对协议流程无影响，可以放心加用；另一部分没有放进去，因为有待进一步证明其安全性。具体总结如下：</p>
+<p>本节只区分“代码中已有的计算方法”和“仍需证明或实验的设想”。实现了某种优化，不等于本文已经给出了新的安全定理。</p>
 <h2 id="一已在代码中落地的理论创新"><a class="header" href="#一已在代码中落地的理论创新">一、已在代码中落地的理论创新</a></h2>
-<h3 id="1-多线性扩展折叠与求和交换打破大域乘法瓶颈"><a class="header" href="#1-多线性扩展折叠与求和交换打破大域乘法瓶颈">1. 多线性扩展折叠与求和交换（打破大域乘法瓶颈）</a></h3>
+<h3 id="1-多线性扩展折叠与求和交换"><a class="header" href="#1-多线性扩展折叠与求和交换">1. 多线性扩展折叠与求和交换</a></h3>
 <ul>
-<li>理论设计：针对协议中的大数乘法瓶颈，提出两步优化：第一步通过交换求和顺序 $\chi’_h = \sum \chi_i b_{i,h}$ 消除大数乘法；第二步利用拉格朗日多线性扩展的蝶形网络（Tree-evaluation）将复杂度从 $\mathcal{O}(2^c \cdot c^2)$ 降为 $\mathcal{O}(2^c)$。</li>
+<li>代码对应的数学方法：先通过交换求和顺序得到 $\chi’<em>h = \sum \chi_i b</em>{i,h}$，再用多线性扩展的蝴蝶网络求值。后者按 $c$ 层处理 $2^c$ 个系数；实际复杂度应结合块数、矩阵扫描和缓存路径分析，不能只写成一个无条件的渐进式结论。</li>
 <li>工程落地：在 <code>implicit_eval.rs</code> 中完整实现了上述逻辑。
 <ul>
 <li>第一步，利用 Gray 码预计算字节子集 XOR 表（<code>build_byte_subset_xor_table</code>），将 $\chi’_h$ 的计算转化为纯查表与异或操作。</li>
@@ -211,24 +211,24 @@
 </ul>
 <h3 id="2-流式生成矩阵消除-l3-cache-miss打破内存瓶颈"><a class="header" href="#2-流式生成矩阵消除-l3-cache-miss打破内存瓶颈">2. 流式生成矩阵消除 L3 Cache Miss（打破内存瓶颈）</a></h3>
 <ul>
-<li>理论设计：若直接物化 13MB 规模的伪随机矩阵，会导致严重的 L3 Cache Miss，从而拖慢并发性能。建议在 L1 缓存中流式生成数据，降低空间复杂度至 $\mathcal{O}(1)$。</li>
-<li>工程落地：在 <code>streaming_matrix.rs</code> 中引入了 <code>StreamingMatrixCols</code> 结构体，实行“零物化”策略。利用底层的 AES-NI 硬件指令（<code>_mm_aesenc_si128</code>）实时展开 PRG 种子生成矩阵列，进行 XOR 累加后立即释放，彻底消除了内存带宽瓶颈。</li>
+<li>实现事实：伪随机矩阵由种子确定，<code>StreamingMatrixCols</code> 按需生成列，降低了常驻空间；是否改善 cache 和并发性能必须通过给定硬件上的 benchmark 判断。</li>
+<li>工程落地：在 <code>streaming_matrix.rs</code> 中引入 <code>StreamingMatrixCols</code>，实行“零物化”策略。满足编译条件时使用 AES-NI 实时展开 PRG 种子生成矩阵列，进行 XOR 累加后释放；它减少常驻内存，但不能据此断言消除了内存带宽瓶颈。</li>
 </ul>
 <h3 id="3-叶子见证降维单矩阵叶哈希"><a class="header" href="#3-叶子见证降维单矩阵叶哈希">3. 叶子见证降维（单矩阵叶哈希）</a></h3>
 <ul>
-<li>理论设计：在 Merkle 树的叶子节点（公钥）计算中，无需使用双输入哈希 $h_B(x_0, x_1)$，只需满足单向性的 $y = B_{leaf} \cdot \text{RE}(x)$，即可将私钥体积从 $2n$ 降低到 $n$。</li>
-<li>工程落地：在 FDABS（全动态属性基签名）协议中已实装。代码专门引入了第三个矩阵 <code>pk.b_leaf_cols</code>，并通过单矩阵版 <code>build_hash_terms</code> 计算 $v_\ell = B_{leaf} \cdot \text{RE}(a | \text{rand})$，有效压缩了 Witness 维度。</li>
+<li>实现事实：FDABS 使用单矩阵叶子关系 $y = B_{leaf} \cdot \text{RE}(x)$，与 RingSig/GroupSig 的双输入哈希约束不同。是否可以据此给出通用的安全或体积改进，需要单独的方案分析。</li>
+<li>工程落地：FDABS 引入第三个矩阵 <code>pk.b_leaf_cols</code>，并通过单矩阵版 <code>build_hash_terms</code> 计算叶子关系；它改变了该应用的 witness/约束结构，但是否“压缩”要结合具体参数比较。</li>
 </ul>
 <h3 id="4-单证明者多实例签名与可链接环签名-lrs"><a class="header" href="#4-单证明者多实例签名与可链接环签名-lrs">4. 单证明者多实例签名与可链接环签名 (LRS)</a></h3>
 <ul>
-<li>理论设计：通过合并 Fiat-Shamir 挑战，打包 $N$ 个消息共享同一个 GGM 树和 $\Delta$（静态摊销批处理）；同时引入密钥镜像 $I = B_{link} \cdot \text{RE}(x)$ 升级为可链接环签名 (LRS)。</li>
-<li>工程落地：代码实现了共享 VOLE 树的批处理逻辑，并在基准测试中验证了性能（批量化 LRS 在 10× 批处理下签名摊销至 ~2.5 KB/个）。</li>
+<li>实现事实：代码提供共享 VOLE 树的 batch LRS 接口，并计算 key image $I$。它是仓库扩展，不能直接写成论文主方案或新的安全证明。</li>
+<li>工程落地：代码实现了共享 VOLE 树的批处理逻辑。具体摊销大小应以对应 benchmark 的 metadata 和原始样本为准，不能将一次实验值当作协议常数。</li>
 </ul>
 <h2 id="二基于工程权衡的技术路线调整"><a class="header" href="#二基于工程权衡的技术路线调整">二、基于工程权衡的技术路线调整</a></h2>
 <h3 id="1-塔域加速大域乘法"><a class="header" href="#1-塔域加速大域乘法">1. 塔域加速大域乘法</a></h3>
 <ul>
 <li>理论初衷：计划将 $\mathbb{F}_{2^{128}}$ 运算同构分解到塔域 $\mathbb{F}_{2^8}$ 上以加速运算。</li>
-<li>工程实际：在 <code>finite_field.rs</code> 中，实际采用了直接调用 CPU 底层 <code>PCLMULQDQ</code> 和 <code>PMULL</code> 无进位乘法指令的方案。同构映射在工程上易引入查表开销与分支预测失败，而硬件指令原生支持使得单次乘法达到了亚纳秒级，以更小的代码复杂度达成了大域加速的初衷。</li>
+<li>工程实际：有限域运算由 <code>swanky_field</code> 提供，目标架构满足条件时可使用 PCLMULQDQ/PMULL；是否更快以 <code>gf128_bench</code> 的实际输出为准。</li>
 </ul>
 <h2 id="三未来工作与待验证优化"><a class="header" href="#三未来工作与待验证优化">三、未来工作与待验证优化</a></h2>
 <h3 id="1-消除群签名随机数承诺左零空间-h_r"><a class="header" href="#1-消除群签名随机数承诺左零空间-h_r">1. 消除群签名随机数承诺（左零空间 $H_R$）</a></h3>

@@ -58,7 +58,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-6f4e895a.js";
+            window.path_to_searchindex_js = "searchindex-532edccc.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -199,40 +199,40 @@
                     <main>
                         <h1 id="code-based-zero-knowledge-from-vole-in-the-head-核心代码与架构解析报告"><a class="header" href="#code-based-zero-knowledge-from-vole-in-the-head-核心代码与架构解析报告">Code-Based Zero-Knowledge from VOLE-in-the-Head: 核心代码与架构解析报告</a></h1>
 <h2 id="报告导读"><a class="header" href="#报告导读">报告导读</a></h2>
-<p>本报告旨在解析项目代码在 CodeBased ZKP及其高级隐私保护应用的实现；代码采用 Rust 编写，共计约 1.5w 行（不包含子模块和其他依赖）。本报告分为十个部分。</p>
+<p>本报告从数学关系、证明协议和应用语句三个层面解释实现。代码采用 Rust 编写，FAEST 的 VOLE/BAVC 部分通过固定的 C 参考实现接入。全文以源码、测试和仓库中的论文复现实验说明为依据；未在这些材料中确认的安全结论不在此处外推。</p>
 <h3 id="模块一底层数学与矩阵运算"><a class="header" href="#模块一底层数学与矩阵运算">模块一：底层数学与矩阵运算</a></h3>
 <p>本模块是整个 ZKP 系统的数学基石与性能瓶颈突破口。</p>
 <ul>
-<li>$GF(2^{128})$ 硬件加速：利用 CPU 的 CLMUL/PMULL 指令，实现亚纳秒级域乘法。</li>
-<li>列流式零物化矩阵：对于极庞大的公开矩阵 $B$，采用按需列流式（Column-streaming）生成与掩码 XOR，有效增大 cache 命中率。</li>
+<li>$GF(2^{128})$ 运算：通过 <code>swanky_field</code> 的 <code>F128b</code> 表示有限域元素，硬件路径可使用 CLMUL/PMULL。</li>
+<li>列流式矩阵：对由种子确定的矩阵按列生成，避免默认物化整个矩阵。</li>
 </ul>
 <p>👉 <a href="#模块一底层数学与内存优化">点击查看：1_底层数学与矩阵运算.md</a></p>
 <h3 id="模块二核心密码学原语"><a class="header" href="#模块二核心密码学原语">模块二：核心密码学原语</a></h3>
 <p>提供两种基于编码的密码学原语，它们是构建上层 ZK 签名系统的代数骨架。</p>
 <ul>
-<li>AFS 哈希：基于 2-RNSD 问题构建的抗碰撞哈希函数，提供了常数时间流式求值实现。</li>
-<li>McEliece 加密：实现带正则噪声的 McEliece 身份加密算法，为群签名提供可控追踪能力。</li>
+<li>AFS 哈希：以 regular encoding 和二元矩阵乘法为核心的编码型哈希关系，并提供流式/掩码求值路径。</li>
+<li>McEliece 关系：为 GroupSig 的加密一致性提供约束所需的编码、矩阵和密文操作。</li>
 </ul>
 <p>👉 <a href="#模块二核心密码学原语afs-哈希与-mceliece-加密">点击查看：2_核心密码学原语.md</a></p>
 <h3 id="模块三voleith-状态机与-ffi"><a class="header" href="#模块三voleith-状态机与-ffi">模块三：VOLEitH 状态机与 FFI</a></h3>
 <p>实现了 VOLE-in-the-Head 范式所需的功能，并负责跨语言的安全集成。</p>
 <ul>
-<li>跨语言 FFI 安全封装：集成 FAEST 的 C 代码，复用其经过 NIST 审查的高效 GGM-based 树承诺。</li>
-<li>严格的状态机生命周期：通过 Rust 的所有权模型安全管理 C 层的 Prover/Verifier 证明树状态，避免内存泄漏。</li>
+<li>跨语言接口：接入 FAEST 的 VOLE commit/open/reconstruct 和 BAVC/GGM 状态。</li>
+<li>Rust 封装：负责长度、返回状态、资源释放和结构布局检查；这些检查不等同于独立安全证明。</li>
 </ul>
 <p>👉 <a href="#模块三voleith-状态机与跨语言-ffi">点击查看：3_VOLEitH状态机与FFI.md</a></p>
 <h3 id="模块四多项式约束生成"><a class="header" href="#模块四多项式约束生成">模块四：多项式约束生成</a></h3>
 <p>系统的理论创新核心，将正则编码等操作编译为布尔多项式，并进行极速求值。</p>
 <ul>
-<li>非线性正则编码代数化：利用 Möbius 变换，将非线性的正则编码巧妙转化为 degree-$c$ 的 ANF 约束系统。</li>
-<li>蝴蝶隐式求值引擎：借鉴 FFT 蝶形结构，将约束求值的计算复杂度从 $\mathcal{O}(m \cdot 2^c)$ 压缩到 $\mathcal{O}(m \cdot c)$。</li>
+<li>非线性正则编码代数化：利用布尔立方体上的子集关系，将 regular encoding 写成 degree-$c$ 的 ANF 约束。</li>
+<li>蝴蝶隐式求值：利用求和交换和多线性折叠，避免显式展开每个 regular-encoding 输出。</li>
 </ul>
 <p>👉 <a href="#模块四正则编码到多项式约束的转化anf-约束编译与蝴蝶隐式求值">点击查看：4_多项式约束生成.md</a></p>
 <h3 id="模块五zk-核心证明协议"><a class="header" href="#模块五zk-核心证明协议">模块五：ZK 核心证明协议</a></h3>
 <p>实现 $\Pi^t_{dD-Rep}$ 核心协议，负责具体的零知识证明与验证逻辑。</p>
 <ul>
-<li>线性因子乘积盲化：利用 VOLE 的线性乘积，对约束求值后的多项式系数进行安全盲化。</li>
-<li>Fiat-Shamir 变换：基于 SHA-3 Keccak-256 海绵结构吸收承诺并挤出挑战值，实现完美的 NIZK 交互转换。</li>
+<li>线性因子乘积盲化：将 packed auxiliary 的线性因子乘积加入响应多项式。</li>
+<li>Fiat-Shamir 变换：以带标签的 Keccak-256 transcript 派生关系挑战和 opening challenge；其安全性仍需结合协议模型分析。</li>
 </ul>
 <p>👉 <a href="#模块五pit_dd-rep-核心协议与-nizk-变换">点击查看：5_ZK核心证明协议.md</a></p>
 <h3 id="模块六基础应用层签名"><a class="header" href="#模块六基础应用层签名">模块六：基础应用层签名</a></h3>
@@ -245,15 +245,15 @@
 <h3 id="模块七高级应用层签名"><a class="header" href="#模块七高级应用层签名">模块七：高级应用层签名</a></h3>
 <p>在环签名基础上，引入加密与电路约束，实现具有复杂访问控制的顶级签名方案。</p>
 <ul>
-<li>群签名 (GS)：将 McEliece 身份密文运算注入 ANF 约束系统，实现匿名性下的“管理员可控追踪”。</li>
-<li>属性基签名 (FDABS)：极具创新地使用 NAND 门约束表达任意布尔电路策略，并用叶子节点奇偶性校验防止欺骗。</li>
+<li>群签名 (GS)：将 McEliece 相关密文一致性写入 ANF 约束系统。</li>
+<li>属性基签名 (FDABS)：将布尔电路中的门关系和属性关系写入约束系统；具体的生命周期管理不属于在线证明路径。</li>
 </ul>
 <p>👉 <a href="#模块七高级应用层群签名与全动态属性基签名-fdabs">点击查看：7_高级应用层签名.md</a></p>
 <h3 id="模块八参数优化与基准测试"><a class="header" href="#模块八参数优化与基准测试">模块八：参数优化与基准测试</a></h3>
 <p>系统在参数选择、序列化体积及并发执行上的工程优化。</p>
 <ul>
-<li>严格的安全评估：结合 8-bit Grinding 工作量证明，在兼顾性能的同时保证 128-bit 等效安全强度。</li>
-<li>多核并发榨取：大量使用 <code>rayon</code> 数据并行化框架，在哈希树计算和多项式求值等运算大幅加速。</li>
+<li>安全评估：显式计算组合挑战项和 Delta 挑战项，记录 grinding 对工作因子的影响，但不把它直接当作 soundness bit 数。</li>
+<li>并发与序列化：只作为实现层优化，具体速度和签名大小以实验记录为准。</li>
 </ul>
 <p>👉 <a href="#模块八参数配置工程优化与基准测试安全分析与性能报告">点击查看：8_参数优化与基准测试.md</a></p>
 <h3 id="模块九创新点对接"><a class="header" href="#模块九创新点对接">模块九：创新点对接</a></h3>
@@ -261,14 +261,14 @@
 <p>👉 <a href="#模块九理论创新点的工程落地与未来工作">点击查看：9_创新点对接.md</a></p>
 <h3 id="模块十原始数据"><a class="header" href="#模块十原始数据">模块十：原始数据</a></h3>
 <p>包括实验环境和原始数据</p>
-<p>👉 <a href="#10_codebasedzkp-性能测试原始数据">点击查看：10_原始数据.md</a></p>
+<p>👉 <a href="#模块十codebasedzkp-性能测试原始数据">点击查看：10_原始数据.md</a></p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="模块一底层数学与内存优化"><a class="header" href="#模块一底层数学与内存优化">模块一：底层数学与内存优化</a></h1>
-<p>128-bits 域运算与大矩阵流式计算</p>
+<p>有限域表示、比特向量与大矩阵流式计算</p>
 <h2 id="一概述"><a class="header" href="#一概述">一、概述</a></h2>
 <p>本模块是整个 ZKP 系统的基石，也是性能瓶颈突破口。它解决两个根本问题：</p>
 <ol>
-<li>如何在 $\mathbb{F}_{2^{128}}$ 上尽可能快的做乘法运算，这一点同样也在原论文被提及到。</li>
+<li>如何在 $\mathbb{F}_{2^{128}}$ 上表示和计算关系证明所需的域元素；</li>
 <li>如何在更快速地操作 $\mathbb{F}_2^{n \times m}$（$n \approx 10^4, m \approx 10^5$）量级的二元矩阵，基于编码的 ZK 协议需要大量的随机矩阵（如 $B \in \mathbb{F}_2^{n \times m}$），同时增大 cache 命中率。</li>
 </ol>
 <h2 id="二gf2128-有限域运算finite_fieldrs"><a class="header" href="#二gf2128-有限域运算finite_fieldrs">二、GF(2^128) 有限域运算：<code>finite_field.rs</code></a></h2>
@@ -277,7 +277,7 @@
 <p>$$
 a(x) = a_{127}x^{127} + a_{126}x^{126} + \cdots + a_1x + a_0, \quad a_i \in \mathbb{F}_2
 $$</p>
-<p>加法即按位 XOR；乘法是多项式乘法再模一个 128 次不可约多项式 $x^{128} + x^7 + x^2 + x + 1$。</p>
+<p>加法即按位 XOR；乘法是多项式乘法再模实现所选的 128 次不可约多项式。具体表示由 <code>swanky_field</code> 的 <code>F128b</code> 实现决定，本文不把底层表示常数当作协议参数。</p>
 <h3 id="22-代码实现方式"><a class="header" href="#22-代码实现方式">2.2 代码实现方式</a></h3>
 <div class="table-wrapper">
 <table>
@@ -285,7 +285,7 @@ $$</p>
 <tr><th>数学概念</th><th>代码中对应</th><th>说明</th></tr>
 </thead>
 <tbody>
-<tr><td>$\mathbb{F}_{2^{128}}$ 元素</td><td><code>F128b</code> (来自 <code>swanky-field-binary</code>)</td><td>128-bit 无符号整数的封装，内部为 <code>u64x2</code> 或 <code>__m128i</code></td></tr>
+<tr><td>$\mathbb{F}_{2^{128}}$ 元素</td><td><code>F128b</code> (来自 <code>swanky-field-binary</code>)</td><td>128-bit 有限域元素的封装</td></tr>
 <tr><td>域加法 $a + b$</td><td><code>a + b</code></td><td>直接编译为 <code>XOR</code> 指令，常数时间</td></tr>
 <tr><td>域乘法 $a \cdot b$</td><td><code>a * b</code></td><td>底层调用 PCLMULQDQ / PMULL 硬件指令</td></tr>
 <tr><td>零元</td><td><code>F128b::ZERO</code></td><td>$a + 0 = a$</td></tr>
@@ -293,11 +293,11 @@ $$</p>
 </tbody>
 </table>
 </div>
-<p>代码没有自己实现域运算，而是复用 Galois Inc. 的 <code>swanky</code> 密码库（原 <code>scuttlebutt</code> 库）。<code>swanky-field-binary</code> 在编译时通过条件编译自动检测目标架构：</p>
+<p>代码没有自己实现域运算，而是复用 <code>swanky</code> 的有限域接口。支持的硬件路径由编译特性和目标架构决定：</p>
 <p>x86_64 下使用 <code>PCLMULQDQ</code> 指令 + AES-NI 的 <code>AESDEC</code> 做多项式约简，单条指令在一个时钟周期内完成 64-bit 无进位乘法，约简阶段复用 AES 轮函数加速。</p>
-<p>从 <code>benches/gf128_bench.rs</code> 可以看到，当使用 <code>RUSTFLAGS="-C target-cpu=native"</code> 编译时，微基准测试报告显示平均每次乘法耗时在亚纳秒级（ &lt; 0.5 ms / 万次），验证了硬件加速被正确激活。</p>
+<p><code>benches/gf128_bench.rs</code> 可用于测量域乘法；具体耗时随 CPU、编译参数和线程环境变化，不能把某次微基准数字写成协议性质。</p>
 <h3 id="23-安全注意事项"><a class="header" href="#23-安全注意事项">2.3 安全注意事项</a></h3>
-<p>域乘法的常数时间性质由硬件指令（PCLMULQDQ / PMULL）天然保证，这些指令固定延迟的，也没有任何内存分配或可变状态操作，因此不受侧信道攻击的风险。</p>
+<p>有限域函数的实现路径避免了显式的秘密相关分支，但完整侧信道安全仍取决于编译器、硬件、调用上下文和整个协议，不能仅由使用硬件指令推出。</p>
 <h2 id="三大矩阵流式计算streaming_matrixrs"><a class="header" href="#三大矩阵流式计算streaming_matrixrs">三、大矩阵流式计算：<code>streaming_matrix.rs</code></a></h2>
 <h3 id="31-问题与设计思想"><a class="header" href="#31-问题与设计思想">3.1 问题与设计思想</a></h3>
 <p>在基于编码的 ZK 协议中（AFC 哈希、VOLE 承诺等），需要大量使用伪随机矩阵：</p>
@@ -340,7 +340,7 @@ $$</p>
 
 <h3 id="34-内存管理策略详解"><a class="header" href="#34-内存管理策略详解">3.4 内存管理策略详解</a></h3>
 <h4 id="策略一零物化"><a class="header" href="#策略一零物化">策略一：零物化</a></h4>
-<p>矩阵从未完整存储在内存中。<code>StreamingMatrixCols</code> 仅持有 32 字节的状态信息（16 字节种子 + 部分元数据）。每次调用 <code>column(j)</code> 生成一列的 <code>n</code> 个比特，用完即丢弃。这使得 $1280 \times 81920$ 的矩阵实际占用从约 $12.5\text{ MB}$ 降至 $32\text{ B}$。</p>
+<p>矩阵默认不完整存储在内存中。<code>StreamingMatrixCols</code> 保存 16 字节种子、维度、尾部掩码和 PRG 状态；每次调用 <code>column(j)</code> 生成一列的 <code>n</code> 个比特，用完即丢弃。因此主要工作空间从物化矩阵的 $\mathcal{O}(nm)$ 降为一列缓冲区和 PRG 状态，具体字节数随硬件后端而变。</p>
 <h4 id="策略二延迟生成"><a class="header" href="#策略二延迟生成">策略二：延迟生成</a></h4>
 <p><code>fill_column_bytes</code> 使用按需填充模式。只有 <code>column(j)</code> 或 <code>fill_column_bytes</code> 被显式调用时，数据才被生成。<code>materialize()</code> 方法虽然提供了全矩阵物化的接口用于测试，但在正式实验的代码中不使用，正式实验只使用 <code>iter()</code> 逐个消费列。</p>
 <h4 id="策略三aes-ctr-作为向量-prg"><a class="header" href="#策略三aes-ctr-作为向量-prg">策略三：AES-CTR 作为向量 PRG</a></h4>
@@ -477,10 +477,10 @@ fn test_streaming_matrix_is_deterministic() {
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="模块二核心密码学原语afs-哈希与-mceliece-加密"><a class="header" href="#模块二核心密码学原语afs-哈希与-mceliece-加密">模块二：核心密码学原语——AFS 哈希与 McEliece 加密</a></h1>
 <h2 id="一概述-1"><a class="header" href="#一概述-1">一、概述</a></h2>
-<p>本模块提供两种基于编码的密码学原语，它们是整个 ZK 签名系统上层应用的代数骨架：</p>
+<p>本模块介绍上层关系实际使用的两类编码型对象。它们提供的是代数关系和求值接口；安全性结论仍需回到相应的编码问题和完整方案证明：</p>
 <ol>
-<li>AFS 哈希（AFC Hash）——一种基于 2-RNSD (2-Regular Null Syndrome Decoding) 困难问题的抗碰撞哈希函数。它的输出是一个二元向量，任何碰撞都等价于求解一个被公认为 NP-hard 的编码论问题。</li>
-<li>McEliece 加密——基于 不可区分置换 和 Goppa 码 的公钥加密方案（这里用于群签名中的身份密文生成），其安全性可归约到经典 McEliece 难题。</li>
+<li>AFS 哈希关系——由 regular encoding 和二元矩阵乘法构成，用于把输入关系写成低次数布尔多项式。</li>
+<li>McEliece 相关对象——<code>mceliece.rs</code> 和 GroupSig 使用的编码、矩阵及密文运算，用于构造可证明的加密一致性关系；本仓库文档不把它扩写成一个独立的身份加密方案。</li>
 </ol>
 <h2 id="二afs-哈希函数afs_hashrs"><a class="header" href="#二afs-哈希函数afs_hashrs">二、AFS 哈希函数：<code>afs_hash.rs</code></a></h2>
 <h3 id="21-数学定义"><a class="header" href="#21-数学定义">2.1 数学定义</a></h3>
@@ -494,7 +494,7 @@ $$</p>
 <li>$u_0, u_1 \in \mathbb{F}_2^{n}$ 是 $n$ 比特的输入</li>
 <li>$\text{RE}: \mathbb{F}_2^{n} \to \mathbb{F}_2^{m}$ 是正则编码函数（Regular Encoding），将 $n$ 比特输入映射为 $m = \frac{n}{c} \cdot 2^c$ 比特的稀疏二元向量，其汉明重量恰为 $n/c$</li>
 </ul>
-<p>抗碰撞安全性：寻找 $h_B(u_0, u_1) = h_B(u’_0, u’_1)$ 的碰撞等价于在 $\mathbb{F}_2$ 上求解带噪的线性方程组（即 2-RNSD 问题），这是码基密码学中公认的困难问题。</p>
+<p>在论文的编码型安全背景下，该结构与 2-RNSD 类关系相联系。就本仓库代码而言，能够直接确认的是哈希定义、维度检查、regular encoding 求值以及约束等价性测试；“碰撞等价于某个困难问题”属于方案安全分析，不能由实现函数单独推出。</p>
 <h3 id="22-正则编码-regular-encoding-详解"><a class="header" href="#22-正则编码-regular-encoding-详解">2.2 正则编码 (Regular Encoding) 详解</a></h3>
 <h4 id="221-数学定义"><a class="header" href="#221-数学定义">2.2.1 数学定义</a></h4>
 <p>令 $c$ 为块大小（chunk size），$n$ 必须能被 $c$ 整除。正则编码将输入 $x$ 划分为 $\frac{n}{c}$ 个各长为 $c$ 比特的块。每个块 $x^{(i)} \in \mathbb{F}_2^{c}$ 被映射为一个独热向量（one-hot vector）：</p>
@@ -803,7 +803,7 @@ $$</p>
 <ul>
 <li>需要重新实现 $\tau$ 棵 GGM 树的构建、密钥扩展、Merkle 哈希聚合——这是数千行经过审计的 C 代码</li>
 <li>需要保证与 FAEST 规范的行为完全一致（包括常数时间执行、字节序、SHA-3 用法等）</li>
-<li>FAEST 的 C 代码经历了 NIST 后量子密码标准化过程的严格审查，复用它直接继承了其安全保证</li>
+<li>复用固定参考实现可以避免在本仓库重新定义 BAVC 的字节级行为，但不能把 FFI 接入自动解释为继承完整安全保证；参数、组合方式和本地关系证明仍需单独分析。</li>
 </ul>
 <h3 id="23-代码组织"><a class="header" href="#23-代码组织">2.3 代码组织</a></h3>
 <pre><code>faest-ref/           ← C 源码（子模块）
@@ -1086,7 +1086,7 @@ squeeze() → opening_challenge
     ((λ - w_grind)..λ).all(|bit| !bit_lsb(challenge, bit))
 }
 <span class="boring">}</span></code></pre>
-<p>这要求 Prover 在最终确定签名前，平均需要进行 $2^{w_\text{grind}}$ 次尝试。对于 $w_\text{grind} = 8$（ReSolveD+ 的默认参数），Prover 需尝试约 256 次。这保证了 Verifier 对证明的非平凡性（non-triviality）有 $\lambda + w_\text{grind}$ 比特的置信度。</p>
+<p>这要求 Prover 在最终确定签名前，平均需要约 $2^{w_\text{grind}}$ 次尝试。对于当前 <code>w_grind = 8</code> 的 profile，平均工作量约为 256 次。该工作量是 FAEST opening 规则的一部分；<code>security.rs</code> 将其作为单独的工作因子记录，不把它直接加到关系证明的统计 soundness bound 中。</p>
 <h2 id="五线缆编码wirers"><a class="header" href="#五线缆编码wirers">五、线缆编码：<code>wire.rs</code></a></h2>
 <h3 id="51-版本化规范格式"><a class="header" href="#51-版本化规范格式">5.1 版本化规范格式</a></h3>
 <p><code>wire.rs</code> 实现了一个自描述、版本化、严格规范的序列化格式，用于所有签名类型的线缆传输。</p>
@@ -1195,7 +1195,7 @@ squeeze() → opening_challenge
 <p>这分为两个阶段：</p>
 <ol>
 <li><code>constraint_gen.rs</code> — 编译阶段：离线预计算正则编码的 ANF 系数表</li>
-<li><code>implicit_eval.rs</code> — 求值阶段：在线安全计算 χ-加权隐式多项式，使用蝴蝶折叠算法（Butterfly Evaluation）将复杂度从 $\mathcal{O}(m \cdot 2^c)$ 降至 $\mathcal{O}(m \cdot c)$</li>
+<li><code>implicit_eval.rs</code> — 求值阶段：在线计算 χ-加权隐式多项式，利用求和交换和蝴蝶折叠减少重复的 ANF 求值；具体循环仍需按块大小 $2^c$ 计量，不能简单写成与 $c$ 线性。</li>
 </ol>
 <h2 id="二正则编码的代数化从独热向量到-anf-多项式"><a class="header" href="#二正则编码的代数化从独热向量到-anf-多项式">二、正则编码的代数化——从独热向量到 ANF 多项式</a></h2>
 <h3 id="21-问题重述"><a class="header" href="#21-问题重述">2.1 问题重述</a></h3>
@@ -1270,7 +1270,7 @@ $$</p>
 <p>$$
 \tilde{G}(Y) = \sum_{i=1}^t \chi_i \cdot \tilde{g}_i(Y)
 $$</p>
-<p>利用这个交换律，可以将求值复杂度从 $\mathcal{O}(t \cdot 2^c)$ 降低到 $\mathcal{O}(m \cdot c)$。</p>
+<p>利用这个交换律，可以先把约束索引 $i$ 的求和折叠成列系数 $\chi’_j$，从而避免对每个约束重复扫描同一组 regular-encoding 项。之后的 <code>evaluate_chunk_butterfly</code> 对每个大小为 $2^c$ 的块做逐层折叠；它的工作量应按实际块数和 $2^c$ 计量，而不是笼统宣称为 $\mathcal{O}(m\cdot c)$。</p>
 <h3 id="32-三步求值流水线"><a class="header" href="#32-三步求值流水线">3.2 三步求值流水线</a></h3>
 <pre class="mermaid">graph TD
     Input[challenges χ&lt;br&gt;t 个 F_128] --&gt; Step1
@@ -1359,7 +1359,7 @@ $$</p>
 \tilde{F}(p) = \sum_{j=0}^{\text{block_count}-1} \sum_{\text{idx}=0}^{2^c-1} \chi’_{j, \text{idx}} \cdot \tilde{f}_{\text{idx}}(p)
 $$</p>
 <p>其中 $\tilde{f}_{\text{idx}}(p)$ 是正则编码多项式 $f_{\text{idx}}$ 在仿射基 $\text{affine}_{j}$ 上的求值结果。直接展开需要 $\mathcal{O}(2^c)$ 次域乘法和加法。</p>
-<p>蝴蝶算法将复杂度降至 $\mathcal{O}(c)$。它的灵感来自 FFT 的 Cooley-Tukey 蝶形结构：</p>
+<p>蝴蝶算法仍然需要处理输入的 $2^c$ 个系数，但把求值组织为 $c$ 层原地折叠；每层的元素数减半，总工作量仍应按 $\mathcal{O}(2^c)$（每个块）理解。它的优势在于避免逐个输出多项式、单项式地重复求值，而不是把指数规模变成线性规模。它的结构与 FFT 的 Cooley-Tukey 蝶形相似：</p>
 <pre><code>Algorithm: evaluate_chunk_butterfly(chi_prime_chunk[0..2^c),
                                      x_vars[0..c), point)
 
@@ -1457,11 +1457,11 @@ Input: challenge (χ[0..t]), chi_prime, const_term, c
 <tr><th>优化技术</th><th>位置</th><th>加速比（相对朴素实现）</th></tr>
 </thead>
 <tbody>
-<tr><td>求和交换（χ’ 聚合）</td><td><code>compute_chi_prime</code></td><td>$\mathcal{O}(t \cdot m) \to \mathcal{O}(m)$</td></tr>
+<tr><td>求和交换（χ’ 聚合）</td><td><code>compute_chi_prime</code></td><td>把约束维度的重复求和改为列聚合；实际成本取决于矩阵稀疏性或流式扫描</td></tr>
 <tr><td>字节子集 XOR 表</td><td><code>build_byte_subset_xor_table</code></td><td>$8\times$ 逐位扫描</td></tr>
 <tr><td>手工 160 字节展开</td><td><code>xor_32!</code> / <code>subset_xor_from_bytes</code></td><td>$2\sim 3\times$ 循环</td></tr>
 <tr><td>栈分配工作缓冲区</td><td><code>evaluate_chunk_butterfly</code>（$2^c \le 256$）</td><td>消除堆分配</td></tr>
-<tr><td>Rayon 并行</td><td>列 $\ge 8192$，块 $\ge 128$</td><td>接近核心数线性加速</td></tr>
+<tr><td>Rayon 并行</td><td>由输入规模和线程数触发</td><td>实际加速随 CPU、线程数和内存带宽变化</td></tr>
 <tr><td>配对蝴蝶同时求值</td><td><code>evaluate_pair_*_butterfly</code></td><td>$2\times$（合并左右矩阵）</td></tr>
 </tbody>
 </table>
@@ -1547,7 +1547,7 @@ $$</p>
     CommitmentMessage { correction }
 }
 <span class="boring">}</span></code></pre>
-<p>校正子的信息论安全性：由于 $u$ 是 Prover 私有的秘密向量（Verifier 只知道 $q$ 和 $\Delta$，但 $u$ 对 Verifier 具有 $-\log_2(\text{Pr}[u=0]) = k$ 比特的熵），$w \oplus u$ 完美隐藏了 $w$。</p>
+<p>在理想化的均匀 VOLE 相关模型中，$u$ 对观察者是均匀的，因此 $w \oplus u$ 对固定的 $w$ 不提供额外信息。这里的隐藏性依赖 VOLE 相关量的分布和协议组合，不能仅凭 <code>commit</code> 函数单独宣称完整零知识性。</p>
 <p>Verifier 端的吸收：Verifier 利用校正子修正自己的 $q$：</p>
 <p>$$
 \tilde{q}_i = q_i + \text{corr}_i \cdot \Delta \in \mathbb{F}_{2^{128}}
@@ -1558,7 +1558,11 @@ $$</p>
 $$</p>
 <p>当 $w_i = u_i$ 时，$\text{corr}_i = 0$，$\tilde{q}_i = q_i = v_i$
 当 $w_i \neq u_i$ 时，$\text{corr}_i = 1$，$\tilde{q}_i = q_i + \Delta = v_i$</p>
-<p>因此 $\tilde{q} = \mathbf{v}$ 当且仅当校正子正确。Verifier 在不知道 $u$ 和 $v$ 的情况下，获得了正确 witness 所对应的 VOLE 关系。</p>
+<p>因此当 correction 为 $w\oplus u$ 时，代码得到的是
+[
+\tilde q_i=q_i+(w_i\oplus u_i)\Delta=v_i+w_i\Delta,
+]
+而不是单独的 $v_i$。这正是后续在点 $\Delta$ 上评价 witness 约束所需的 affine 视图。Verifier 不需要恢复 $u$ 或 $v$ 的明文向量，只需检查该视图与响应多项式相符。</p>
 <p>常数时间实现：<code>corrected_q_from_bitvec</code> 使用 <code>conditional_select</code>（来自 <code>subtle</code> crate）逐字节展开校正子位，避免秘密依赖的分支。</p>
 <h3 id="23-step-2挑战生成challengemessage"><a class="header" href="#23-step-2挑战生成challengemessage">2.3 Step 2：挑战生成（<code>ChallengeMessage</code>）</a></h3>
 <p>在交互式版本中，Verifier 采样随机域元素：</p>
@@ -1693,7 +1697,7 @@ $$</p>
     }
 }
 <span class="boring">}</span></code></pre>
-<p>即 $P = {0, 1, g, g^2, \dots, g^{d-1}}$，其中 $g$ 是 $\mathbb{F}_{2^{128}}$ 的乘法生成元。这保证了所有插值点互不相同（因为 $g$ 的阶为 $2^{128}-1$）。</p>
+<p>即从 $0$ 开始取 <code>d+1</code> 个点，并令后续点按 <code>F::GENERATOR</code> 递乘。代码依赖有限域实现提供的 generator；测试只要求实际取到的点互不相同，不在文档中额外宣称其阶的具体证明。</p>
 <p>当度数 $d \le 15$ 时（<code>STACK_POLY_COEFFS = 16</code>），插值工作缓冲区使用栈分配，避免堆分配的开销。</p>
 <h2 id="三完整的数据流公式-代码映射"><a class="header" href="#三完整的数据流公式-代码映射">三、完整的数据流公式-代码映射</a></h2>
 <div class="table-wrapper">
@@ -1894,7 +1898,7 @@ Verifier:
 <tr><td>零知识性</td><td>VOLE 校正子 $w \oplus u$ 隐藏 witness；盲化系数 $\tilde{a}_j$ 隐藏多项式系数</td></tr>
 <tr><td>可靠性</td><td>验证等式 $\sum \chi_i g_i(\tilde{q}) + \Pi q_{\text{aux}} = \sum \tilde{a}_j \Delta^j$ 在违规 witness 下成立的概率 $\le 2^{-\lambda}$</td></tr>
 <tr><td>非交互性</td><td>Fiat-Shamir 变换将 Verifier 的随机挑战替换为 SHA-3 哈希输出</td></tr>
-<tr><td>抗碰撞</td><td>Fiat-Shamir 挑战域分离 + Keccak-256 抗碰撞保证</td></tr>
+<tr><td>transcript 绑定</td><td>带标签吸收、域分离和确定性重算；哈希抗碰撞假设属于安全模型</td></tr>
 </tbody>
 </table>
 </div>
@@ -2686,9 +2690,9 @@ Output: FdabsSignature
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="模块八参数配置工程优化与基准测试安全分析与性能报告"><a class="header" href="#模块八参数配置工程优化与基准测试安全分析与性能报告">模块八：参数配置、工程优化与基准测试——安全分析与性能报告</a></h1>
 <h2 id="一概述-7"><a class="header" href="#一概述-7">一、概述</a></h2>
-<p>本模块是整个系统的工程化结晶，涵盖三个核心维度：</p>
+<p>本模块把安全参数、签名表示和实验口径放在一起；并只在必要处说明实现优化：</p>
 <ol>
-<li><code>security.rs</code> — 严格的安全性分析和参数选择，确保系统达到目标安全强度</li>
+<li><code>security.rs</code> — 对当前关系证明上界进行 concrete accounting，不替代完整安全证明</li>
 <li><code>artifact_bundle.rs</code> — 极紧凑的签名序列化格式，将签名体积压缩到 KB 级别</li>
 <li><code>benches/paper_benchmarks.rs</code> + <code>scripts/</code> — 端到端基准测试框架和性能调优</li>
 </ol>
@@ -2728,15 +2732,15 @@ $$</p>
 <pre><code>degree=9, combination=128, delta=128 → bit_security ≈ 124.678
 degree=9, combination=128, delta=120 → bit_security ≈ 116.829
 </code></pre>
-<p>这与论文表 6 的 116-bit 保守估计一致。</p>
-<p>Grinding 补偿：$w_\text{grind} = 8$ 比特的 grinding 提供了额外的 $\log_2(2^8) = 8$ 比特工作因子：</p>
+<p>该数值可与论文中的保守参数分析作对照；它不是对所有应用参数自动成立的统一安全等级。</p>
+<p>单独记录 grinding：$w_\text{grind} = 8$ 比特意味着平均约 $2^8$ 次 opening challenge 尝试。代码把它作为工作因子单独报告：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub fn optimistic_work_factor_bits(self, grinding_bits: usize) -&gt; f64 {
     self.bit_security + grinding_bits as f64
 }
 <span class="boring">}</span></code></pre>
-<p>这使得实际攻击难度达到约 $116.8 + 8 \approx 124.8$ 比特。</p>
+<p>这不能直接改写为 statistical soundness 达到 $116.8+8$ bit；它只是对接受一个满足 opening 条件的 transcript 所需计算工作的另一种解释。</p>
 <h3 id="24-参数套件"><a class="header" href="#24-参数套件">2.4 参数套件</a></h3>
 <div class="table-wrapper">
 <table>
@@ -2996,7 +3000,7 @@ const DOMAIN_SIZE: usize = 1 &lt;&lt; C;  // 域大小 = 256
 const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 <span class="boring">}</span></code></pre>
 <h3 id="47-性能对比"><a class="header" href="#47-性能对比">4.7 性能对比</a></h3>
-<p>详见 <a href="#10_codebasedzkp-性能测试原始数据">10_原始数据.md</a></p>
+<p>详见 <a href="#模块十codebasedzkp-性能测试原始数据">10_原始数据.md</a></p>
 <p>（具体毫秒值可通过 <code>just bench-paper</code> 或 <code>just speed-table</code> 运行获取）</p>
 <h2 id="五工程优化总结"><a class="header" href="#五工程优化总结">五、工程优化总结</a></h2>
 <div class="table-wrapper">
@@ -3005,24 +3009,24 @@ const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 <tr><th>优化层次</th><th>具体技术</th><th>影响</th></tr>
 </thead>
 <tbody>
-<tr><td>算法</td><td>隐式求值/蝴蝶折叠</td><td>$O(t \cdot 2^c) \to O(m \cdot c)$</td></tr>
-<tr><td>内存</td><td><code>StreamingMatrixCols</code> 流式列生成</td><td>矩阵内存 $O(nm) \to O(1)$</td></tr>
+<tr><td>算法</td><td>隐式求值/蝴蝶折叠</td><td>先聚合 $\chi’$，再按块进行 $c$ 层折叠；成本取决于块数和 $2^c$</td></tr>
+<tr><td>内存</td><td><code>StreamingMatrixCols</code> 流式列生成</td><td>避免常驻完整矩阵，工作空间由列缓冲区和 PRG 状态主导</td></tr>
 <tr><td>序列化</td><td>种子代替矩阵、紧凑位编码</td><td>签名体积 MB → KB</td></tr>
-<tr><td>并行</td><td>Rayon <code>par_iter</code> / <code>par_chunks_mut</code> / <code>join</code></td><td>接近核数线性加速</td></tr>
-<tr><td>硬件</td><td>PCLMULQDQ / AES-NI / BMI2</td><td>亚微秒级域运算</td></tr>
-<tr><td>微架构</td><td>循环展开、栈分配、四累加器</td><td>额外 2-3$\times$ 系数提升</td></tr>
-<tr><td>安全</td><td>Grinding 8-bit、常数时间实现</td><td>124-bit 等效安全强度</td></tr>
+<tr><td>并行</td><td>Rayon <code>par_iter</code> / <code>par_chunks_mut</code> / <code>join</code></td><td>加速取决于线程数、CPU 和内存带宽</td></tr>
+<tr><td>硬件</td><td>PCLMULQDQ / AES-NI / BMI2</td><td>具体效果由 benchmark 测量</td></tr>
+<tr><td>微架构</td><td>循环展开、栈分配、四累加器</td><td>减少热路径开销，不作为协议结论</td></tr>
+<tr><td>安全</td><td>Grinding 8-bit、掩码/常数时间路径</td><td>与关系证明 bound、工作因子分开报告</td></tr>
 <tr><td>工程</td><td>双后端切换（HW/SW fallback）</td><td>跨平台兼容</td></tr>
 </tbody>
 </table>
 </div>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="模块九理论创新点的工程落地与未来工作"><a class="header" href="#模块九理论创新点的工程落地与未来工作">模块九：理论创新点的工程落地与未来工作</a></h1>
-<p>有一部分已经有了，因为是纯工程上的优化，对协议流程无影响，可以放心加用；另一部分没有放进去，因为有待进一步证明其安全性。具体总结如下：</p>
+<p>本节只区分“代码中已有的计算方法”和“仍需证明或实验的设想”。实现了某种优化，不等于本文已经给出了新的安全定理。</p>
 <h2 id="一已在代码中落地的理论创新"><a class="header" href="#一已在代码中落地的理论创新">一、已在代码中落地的理论创新</a></h2>
-<h3 id="1-多线性扩展折叠与求和交换打破大域乘法瓶颈"><a class="header" href="#1-多线性扩展折叠与求和交换打破大域乘法瓶颈">1. 多线性扩展折叠与求和交换（打破大域乘法瓶颈）</a></h3>
+<h3 id="1-多线性扩展折叠与求和交换"><a class="header" href="#1-多线性扩展折叠与求和交换">1. 多线性扩展折叠与求和交换</a></h3>
 <ul>
-<li>理论设计：针对协议中的大数乘法瓶颈，提出两步优化：第一步通过交换求和顺序 $\chi’_h = \sum \chi_i b_{i,h}$ 消除大数乘法；第二步利用拉格朗日多线性扩展的蝶形网络（Tree-evaluation）将复杂度从 $\mathcal{O}(2^c \cdot c^2)$ 降为 $\mathcal{O}(2^c)$。</li>
+<li>代码对应的数学方法：先通过交换求和顺序得到 $\chi’<em>h = \sum \chi_i b</em>{i,h}$，再用多线性扩展的蝴蝶网络求值。后者按 $c$ 层处理 $2^c$ 个系数；实际复杂度应结合块数、矩阵扫描和缓存路径分析，不能只写成一个无条件的渐进式结论。</li>
 <li>工程落地：在 <code>implicit_eval.rs</code> 中完整实现了上述逻辑。
 <ul>
 <li>第一步，利用 Gray 码预计算字节子集 XOR 表（<code>build_byte_subset_xor_table</code>），将 $\chi’_h$ 的计算转化为纯查表与异或操作。</li>
@@ -3032,24 +3036,24 @@ const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 </ul>
 <h3 id="2-流式生成矩阵消除-l3-cache-miss打破内存瓶颈"><a class="header" href="#2-流式生成矩阵消除-l3-cache-miss打破内存瓶颈">2. 流式生成矩阵消除 L3 Cache Miss（打破内存瓶颈）</a></h3>
 <ul>
-<li>理论设计：若直接物化 13MB 规模的伪随机矩阵，会导致严重的 L3 Cache Miss，从而拖慢并发性能。建议在 L1 缓存中流式生成数据，降低空间复杂度至 $\mathcal{O}(1)$。</li>
-<li>工程落地：在 <code>streaming_matrix.rs</code> 中引入了 <code>StreamingMatrixCols</code> 结构体，实行“零物化”策略。利用底层的 AES-NI 硬件指令（<code>_mm_aesenc_si128</code>）实时展开 PRG 种子生成矩阵列，进行 XOR 累加后立即释放，彻底消除了内存带宽瓶颈。</li>
+<li>实现事实：伪随机矩阵由种子确定，<code>StreamingMatrixCols</code> 按需生成列，降低了常驻空间；是否改善 cache 和并发性能必须通过给定硬件上的 benchmark 判断。</li>
+<li>工程落地：在 <code>streaming_matrix.rs</code> 中引入 <code>StreamingMatrixCols</code>，实行“零物化”策略。满足编译条件时使用 AES-NI 实时展开 PRG 种子生成矩阵列，进行 XOR 累加后释放；它减少常驻内存，但不能据此断言消除了内存带宽瓶颈。</li>
 </ul>
 <h3 id="3-叶子见证降维单矩阵叶哈希"><a class="header" href="#3-叶子见证降维单矩阵叶哈希">3. 叶子见证降维（单矩阵叶哈希）</a></h3>
 <ul>
-<li>理论设计：在 Merkle 树的叶子节点（公钥）计算中，无需使用双输入哈希 $h_B(x_0, x_1)$，只需满足单向性的 $y = B_{leaf} \cdot \text{RE}(x)$，即可将私钥体积从 $2n$ 降低到 $n$。</li>
-<li>工程落地：在 FDABS（全动态属性基签名）协议中已实装。代码专门引入了第三个矩阵 <code>pk.b_leaf_cols</code>，并通过单矩阵版 <code>build_hash_terms</code> 计算 $v_\ell = B_{leaf} \cdot \text{RE}(a | \text{rand})$，有效压缩了 Witness 维度。</li>
+<li>实现事实：FDABS 使用单矩阵叶子关系 $y = B_{leaf} \cdot \text{RE}(x)$，与 RingSig/GroupSig 的双输入哈希约束不同。是否可以据此给出通用的安全或体积改进，需要单独的方案分析。</li>
+<li>工程落地：FDABS 引入第三个矩阵 <code>pk.b_leaf_cols</code>，并通过单矩阵版 <code>build_hash_terms</code> 计算叶子关系；它改变了该应用的 witness/约束结构，但是否“压缩”要结合具体参数比较。</li>
 </ul>
 <h3 id="4-单证明者多实例签名与可链接环签名-lrs"><a class="header" href="#4-单证明者多实例签名与可链接环签名-lrs">4. 单证明者多实例签名与可链接环签名 (LRS)</a></h3>
 <ul>
-<li>理论设计：通过合并 Fiat-Shamir 挑战，打包 $N$ 个消息共享同一个 GGM 树和 $\Delta$（静态摊销批处理）；同时引入密钥镜像 $I = B_{link} \cdot \text{RE}(x)$ 升级为可链接环签名 (LRS)。</li>
-<li>工程落地：代码实现了共享 VOLE 树的批处理逻辑，并在基准测试中验证了性能（批量化 LRS 在 10× 批处理下签名摊销至 ~2.5 KB/个）。</li>
+<li>实现事实：代码提供共享 VOLE 树的 batch LRS 接口，并计算 key image $I$。它是仓库扩展，不能直接写成论文主方案或新的安全证明。</li>
+<li>工程落地：代码实现了共享 VOLE 树的批处理逻辑。具体摊销大小应以对应 benchmark 的 metadata 和原始样本为准，不能将一次实验值当作协议常数。</li>
 </ul>
 <h2 id="二基于工程权衡的技术路线调整"><a class="header" href="#二基于工程权衡的技术路线调整">二、基于工程权衡的技术路线调整</a></h2>
 <h3 id="1-塔域加速大域乘法"><a class="header" href="#1-塔域加速大域乘法">1. 塔域加速大域乘法</a></h3>
 <ul>
 <li>理论初衷：计划将 $\mathbb{F}_{2^{128}}$ 运算同构分解到塔域 $\mathbb{F}_{2^8}$ 上以加速运算。</li>
-<li>工程实际：在 <code>finite_field.rs</code> 中，实际采用了直接调用 CPU 底层 <code>PCLMULQDQ</code> 和 <code>PMULL</code> 无进位乘法指令的方案。同构映射在工程上易引入查表开销与分支预测失败，而硬件指令原生支持使得单次乘法达到了亚纳秒级，以更小的代码复杂度达成了大域加速的初衷。</li>
+<li>工程实际：有限域运算由 <code>swanky_field</code> 提供，目标架构满足条件时可使用 PCLMULQDQ/PMULL；是否更快以 <code>gf128_bench</code> 的实际输出为准。</li>
 </ul>
 <h2 id="三未来工作与待验证优化"><a class="header" href="#三未来工作与待验证优化">三、未来工作与待验证优化</a></h2>
 <h3 id="1-消除群签名随机数承诺左零空间-h_r"><a class="header" href="#1-消除群签名随机数承诺左零空间-h_r">1. 消除群签名随机数承诺（左零空间 $H_R$）</a></h3>
@@ -3063,18 +3067,19 @@ const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 <li>当前状态：当前的 <code>security.rs</code> 遵循 128-bit 经典安全参数及 8-bit Grinding，以对齐现有的 VOLEitH 论文基准。QROM 兼容的哈希吸收变体将作为未来协议升级的重点方向。</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="10_codebasedzkp-性能测试原始数据"><a class="header" href="#10_codebasedzkp-性能测试原始数据">10_CodeBasedZKP 性能测试原始数据</a></h1>
+<h1 id="模块十codebasedzkp-性能测试原始数据"><a class="header" href="#模块十codebasedzkp-性能测试原始数据">模块十：CodeBasedZKP 性能测试原始数据</a></h1>
 <ul>
 <li>论文名称：Code-Based Zero-Knowledge from VOLE-in-the-Head and Their Applications: Simpler, Faster, and Smaller</li>
-<li>更新日期：2026-07-11</li>
+<li>数据记录日期：2026-07-11</li>
+<li>说明：下表是当时实验记录的原始汇总；新的正式结果应以当前脚本生成的 metadata 和 raw samples 为准。</li>
 </ul>
 <h2 id="声明"><a class="header" href="#声明">声明</a></h2>
 <ol>
-<li>当前签名使用的参数和论文基本一致，但是经初步分析，算法的实际安全等级不是严格 128 bits，具体安全等级需要进一步确认；</li>
+<li>当前签名使用的参数与论文中的 128-bit 配置基本对应；但由 <code>security.rs</code> 计算的关系证明上界不是严格 128 bits，具体数值见模块八；</li>
 <li>本仓库的实际签名体积和论文存在出入，但在实际的可接受范围内，详见性能测试部分；</li>
-<li>本文实现端到端签名与证明的代码，但不保证可以用于工业生产，该版本仅用于算法正确性和效率的初步验证；</li>
-<li>该仓库代码的全部实现，理论安全等级均为 128 bits；256-bit 参数只有公式和表格复现，没有可执行实现；</li>
-<li>本仓库使用 ChatGPT 5.5 和 ChatGPT5.6 Sol 辅助编程，未经过专业代码审计，但代码自身断言和验签可以确保基本正确</li>
+<li>本仓库实现了在线签名和证明验证路径，但未经过生产级密码学审计，数据只用于算法正确性和效率的研究性验证；</li>
+<li>当前可执行路径是 128-bit profile；256-bit 参数只用于公式和表格复现，没有对应的可执行路径；</li>
+<li>单元测试、负向测试和跨进程测试可以支持实现级正确性判断，但不能替代独立密码学审计或安全证明。</li>
 </ol>
 <h2 id="测试环境"><a class="header" href="#测试环境">测试环境</a></h2>
 <h3 id="硬件配置"><a class="header" href="#硬件配置">硬件配置</a></h3>
@@ -3098,7 +3103,7 @@ const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 <li>核心编译器：Clang/LLVM: v22.1.6，GCC: v16.1.1；rust版本为 cargo 1.96.1 (356927216 2026-06-26) (Arch Linux rust 1:1.96.1-1.1)，其他依赖环境详见 <code>Cargo.toml</code></li>
 </ul>
 <h2 id="测试结果"><a class="header" href="#测试结果">测试结果</a></h2>
-<p>下面内容为测试十次取平均值（删除最低和最高各 1 次，报告中间 8 次的平均值）；其中 l 代表 Witness 比特长度，t 代表多项式约束数量，d 代表关系多项式的最高次数；测试阶段启用了硬件加速并优化了工程实现。</p>
+<p>下面内容为测试十次取平均值（删除最低和最高各 1 次，报告中间 8 次的平均值）。其中 <code>l</code> 代表 witness 比特长度，<code>t</code> 代表多项式约束数量，<code>d</code> 代表关系多项式的最高次数；测试阶段启用了硬件加速。Sign/Verify 的计时边界应结合当前 <code>scripts/paper_speed_table.sh</code> 的定义理解，不能与仅测关系求值的旧数据混用。</p>
 <h3 id="单核运行结果"><a class="header" href="#单核运行结果">单核运行结果</a></h3>
 <p>（旨在对齐 Stern 协议，同样运行在单核处理器上）</p>
 <div class="table-wrapper">
@@ -3138,6 +3143,14 @@ const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 </tbody>
 </table>
 </div>
+<h2 id="数据的直接观察"><a class="header" href="#数据的直接观察">数据的直接观察</a></h2>
+<ol>
+<li><code>ell</code> 从 5 增加到 10 时，RingSig、Scope-LRS、GroupSig 和 FDABS 的 witness 长度 <code>l</code>、约束数 <code>t</code> 与签名体积都明显增加；这反映的是认证路径/电路关系规模的增加，而不是单纯的哈希调用次数变化。</li>
+<li>全部逻辑 CPU 的结果通常低于单核运行结果，但 Sign 和 Verify 的缩放并不相同：Sign 包含 VOLE commit、建树、关系响应和 opening，Verify 包含 reconstruct 和关系验证，受内存带宽及并行粒度的影响不同。</li>
+<li>ReSolveD+ 的签名体积约为 3 KiB；其余应用的体积主要随 VOLE opening、witness correction、证明系数和应用关系数据增长。这里的体积是该次实验的签名表示大小，不应与论文中的纯理论通信量直接等同。</li>
+<li>Scope-LRS 是仓库扩展，不能用它的速度或体积数据替代论文主方案的实验结果。</li>
+</ol>
+<p>若重新生成结果，应记录 <code>RAYON_NUM_THREADS</code>、<code>RUST_TEST_THREADS</code>、CPU 指令集、源码 commit、FAEST revision、重复次数和原始样本；仅保留平均值不足以复现实验。</p>
 
                     </main>
 

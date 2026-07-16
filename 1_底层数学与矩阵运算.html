@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-6f4e895a.js";
+            window.path_to_searchindex_js = "searchindex-532edccc.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -197,11 +197,11 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="模块一底层数学与内存优化"><a class="header" href="#模块一底层数学与内存优化">模块一：底层数学与内存优化</a></h1>
-<p>128-bits 域运算与大矩阵流式计算</p>
+<p>有限域表示、比特向量与大矩阵流式计算</p>
 <h2 id="一概述"><a class="header" href="#一概述">一、概述</a></h2>
 <p>本模块是整个 ZKP 系统的基石，也是性能瓶颈突破口。它解决两个根本问题：</p>
 <ol>
-<li>如何在 $\mathbb{F}_{2^{128}}$ 上尽可能快的做乘法运算，这一点同样也在原论文被提及到。</li>
+<li>如何在 $\mathbb{F}_{2^{128}}$ 上表示和计算关系证明所需的域元素；</li>
 <li>如何在更快速地操作 $\mathbb{F}_2^{n \times m}$（$n \approx 10^4, m \approx 10^5$）量级的二元矩阵，基于编码的 ZK 协议需要大量的随机矩阵（如 $B \in \mathbb{F}_2^{n \times m}$），同时增大 cache 命中率。</li>
 </ol>
 <h2 id="二gf2128-有限域运算finite_fieldrs"><a class="header" href="#二gf2128-有限域运算finite_fieldrs">二、GF(2^128) 有限域运算：<code>finite_field.rs</code></a></h2>
@@ -210,7 +210,7 @@
 <p>$$
 a(x) = a_{127}x^{127} + a_{126}x^{126} + \cdots + a_1x + a_0, \quad a_i \in \mathbb{F}_2
 $$</p>
-<p>加法即按位 XOR；乘法是多项式乘法再模一个 128 次不可约多项式 $x^{128} + x^7 + x^2 + x + 1$。</p>
+<p>加法即按位 XOR；乘法是多项式乘法再模实现所选的 128 次不可约多项式。具体表示由 <code>swanky_field</code> 的 <code>F128b</code> 实现决定，本文不把底层表示常数当作协议参数。</p>
 <h3 id="22-代码实现方式"><a class="header" href="#22-代码实现方式">2.2 代码实现方式</a></h3>
 <div class="table-wrapper">
 <table>
@@ -218,7 +218,7 @@ $$</p>
 <tr><th>数学概念</th><th>代码中对应</th><th>说明</th></tr>
 </thead>
 <tbody>
-<tr><td>$\mathbb{F}_{2^{128}}$ 元素</td><td><code>F128b</code> (来自 <code>swanky-field-binary</code>)</td><td>128-bit 无符号整数的封装，内部为 <code>u64x2</code> 或 <code>__m128i</code></td></tr>
+<tr><td>$\mathbb{F}_{2^{128}}$ 元素</td><td><code>F128b</code> (来自 <code>swanky-field-binary</code>)</td><td>128-bit 有限域元素的封装</td></tr>
 <tr><td>域加法 $a + b$</td><td><code>a + b</code></td><td>直接编译为 <code>XOR</code> 指令，常数时间</td></tr>
 <tr><td>域乘法 $a \cdot b$</td><td><code>a * b</code></td><td>底层调用 PCLMULQDQ / PMULL 硬件指令</td></tr>
 <tr><td>零元</td><td><code>F128b::ZERO</code></td><td>$a + 0 = a$</td></tr>
@@ -226,11 +226,11 @@ $$</p>
 </tbody>
 </table>
 </div>
-<p>代码没有自己实现域运算，而是复用 Galois Inc. 的 <code>swanky</code> 密码库（原 <code>scuttlebutt</code> 库）。<code>swanky-field-binary</code> 在编译时通过条件编译自动检测目标架构：</p>
+<p>代码没有自己实现域运算，而是复用 <code>swanky</code> 的有限域接口。支持的硬件路径由编译特性和目标架构决定：</p>
 <p>x86_64 下使用 <code>PCLMULQDQ</code> 指令 + AES-NI 的 <code>AESDEC</code> 做多项式约简，单条指令在一个时钟周期内完成 64-bit 无进位乘法，约简阶段复用 AES 轮函数加速。</p>
-<p>从 <code>benches/gf128_bench.rs</code> 可以看到，当使用 <code>RUSTFLAGS="-C target-cpu=native"</code> 编译时，微基准测试报告显示平均每次乘法耗时在亚纳秒级（ &lt; 0.5 ms / 万次），验证了硬件加速被正确激活。</p>
+<p><code>benches/gf128_bench.rs</code> 可用于测量域乘法；具体耗时随 CPU、编译参数和线程环境变化，不能把某次微基准数字写成协议性质。</p>
 <h3 id="23-安全注意事项"><a class="header" href="#23-安全注意事项">2.3 安全注意事项</a></h3>
-<p>域乘法的常数时间性质由硬件指令（PCLMULQDQ / PMULL）天然保证，这些指令固定延迟的，也没有任何内存分配或可变状态操作，因此不受侧信道攻击的风险。</p>
+<p>有限域函数的实现路径避免了显式的秘密相关分支，但完整侧信道安全仍取决于编译器、硬件、调用上下文和整个协议，不能仅由使用硬件指令推出。</p>
 <h2 id="三大矩阵流式计算streaming_matrixrs"><a class="header" href="#三大矩阵流式计算streaming_matrixrs">三、大矩阵流式计算：<code>streaming_matrix.rs</code></a></h2>
 <h3 id="31-问题与设计思想"><a class="header" href="#31-问题与设计思想">3.1 问题与设计思想</a></h3>
 <p>在基于编码的 ZK 协议中（AFC 哈希、VOLE 承诺等），需要大量使用伪随机矩阵：</p>
@@ -273,7 +273,7 @@ $$</p>
 
 <h3 id="34-内存管理策略详解"><a class="header" href="#34-内存管理策略详解">3.4 内存管理策略详解</a></h3>
 <h4 id="策略一零物化"><a class="header" href="#策略一零物化">策略一：零物化</a></h4>
-<p>矩阵从未完整存储在内存中。<code>StreamingMatrixCols</code> 仅持有 32 字节的状态信息（16 字节种子 + 部分元数据）。每次调用 <code>column(j)</code> 生成一列的 <code>n</code> 个比特，用完即丢弃。这使得 $1280 \times 81920$ 的矩阵实际占用从约 $12.5\text{ MB}$ 降至 $32\text{ B}$。</p>
+<p>矩阵默认不完整存储在内存中。<code>StreamingMatrixCols</code> 保存 16 字节种子、维度、尾部掩码和 PRG 状态；每次调用 <code>column(j)</code> 生成一列的 <code>n</code> 个比特，用完即丢弃。因此主要工作空间从物化矩阵的 $\mathcal{O}(nm)$ 降为一列缓冲区和 PRG 状态，具体字节数随硬件后端而变。</p>
 <h4 id="策略二延迟生成"><a class="header" href="#策略二延迟生成">策略二：延迟生成</a></h4>
 <p><code>fill_column_bytes</code> 使用按需填充模式。只有 <code>column(j)</code> 或 <code>fill_column_bytes</code> 被显式调用时，数据才被生成。<code>materialize()</code> 方法虽然提供了全矩阵物化的接口用于测试，但在正式实验的代码中不使用，正式实验只使用 <code>iter()</code> 逐个消费列。</p>
 <h4 id="策略三aes-ctr-作为向量-prg"><a class="header" href="#策略三aes-ctr-作为向量-prg">策略三：AES-CTR 作为向量 PRG</a></h4>

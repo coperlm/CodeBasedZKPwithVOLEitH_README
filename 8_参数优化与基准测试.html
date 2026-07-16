@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-6f4e895a.js";
+            window.path_to_searchindex_js = "searchindex-532edccc.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -198,9 +198,9 @@
                     <main>
                         <h1 id="模块八参数配置工程优化与基准测试安全分析与性能报告"><a class="header" href="#模块八参数配置工程优化与基准测试安全分析与性能报告">模块八：参数配置、工程优化与基准测试——安全分析与性能报告</a></h1>
 <h2 id="一概述"><a class="header" href="#一概述">一、概述</a></h2>
-<p>本模块是整个系统的工程化结晶，涵盖三个核心维度：</p>
+<p>本模块把安全参数、签名表示和实验口径放在一起；并只在必要处说明实现优化：</p>
 <ol>
-<li><code>security.rs</code> — 严格的安全性分析和参数选择，确保系统达到目标安全强度</li>
+<li><code>security.rs</code> — 对当前关系证明上界进行 concrete accounting，不替代完整安全证明</li>
 <li><code>artifact_bundle.rs</code> — 极紧凑的签名序列化格式，将签名体积压缩到 KB 级别</li>
 <li><code>benches/paper_benchmarks.rs</code> + <code>scripts/</code> — 端到端基准测试框架和性能调优</li>
 </ol>
@@ -240,15 +240,15 @@ $$</p>
 <pre><code>degree=9, combination=128, delta=128 → bit_security ≈ 124.678
 degree=9, combination=128, delta=120 → bit_security ≈ 116.829
 </code></pre>
-<p>这与论文表 6 的 116-bit 保守估计一致。</p>
-<p>Grinding 补偿：$w_\text{grind} = 8$ 比特的 grinding 提供了额外的 $\log_2(2^8) = 8$ 比特工作因子：</p>
+<p>该数值可与论文中的保守参数分析作对照；它不是对所有应用参数自动成立的统一安全等级。</p>
+<p>单独记录 grinding：$w_\text{grind} = 8$ 比特意味着平均约 $2^8$ 次 opening challenge 尝试。代码把它作为工作因子单独报告：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub fn optimistic_work_factor_bits(self, grinding_bits: usize) -&gt; f64 {
     self.bit_security + grinding_bits as f64
 }
 <span class="boring">}</span></code></pre>
-<p>这使得实际攻击难度达到约 $116.8 + 8 \approx 124.8$ 比特。</p>
+<p>这不能直接改写为 statistical soundness 达到 $116.8+8$ bit；它只是对接受一个满足 opening 条件的 transcript 所需计算工作的另一种解释。</p>
 <h3 id="24-参数套件"><a class="header" href="#24-参数套件">2.4 参数套件</a></h3>
 <div class="table-wrapper">
 <table>
@@ -517,13 +517,13 @@ const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 <tr><th>优化层次</th><th>具体技术</th><th>影响</th></tr>
 </thead>
 <tbody>
-<tr><td>算法</td><td>隐式求值/蝴蝶折叠</td><td>$O(t \cdot 2^c) \to O(m \cdot c)$</td></tr>
-<tr><td>内存</td><td><code>StreamingMatrixCols</code> 流式列生成</td><td>矩阵内存 $O(nm) \to O(1)$</td></tr>
+<tr><td>算法</td><td>隐式求值/蝴蝶折叠</td><td>先聚合 $\chi’$，再按块进行 $c$ 层折叠；成本取决于块数和 $2^c$</td></tr>
+<tr><td>内存</td><td><code>StreamingMatrixCols</code> 流式列生成</td><td>避免常驻完整矩阵，工作空间由列缓冲区和 PRG 状态主导</td></tr>
 <tr><td>序列化</td><td>种子代替矩阵、紧凑位编码</td><td>签名体积 MB → KB</td></tr>
-<tr><td>并行</td><td>Rayon <code>par_iter</code> / <code>par_chunks_mut</code> / <code>join</code></td><td>接近核数线性加速</td></tr>
-<tr><td>硬件</td><td>PCLMULQDQ / AES-NI / BMI2</td><td>亚微秒级域运算</td></tr>
-<tr><td>微架构</td><td>循环展开、栈分配、四累加器</td><td>额外 2-3$\times$ 系数提升</td></tr>
-<tr><td>安全</td><td>Grinding 8-bit、常数时间实现</td><td>124-bit 等效安全强度</td></tr>
+<tr><td>并行</td><td>Rayon <code>par_iter</code> / <code>par_chunks_mut</code> / <code>join</code></td><td>加速取决于线程数、CPU 和内存带宽</td></tr>
+<tr><td>硬件</td><td>PCLMULQDQ / AES-NI / BMI2</td><td>具体效果由 benchmark 测量</td></tr>
+<tr><td>微架构</td><td>循环展开、栈分配、四累加器</td><td>减少热路径开销，不作为协议结论</td></tr>
+<tr><td>安全</td><td>Grinding 8-bit、掩码/常数时间路径</td><td>与关系证明 bound、工作因子分开报告</td></tr>
 <tr><td>工程</td><td>双后端切换（HW/SW fallback）</td><td>跨平台兼容</td></tr>
 </tbody>
 </table>
