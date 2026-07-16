@@ -172,9 +172,9 @@ if bavc.h.is_null() || bavc.k.is_null() || bavc.com.is_null() || bavc.sd.is_null
 
 这种防御式编程模式确保即使 C 侧返回异常状态，Rust 侧也不会在空指针上继续操作。
 
-### 3.4 不依赖 C 的 Rust 原生实现：VOLE 哈希
+### 3.4 VOLE 哈希：同一算法的两种实现
 
-为减少 C FFI 调用的性能开销和跨语言维护负担，FAEST 的 VOLE 哈希函数（`vole_hash`）在 Rust 中完整重新实现：
+FAEST C 的 `universal_hashing.c` 已经提供 `vole_hash_128`，仓库同时保留了一个 Rust 等价实现 `vole_hash_128f_rust`。运行路径选择 Rust 版本，不是因为 C 版本不可用，而是因为两者的有限域乘法实现不同：Rust 使用 `F128b` 和可用时的 PCLMULQDQ，C 的 `bf128_mul`/`bf64_mul` 是逐 bit 的 shift-and-XOR 实现。
 
 ```rust
 fn vole_hash_128f_rust(seed, input, hash_ell_bits) -> [u8; 18]
@@ -207,7 +207,7 @@ low ^ high ^ (high << 1) ^ (high << 3) ^ (high << 4)
 
 这约简多项式 $x^{64} + x^4 + x^3 + x + 1$。
 
-正确性保障：`test_rust_vole_hash_matches_faest_c_reference` 在多种输入长度（0 ~ 28176 比特）和多种随机种子下，逐字节比对 Rust 实现与 C 参考实现的输出，确保完全一致。
+正确性保障：`test_rust_vole_hash_matches_faest_c_reference` 在多种输入长度（0 ~ 28176 比特）和多种随机种子下，逐字节比对 Rust 实现与 C 参考实现的输出。优化构建的性能审计测试显示，在当前 x86_64 主机上 Rust 版本约为 C 版本的 50–86 倍；因此这里的重复实现是有性能依据的，不应机械替换为 FFI。
 
 ## 四、状态机设计：`voleith.rs`
 
@@ -422,7 +422,7 @@ graph TD
 
 | 决策 | 理由 |
 |------|------|
-| VOLE 哈希在 Rust 中重写 | 减少 FFI 调用频率，利用内联的 PCLMULQDQ/PMULL 加速 |
+| VOLE 哈希保留 Rust 等价实现 | C 版本可作参考校验，但其有限域乘法为逐 bit 实现；Rust 路径可利用 PCLMULQDQ/PMULL |
 | BAVC 树承诺保留在 C 侧 | GGM 树构建涉及大量递归内存分配，C 的 `malloc/free` 更高效 |
 | 列转置在 Rust 侧执行 | 需要 Rust 的 `rayon` 并行框架；使用 BMI2 `PEXT` 指令优化逐位列提取 |
 | Grinding 在 Rust 侧完成 | 纯数学运算，不依赖 C 状态；可利用 `rayon` 并行搜索 |
