@@ -7,6 +7,12 @@
 
 源码优先。论文中的安全定理、参数表和应用生命周期不能自动视为本仓库已经实现的功能。特别是，当前仓库的可执行证明域为 `F128b = GF(2^128)`，256-bit 论文表格没有对应的可执行 profile。
 
+## 论文与实现的关系
+
+论文为 Ying Ouyang、Deng Tang、Yanhong Xu，*Code-Based Zero-Knowledge from VOLE-in-the-Head and Their Applications: Simpler, Faster, and Smaller*，ASIACRYPT 2024，LNCS 15488，2025，DOI: [10.1007/978-981-96-0935-2_14](https://doi.org/10.1007/978-981-96-0935-2_14)。
+
+论文提出 RingSig、GroupSig 和 FDABS 等完整方案；本仓库实现的是这些方案的关系证明、在线签名/验证和本地线缆格式。群成员注册、群签名开封/解密与撤销、FDABS 属性机构和策略分发等系统生命周期不在当前实现范围内。完整边界以仓库根目录的 `LIMITATIONS.md` 为准。
+
 ## 证明对象的共同形式
 
 应用层最终都把待证明语句写成
