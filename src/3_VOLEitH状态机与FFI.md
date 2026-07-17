@@ -4,7 +4,7 @@
 
 本模块是整个 ZKP 系统的核心引擎——它负责将密码学约束系统与底层的延迟 VOLE 功能（Delayed VOLE functionality, $\mathcal{F}\_{\text{sVOLE}}$）衔接起来。架构上采用两层级联设计：
 
-1. C 层（FAEST）：提供 GGM/BAVC 所需的承诺、打开和重构例程。$\tau$ 是并行重复数，$\lambda$ 是安全参数；树的形状由 FAEST profile 中的树参数确定。
+1. C 层（FAEST）：提供 GGM/BAVC 所需的承诺、打开和重构例程。$\tau$ 是并行重复数，$\lambda$ 是安全参数；树的形状由 FAEST 参数配置中的树参数确定。
 2. Rust 层：通过 FFI 安全封装 C 层状态机，并在此基础上实现 Prover/Verifier 的协议状态机，负责挑战生成、相关性提取（correlation extraction）、约束绑定等高层协议逻辑。
 
 ## 二、为什么需要 FFI 复用 FAEST 的 C 代码？
@@ -179,7 +179,7 @@ FAEST C 的 `universal_hashing.c` 提供 `vole_hash_128`，仓库同时保留 Ru
 fn vole_hash_128f_rust(seed, input, hash_ell_bits) -> [u8; 18]
 ```
 
-这实现了一个基于 F128b 域运算的密钥哈希（Keyed Hash），核心计算为：
+这实现了一个基于代码类型 `F128b`（对应 $\mathbb F_{2^{128}}$）运算的密钥哈希，核心计算为：
 
 $$
 H = (h_2, h_3) = (r_0 \cdot h_0 + r_1 \cdot h_1,\; r_2 \cdot h_0 + r_3 \cdot h_1)
@@ -268,7 +268,7 @@ graph TD
 
 ```mermaid
 graph TD
-    A([reconstruct]) --> B[验证 profile 与参数]
+    A([reconstruct]) --> B[验证参数配置与参数值]
     B --> C{Grinding<br/>有效?}
     
     C -->|否| Reject([验证失败/拒绝])
@@ -339,13 +339,13 @@ fn challenge_has_required_grind_bits(challenge, w_grind) -> bool {
 }
 ```
 
-这要求 Prover 在最终确定签名前，平均需要约 $2^{w_\text{grind}}$ 次尝试。对于当前 `w_grind = 8` 的 profile，平均工作量约为 256 次。该工作量是 FAEST opening 规则的一部分；`security.rs` 将其作为单独的工作因子记录，不把它直接加到关系证明的统计 soundness bound 中。
+这要求 Prover 在最终确定签名前，平均需要约 $2^{w_\text{grind}}$ 次尝试。对于当前 `w_grind = 8` 的参数配置，平均工作量约为 256 次。该工作量是 FAEST opening 规则的一部分；`security.rs` 将其作为单独的工作因子记录，不把它直接加到关系证明的统计 soundness bound 中。
 
-## 五、线缆编码：`wire.rs`
+## 五、序列化字节格式：`wire.rs`
 
 ### 5.1 版本化规范格式
 
-`wire.rs` 实现了一个自描述、版本化、严格规范的序列化格式，用于所有签名类型的线缆传输。
+`wire.rs` 实现了一个自描述、版本化的规范序列化字节格式，用于所有签名类型的存储与传输。
 
 格式结构：
 
@@ -356,7 +356,7 @@ fn challenge_has_required_grind_bits(challenge, w_grind) -> bool {
 └─────────┴──────────┴────────┴──────────┴──────────────┴──────┘
 ```
 
-- Magic：`CBZKVSIG`（8 字节魔术数，用于快速识别和版本过滤）
+- 格式标识符：`CBZKVSIG`（8 字节，用于识别格式类型）
 - Version：当前为 `1`（小端编码）
 - Kind：签名类型标识
 
@@ -375,7 +375,7 @@ Payload 包含三个主要部分：
 2. `ProofMessage<F128b>`：盲化系数向量（blinded coefficients）
    - 编码方式：长度前缀（u64）+ 每个系数 16 字节（`F128b::to_bytes()`）
 3. `VoleitHTranscript`：完整的 VOLE 协议通信轨迹
-   - profile（1 字节）
+   - 参数配置标识符（1 字节）
    - commitment_hash（32 字节）
    - IV（16 字节）
    - consistency_c（长度前缀 + 变长）
@@ -424,5 +424,5 @@ graph TD
 | VOLE 哈希保留 Rust 等价实现 | C 版本可作参考校验，但其有限域乘法为逐 bit 实现；Rust 路径可利用 PCLMULQDQ/PMULL |
 | BAVC 树承诺保留在 C 侧 | 复用 FAEST 参考实现的字节级承诺/打开行为，并由 Rust 包装层管理其资源 |
 | 列转置在 Rust 侧执行 | 需要 Rust 的 `rayon` 并行框架；使用 BMI2 `PEXT` 指令优化逐位列提取 |
-| Grinding 在 Rust 侧完成 | 不依赖 C 状态；当前实现逐个 counter 搜索满足 profile 要求的挑战 |
+| Grinding 在 Rust 侧完成 | 不依赖 C 状态；当前实现逐个 counter 搜索满足参数配置要求的挑战 |
 | 序列化手动编码 | 避免通用序列化框架的开销和版本漂移；精确的位紧凑编码 |

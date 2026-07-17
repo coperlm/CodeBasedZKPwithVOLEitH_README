@@ -6,7 +6,7 @@
 
 论文为 Ying Ouyang、Deng Tang、Yanhong Xu，*Code-Based Zero-Knowledge from VOLE-in-the-Head and Their Applications: Simpler, Faster, and Smaller*，ASIACRYPT 2024，LNCS 15488，2025，DOI: [10.1007/978-981-96-0935-2_14](https://doi.org/10.1007/978-981-96-0935-2_14)。
 
-当前版本实现了关系证明、在线签名/验证及其序列化格式。其中，群签名的成员注册、开封和撤销，以及 FDABS 的属性机构、注册、更新和撤销流程属于完整系统的管理功能，后续可在现有签名验证接口上继续扩展。当前可执行证明域为 `F128b = GF(2^128)`；完整实现边界见仓库根目录的 `LIMITATIONS.md`。
+当前版本实现了关系证明、在线签名/验证及其序列化格式。其中，群签名的成员注册、开封和撤销，以及 FDABS 的属性机构、注册、更新和撤销流程属于完整系统的管理功能，后续可在现有签名验证接口上继续扩展。代码类型 `F128b` 对应数学有限域 $\mathbb F_{2^{128}}$；完整实现边界见仓库根目录的 `LIMITATIONS.md`。
 
 ## 证明对象的共同形式
 
