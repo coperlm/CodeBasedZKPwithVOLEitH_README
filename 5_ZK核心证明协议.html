@@ -57,10 +57,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-d54d9d87.js";
+            window.path_to_searchindex_js = "searchindex-325ae966.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-513cb83f.js"></script>
+        <script src="toc-97dc7667.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -205,7 +205,7 @@
 <p>本模块包含两个层面：</p>
 <ol>
 <li><code>protocol_dd_rep.rs</code> — $\Pi^t_{dD-Rep}$ 协议的三步实现（承诺 → 挑战 → 响应/验证）</li>
-<li><code>transcript.rs</code> — Fiat-Shamir 变换的 Random Oracle 实例化（SHA-3 Keccak-256）</li>
+<li><code>transcript.rs</code> — Fiat-Shamir 变换的 Random Oracle 实例化（Keccak-256）</li>
 </ol>
 <h2 id="二pit_dd-rep-协议三步曲"><a class="header" href="#二pit_dd-rep-协议三步曲">二、$\Pi^t_{dD-Rep}$ 协议三步曲</a></h2>
 <h3 id="21-协议概览"><a class="header" href="#21-协议概览">2.1 协议概览</a></h3>
@@ -285,7 +285,7 @@ let seed = derive_relation_seed(...);
 ChallengeMessage { challenges: f128_challenges_from_seed(seed, challenge_count) }
 <span class="boring">}</span></code></pre>
 <h3 id="24-step-3prover-响应respond--respond_resolved_plus_implicit"><a class="header" href="#24-step-3prover-响应respond--respond_resolved_plus_implicit">2.4 Step 3：Prover 响应（<code>respond</code> / <code>respond_resolved_plus_implicit</code>）</a></h3>
-<p>Prover 面对的核心任务是：计算 $\tilde{G}(Y) = \sum_{i=1}^t \chi_i \cdot \tilde{g}_i(Y)$ 在 $c+1$ 个插值点上的值，然后插值恢复多项式系数，最后用辅助 VOLE 进行盲化。</p>
+<p>Prover 面对的核心任务是：计算 $\tilde{G}(Y) = \sum_{i=1}^t \chi_i \cdot \tilde{g}_i(Y)$ 在 $d+1$ 个插值点上的值，然后插值恢复多项式系数，最后用辅助 VOLE 进行盲化。对 ReSolveD+，$d=c$，因此专用接口使用 $c+1$ 个点。</p>
 <p>代码提供三种响应模式：</p>
 <h4 id="模式-a通用-anf-求值respond"><a class="header" href="#模式-a通用-anf-求值respond">模式 A：通用 ANF 求值（<code>respond</code>）</a></h4>
 <p>直接对约束系统 ${g_i}$ 的每个多项式在每个插值点逐项求值：</p>
@@ -429,7 +429,7 @@ $$</p>
 <h2 id="四fiat-shamir-变换transcriptrs"><a class="header" href="#四fiat-shamir-变换transcriptrs">四、Fiat-Shamir 变换：<code>transcript.rs</code></a></h2>
 <h3 id="41-random-oracle-实例化"><a class="header" href="#41-random-oracle-实例化">4.1 Random Oracle 实例化</a></h3>
 <p>Fiat-Shamir 启发式将交互式协议转换为非交互式零知识证明（NIZK），其核心是将 Verifier 的随机挑战替换为对协议 transcript 的 密码学哈希。</p>
-<p><code>Transcript</code> 使用 SHA-3 Keccak-256 作为底层哈希函数实例化 Random Oracle：</p>
+<p><code>Transcript</code> 使用 Keccak-256 作为底层哈希函数实例化 Random Oracle：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use sha3::{Digest, Keccak256};
@@ -586,12 +586,11 @@ Verifier:
   (pk, msg, σ) → 接受/拒绝
 
 1. 反序列化 σ → (commitment, proof, transcript)
-2. VOLE 重构: faest_vole_reconstruct(iv, challenge, opening, c) → (q, commitment_hash)
-3. 验证 commitment_hash 一致性
-4. Fiat-Shamir 重建所有挑战
+2. 检查 opening challenge 的 grinding 位
+3. VOLE 重构: faest_vole_reconstruct(iv, challenge, opening, c) → (q, commitment_hash)
+4. 验证 commitment_hash 一致性，并重建 Fiat-Shamir 挑战
 5. 吸收校正子: corrected_q = q + correction · Δ
 6. 验证核心等式: LHS ?= RHS
-7. 验证 Grinding 条件
 </code></pre>
 <h3 id="安全性总结"><a class="header" href="#安全性总结">安全性总结</a></h3>
 <div class="table-wrapper">
@@ -602,7 +601,7 @@ Verifier:
 <tbody>
 <tr><td>零知识性</td><td>VOLE 校正子 $w \oplus u$ 隐藏 witness；盲化系数 $\tilde{a}_j$ 隐藏多项式系数</td></tr>
 <tr><td>可靠性</td><td>论文定理 1 的界为 $1/p^{r\tau}+d/</td></tr>
-<tr><td>非交互性</td><td>Fiat-Shamir 变换将 Verifier 的随机挑战替换为 SHA-3 哈希输出</td></tr>
+<tr><td>非交互性</td><td>Fiat-Shamir 变换将 Verifier 的随机挑战替换为 Keccak-256 派生值</td></tr>
 <tr><td>transcript 绑定</td><td>带标签吸收、域分离和确定性重算；哈希抗碰撞假设属于安全模型</td></tr>
 </tbody>
 </table>

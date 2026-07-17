@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>模块七：高级应用层签名</title>
+        <title>模块七：高级应用层签名（GroupSig、FDABS 与 Scope-LRS）</title>
 
 
         <!-- Custom HTML head -->
@@ -57,10 +57,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-d54d9d87.js";
+            window.path_to_searchindex_js = "searchindex-325ae966.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-513cb83f.js"></script>
+        <script src="toc-97dc7667.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -196,12 +196,13 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="模块七高级应用层群签名与全动态属性基签名-fdabs"><a class="header" href="#模块七高级应用层群签名与全动态属性基签名-fdabs">模块七：高级应用层——群签名与全动态属性基签名 (FDABS)</a></h1>
+                        <h1 id="模块七高级应用层群签名fdabs-与-scope-lrs"><a class="header" href="#模块七高级应用层群签名fdabs-与-scope-lrs">模块七：高级应用层——群签名、FDABS 与 Scope-LRS</a></h1>
 <h2 id="一概述"><a class="header" href="#一概述">一、概述</a></h2>
-<p>本模块对应论文 §5.3、§5.5 的高级应用关系，并在环签名的 Merkle 成员证明基础上实现两类在线签名：</p>
+<p>本模块对应论文 §5.3、§5.5 的高级应用关系，并在环签名的 Merkle 成员证明基础上实现两类在线签名及一个工程扩展：</p>
 <ol>
 <li>群签名（Group Signature, GS）：签名者以两次随机化 McEliece 加密同一身份 $\operatorname{bin}(j)$，并将两个密文与成员见证纳入同一零知识证明。消息通过签名语句摘要绑定。</li>
 <li>全动态属性基签名（Fully Dynamic Attribute-Based Signature, FDABS）：签名者以属性向量、Merkle 路径和策略电路作为见证；属性满足策略时即可生成可验证签名，<code>info</code> 与 <code>epoch</code> 作为签名上下文参与绑定。</li>
+<li>Scope-LRS：在环签名关系上加入由 <code>context_id</code> 派生的链接矩阵和 key image，使同一叶秘密在相同 scope 内的签名可被关联。批量接口把多条实例的见证和约束拼接到一次 VOLEitH 证明中。</li>
 </ol>
 <p>当前版本覆盖上述关系证明、签名、验证和序列化。群成员注册、开封与撤销，以及 FDABS 的属性机构、注册、更新与撤销属于完整应用系统的管理流程，可在现有接口上继续扩展。</p>
 <h2 id="二群签名group-signature"><a class="header" href="#二群签名group-signature">二、群签名（Group Signature）</a></h2>
@@ -561,7 +562,15 @@ Output: FdabsSignature
 </tbody>
 </table>
 </div>
-<h2 id="四总结对比"><a class="header" href="#四总结对比">四、总结对比</a></h2>
+<h2 id="四scope-lrs-工程扩展"><a class="header" href="#四scope-lrs-工程扩展">四、Scope-LRS 工程扩展</a></h2>
+<p><code>LinkableRingPublicKey</code> 在环签名公钥的基础上增加 <code>context_id</code>、链接矩阵 <code>b_link_cols</code> 与 key image。链接矩阵种子由 <code>context_id</code>、矩阵维度和叶秘密长度经 Keccak-256 确定性派生；因此验证者可检查矩阵与 scope 的对应关系。</p>
+<p>对叶秘密 $x=(x_0|x_1)$，代码计算</p>
+<p>$$
+I=B_{\mathrm{link}}\cdot\operatorname{RE}(x),
+$$</p>
+<p>并将 $I$、<code>context_id</code> 和环公钥吸收到 statement digest。签名显式携带 <code>key_image</code>；验证时先检查其等于公钥中的 $I$，再验证包含 Merkle 关系和链接关系的零知识证明。由同一叶秘密和相同 <code>context_id</code> 得到的 key image 相同，因此可作为该 scope 内的链接标识。</p>
+<p>批量接口 <code>sign_lrs_batch</code> 将各实例 witness 顺序拼接，使用一次 <code>VoleitHProver::commit</code>，并按实例偏移量分别计算关系值。批量签名携带一组 key images；<code>verify_lrs_batch</code> 检查它们与每个实例的公开 key image 对应。该接口属于仓库的工程扩展，模块十单独列出其性能记录。</p>
+<h2 id="五总结对比"><a class="header" href="#五总结对比">五、总结对比</a></h2>
 <div class="table-wrapper">
 <table>
 <thead>

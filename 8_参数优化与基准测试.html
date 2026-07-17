@@ -57,10 +57,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-d54d9d87.js";
+            window.path_to_searchindex_js = "searchindex-325ae966.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-513cb83f.js"></script>
+        <script src="toc-97dc7667.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -264,7 +264,7 @@ degree=9, combination=128, delta=120 → bit_security ≈ 116.829
 <p>环签名等方案度数 $d = c+1 = 9$（因方向比特多一度），但安全分析仍适用相同的 bound 公式。</p>
 <h2 id="三resolved-紧凑序列化artifact_bundlers"><a class="header" href="#三resolved-紧凑序列化artifact_bundlers">三、ReSolveD+ 紧凑序列化：<code>artifact_bundle.rs</code></a></h2>
 <h3 id="31-签名体积的理论基础"><a class="header" href="#31-签名体积的理论基础">3.1 签名体积的理论基础</a></h3>
-<p>论文表 7 的优化 ReSolveD+ 条目为 3054 B；本仓库的可独立解码 ReSolveD+ 签名字节包为 3159 B。传统基于 Stern 协议的 ZKP 签名：每次重复需要约 $k$ 比特的承诺和打开数据，重复 $\lambda$ 次（$\lambda = 128$），总签名体积通常在兆字节（MB）级别。</p>
+<p>论文表 7 的优化 ReSolveD+ 条目为 3054 B；本仓库论文参数下 <code>Signature::to_bytes()</code> 的规范签名字节长度为 3159 B。传统基于 Stern 协议的 ZKP 签名：每次重复需要约 $k$ 比特的承诺和打开数据，重复 $\lambda$ 次（$\lambda = 128$），总签名体积通常在兆字节（MB）级别。</p>
 <p>VOLEitH 方法：通过 $\tau$ 棵 GGM 树并行承诺 + 选择性打开，签名体积压缩到 KB 级别。核心压缩机制：</p>
 <div class="table-wrapper">
 <table>
@@ -282,7 +282,7 @@ degree=9, combination=128, delta=120 → bit_security ≈ 116.829
 <tr><td>VOLE subtotal</td><td></td><td>~3 KB</td></tr>
 <tr><td>Correction</td><td>$k$ 比特</td><td>~56 B</td></tr>
 <tr><td>Proof Coeffs</td><td>$d$ 个 $\mathbb{F}_{2^{128}}$ 元素</td><td>$d \times 16$ B</td></tr>
-<tr><td>ReSolveD+ 签名字节包总计</td><td></td><td>3159 B</td></tr>
+<tr><td>ReSolveD+ 规范签名总计</td><td></td><td>3159 B</td></tr>
 </tbody>
 </table>
 </div>
@@ -295,13 +295,13 @@ pub const ARTIFACT_ROWS: usize = 453;
 pub const ARTIFACT_SIGNATURE_BYTES: usize = 3159;
 <span class="boring">}</span></code></pre>
 <h3 id="32-压缩策略详解"><a class="header" href="#32-压缩策略详解">3.2 压缩策略详解</a></h3>
-<h4 id="策略一resolved-签名字节包以种子代替矩阵"><a class="header" href="#策略一resolved-签名字节包以种子代替矩阵">策略一：ReSolveD+ 签名字节包以种子代替矩阵</a></h4>
-<p>公钥中的 $B$ 矩阵不序列化 $n \times m$ 比特（$453 \times 1208 \approx 547$ Kb $\approx 68$ KB），而是仅序列化 16 字节的种子 $\sigma$：</p>
+<h4 id="策略一独立-cli-封装以种子表示公开矩阵"><a class="header" href="#策略一独立-cli-封装以种子表示公开矩阵">策略一：独立 CLI 封装以种子表示公开矩阵</a></h4>
+<p>独立 CLI 使用的 <code>ResolvedPlusBundle</code> 不序列化公钥中的完整 $B$ 矩阵（$453 \times 1208 \approx 547$ Kb $\approx 68$ KB），而是保存其 16 字节种子 $\sigma$：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>bytes.extend_from_slice(&amp;public_key.b_cols.seed());  // 仅 16 字节
 <span class="boring">}</span></code></pre>
-<p>Verifier 在验证时用 <code>StreamingMatrixCols::new(seed, rows, cols)</code> 重新生成矩阵。</p>
+<p>Verifier 解码该封装时用 <code>StreamingMatrixCols::new(seed, rows, cols)</code> 重新生成矩阵。该封装还包含公开输出和规范签名，因此其总大小为 3292 B；3159 B 仅指其中的规范签名。</p>
 <h4 id="策略二紧凑位编码"><a class="header" href="#策略二紧凑位编码">策略二：紧凑位编码</a></h4>
 <p>所有比特向量使用精确比特数编码（<code>canonical_bit_bytes</code>），移除尾部未使用比特：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -376,7 +376,7 @@ const VERSION: u16 = 1;
 <tr><td><code>implicit_eval.rs</code></td><td>χ’ 列聚合</td><td style="text-align: center">列数 $\ge 8192$</td><td style="text-align: center">多核分块计算</td></tr>
 <tr><td><code>implicit_eval.rs</code></td><td>蝴蝶求值块</td><td style="text-align: center">块数 $\ge 128$</td><td style="text-align: center">多核分块计算</td></tr>
 <tr><td><code>implicit_eval.rs</code></td><td>配对 χ’ 左右矩阵</td><td style="text-align: center">列数 $\ge 8192$</td><td style="text-align: center">$2\times$</td></tr>
-<tr><td><code>implicit_eval.rs</code></td><td>VOLE 行哈希</td><td style="text-align: center">输入 $\ge 64$ KB</td><td style="text-align: center">行并行</td></tr>
+<tr><td><code>voleith.rs</code></td><td>VOLE 行哈希</td><td style="text-align: center">输入 $\ge 64$ KB</td><td style="text-align: center">行并行</td></tr>
 <tr><td><code>voleith.rs</code></td><td>列转置</td><td style="text-align: center">列数 $\ge 8$ KB</td><td style="text-align: center">BMI2 加速</td></tr>
 <tr><td><code>protocol_dd_rep.rs</code></td><td>约束求值</td><td style="text-align: center">约束数 $\ge 1$</td><td style="text-align: center">多项式并行</td></tr>
 <tr><td><code>ring_signature_sig.rs</code></td><td>配对 χ’ + 叶子 χ’</td><td style="text-align: center">层数 $\ge 1$</td><td style="text-align: center"><code>rayon::join</code></td></tr>
@@ -435,9 +435,9 @@ let (linear1, linear2) = if rayon::current_num_threads() &gt; 1 {
 <tr><th>指令</th><th>使用场景</th><th style="text-align: center">加速效果</th></tr>
 </thead>
 <tbody>
-<tr><td>PCLMULQDQ / PMULL</td><td>$\mathbb{F}_{2^{128}}$ 和 $\mathbb{F}_{2^{64}}$ 乘法</td><td style="text-align: center">硬件原生</td></tr>
-<tr><td>AES-NI <code>_mm_aesenc_si128</code></td><td>AES-CTR 矩阵列 PRG</td><td style="text-align: center">单周期/AES 轮</td></tr>
-<tr><td>BMI2 <code>_pext_u64</code></td><td>列转置中的比特聚集取</td><td style="text-align: center">$8\times$ 软实现</td></tr>
+<tr><td>PCLMULQDQ / PMULL</td><td>$\mathbb{F}_{2^{128}}$ 和 $\mathbb{F}_{2^{64}}$ 乘法</td><td style="text-align: center">目标平台可用的无进位乘法支持</td></tr>
+<tr><td>AES-NI <code>_mm_aesenc_si128</code></td><td>AES-CTR 矩阵列 PRG</td><td style="text-align: center">硬件 AES 轮指令</td></tr>
+<tr><td>BMI2 <code>_pext_u64</code></td><td>列转置中的比特聚集</td><td style="text-align: center">硬件位提取指令</td></tr>
 </tbody>
 </table>
 </div>
@@ -491,7 +491,7 @@ let total = (acc0 + acc1) + (acc2 + acc3);
 <span class="boring">}</span></code></pre>
 <h3 id="46-基准测试框架"><a class="header" href="#46-基准测试框架">4.6 基准测试框架</a></h3>
 <p><code>paper_benchmarks.rs</code> 使用自定义的 <code>MillisecondTime</code> 测量类型（替代默认的纳秒），直接输出毫秒级的直观结果。</p>
-<p>测试套件覆盖全部 4 种签名方案（ReSolveD+、环签名、群签名、FDABS），并在两组 Merkle 深度（$\ell=5$ 和 $\ell=10$）下分别测量。</p>
+<p>测试套件覆盖四种论文对齐方案（ReSolveD+、环签名、群签名、FDABS），并额外测量 Scope-LRS 与批量 Scope-LRS 工程扩展。Merkle 型方案在 $\ell=5$ 和 $\ell=10$ 两组深度下测量。</p>
 <p>重要参数：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -514,10 +514,10 @@ const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 <tr><th>优化层次</th><th>具体技术</th><th>影响</th></tr>
 </thead>
 <tbody>
-<tr><td>算法</td><td>隐式求值/蝴蝶折叠</td><td>先聚合 $\chi’$，再按块进行 $c$ 层折叠；成本取决于块数和 $2^c$</td></tr>
+<tr><td>算法</td><td>隐式求值/蝴蝶折叠</td><td>先聚合 $\chi’$，再按块进行 $c$ 层折叠</td></tr>
 <tr><td>内存</td><td><code>StreamingMatrixCols</code> 流式列生成</td><td>避免常驻完整矩阵，工作空间由列缓冲区和 PRG 状态主导</td></tr>
 <tr><td>序列化</td><td>种子代替矩阵、紧凑位编码</td><td>ReSolveD+ 签名字节包为 3.08 KiB；各应用签名体积见模块十</td></tr>
-<tr><td>并行</td><td>Rayon <code>par_iter</code> / <code>par_chunks_mut</code> / <code>join</code></td><td>加速取决于线程数、CPU 和内存带宽</td></tr>
+<tr><td>并行</td><td>Rayon <code>par_iter</code> / <code>par_chunks_mut</code> / <code>join</code></td><td>i5-13500H、16 个 Rayon 工作线程下的端到端结果见模块十</td></tr>
 <tr><td>硬件</td><td>PCLMULQDQ / AES-NI / BMI2</td><td>具体效果由 benchmark 测量</td></tr>
 <tr><td>微架构</td><td>循环展开、栈分配、四累加器</td><td>减少性能关键循环的开销，不作为协议结论</td></tr>
 <tr><td>安全</td><td>Grinding 8-bit、掩码/常数时间路径</td><td>与关系证明 bound、工作因子分开报告</td></tr>

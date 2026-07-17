@@ -57,10 +57,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-d54d9d87.js";
+            window.path_to_searchindex_js = "searchindex-325ae966.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-513cb83f.js"></script>
+        <script src="toc-97dc7667.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -506,11 +506,11 @@ $$</p>
 <tr><th>特性</th><th>AFS 哈希</th><th>McEliece 加密</th></tr>
 </thead>
 <tbody>
-<tr><td>底层困难问题</td><td>2-RNSD（码的带噪综合征解码）</td><td>Goppa 码不可区分</td></tr>
+<tr><td>关系背景</td><td>2-RNSD（码的带噪综合征解码）</td><td>正则噪声线性码关系；论文背景为 McEliece</td></tr>
 <tr><td>核心操作</td><td>$B \cdot \text{RE}(x)$</td><td>$G \cdot x \oplus \text{RE}(e’)$</td></tr>
-<tr><td>矩阵来源</td><td><code>StreamingMatrixCols</code>（种子衍生）</td><td><code>pqcrypto-classicmceliece</code> 密钥对</td></tr>
+<tr><td>矩阵来源</td><td><code>StreamingMatrixCols</code>（种子衍生）</td><td><code>GroupPublicKey</code> 提供的 <code>g1_cols</code>、<code>g2_cols</code> 流式公开关系矩阵</td></tr>
 <tr><td>常数时间实现</td><td>✅ 三个 CT 变体</td><td>N/A（公钥操作）</td></tr>
-<tr><td>内存策略</td><td>流式按需生成</td><td>PK 常驻 ~512 KB</td></tr>
+<tr><td>内存策略</td><td>流式按需生成</td><td>流式按需生成公开关系矩阵</td></tr>
 <tr><td>ANF 约束生成</td><td><code>build_pair_hash_terms</code></td><td><code>append_linear_matrix_row_terms</code> + <code>append_re_terms</code></td></tr>
 </tbody>
 </table>

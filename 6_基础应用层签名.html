@@ -57,10 +57,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-d54d9d87.js";
+            window.path_to_searchindex_js = "searchindex-325ae966.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-513cb83f.js"></script>
+        <script src="toc-97dc7667.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -224,7 +224,7 @@ pub struct SecretKey {
     pub x: MainBitVec,                 // 秘密 x（witness）
 }
 <span class="boring">}</span></code></pre>
-<p>密钥生成：</p>
+<p>一组满足该关系的密钥材料可按以下方式构造；在线 API 接收已构造的 <code>PublicKey</code> 与 <code>SecretKey</code>：</p>
 <ol>
 <li>随机选择种子 $\sigma$ → 生成 $B = \text{PRG}(\sigma) \in \mathbb{F}_2^{n \times m}$</li>
 <li>随机选择 $x \in \mathbb{F}_2^k$</li>
@@ -406,7 +406,7 @@ pub struct RingSecretKey {
     /             \
   x_0             x_1  (叶子秘密)
 </code></pre>
-<p>其中 $j_\theta$ 表示从第 $\theta-1$ 层到第 $\theta$ 层的路径方向。例如 $j_1 = 0$ 表示 $u_0 = h_B(v_1, w_1)$（方向正常），$j_1 = 1$ 表示 $u_0 = h_B(w_1, v_1)$（左右交换）。</p>
+<p>其中 $j_\theta$ 表示从第 $\theta-1$ 层到第 $\theta$ 层的路径方向。例如顶层方向位为 0 时，$u_0=h_B(v_1,w_1)$；方向位为 1 时，$u_0=h_B(w_1,v_1)$。</p>
 <h3 id="34-约束构建build_ring_signature_constraints"><a class="header" href="#34-约束构建build_ring_signature_constraints">3.4 约束构建：<code>build_ring_signature_constraints</code></a></h3>
 <p>约束系统包含 $(\ell + 1) \cdot n$ 个多项式（$\ell$ 层每层 $n$ 个 + 叶子层 $n$ 个）。</p>
 <h4 id="341-每层的约束方程"><a class="header" href="#341-每层的约束方程">3.4.1 每层的约束方程</a></h4>

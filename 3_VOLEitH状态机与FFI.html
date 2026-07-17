@@ -57,10 +57,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-d54d9d87.js";
+            window.path_to_searchindex_js = "searchindex-325ae966.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-513cb83f.js"></script>
+        <script src="toc-97dc7667.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -387,7 +387,7 @@ low ^ high ^ (high &lt;&lt; 1) ^ (high &lt;&lt; 3) ^ (high &lt;&lt; 4)
     ^ overflow ^ (overflow &lt;&lt; 1) ^ (overflow &lt;&lt; 3) ^ (overflow &lt;&lt; 4)
 <span class="boring">}</span></code></pre>
 <p>这约简多项式 $x^{64} + x^4 + x^3 + x + 1$。</p>
-<p><code>test_rust_vole_hash_matches_faest_c_reference</code> 在多种输入长度（0 ~ 28176 比特）和随机种子下，逐字节比对 Rust 实现与 C 参考实现的输出。优化构建的测试显示，在当前 x86_64 主机上 Rust 版本约为 C 版本的 50–86 倍。</p>
+<p><code>test_rust_vole_hash_matches_faest_c_reference</code> 在多种输入长度（0 ~ 28176 比特）和随机种子下，逐字节比对 Rust 实现与 C 参考实现的输出。该哈希步骤的端到端影响已计入模块十的签名和验证时间。</p>
 <h2 id="四状态机设计voleithrs"><a class="header" href="#四状态机设计voleithrs">四、状态机设计：<code>voleith.rs</code></a></h2>
 <h3 id="41-延迟-vole-功能delayed-vole"><a class="header" href="#41-延迟-vole-功能delayed-vole">4.1 延迟 VOLE 功能（Delayed VOLE）</a></h3>
 <p>在 VOLEitH 协议中，Prover 和 Verifier 需要建立以下 VOLE 关系：</p>
@@ -477,7 +477,7 @@ $$</p>
 </table>
 </div>
 <h3 id="45-fiat-shamir-挑战派生序列"><a class="header" href="#45-fiat-shamir-挑战派生序列">4.5 Fiat-Shamir 挑战派生序列</a></h3>
-<p>协议使用四轮 Fiat-Shamir 变换将交互式协议转化为 NIZK：</p>
+<p>协议使用三个阶段的 Fiat-Shamir 派生将交互式协议转化为 NIZK：</p>
 <p>第 1 轮挑战 <code>challenge_1</code>：源自 BAVC 承诺 + 一致性证明</p>
 <pre><code>absorb(profile, statement, witness_bits, degree, relation_bits,
        ell_hat_bits, commitment_hash, iv, consistency_c)
@@ -505,7 +505,7 @@ squeeze() → opening_challenge
 <p>这要求 Prover 在最终确定签名前，平均需要约 $2^{w_\text{grind}}$ 次尝试。对于当前 <code>w_grind = 8</code> 的参数配置，平均工作量约为 256 次。该工作量是 FAEST opening 规则的一部分；<code>security.rs</code> 将其作为单独的工作因子记录，不把它直接加到关系证明的统计 soundness bound 中。</p>
 <h2 id="五序列化字节格式wirers"><a class="header" href="#五序列化字节格式wirers">五、序列化字节格式：<code>wire.rs</code></a></h2>
 <h3 id="51-版本化规范格式"><a class="header" href="#51-版本化规范格式">5.1 版本化规范格式</a></h3>
-<p><code>wire.rs</code> 实现了一个自描述、版本化的规范序列化字节格式，用于所有签名类型的存储与传输。</p>
+<p><code>wire.rs</code> 实现了应用签名共享部分的自描述、版本化规范字节格式。各应用可在共享部分后追加自身的公开字段。</p>
 <p>格式结构：</p>
 <pre><code>┌─────────┬──────────┬────────┬──────────┬──────────────┬──────┐
 │  Magic  │ Version  │  Kind  │ Reserved │   Payload    │ Tail │
@@ -527,11 +527,13 @@ squeeze() → opening_challenge
 <tr><td><code>KIND_RING</code></td><td>2</td><td>环签名</td></tr>
 <tr><td><code>KIND_GROUP</code></td><td>3</td><td>群签名</td></tr>
 <tr><td><code>KIND_FDABS</code></td><td>4</td><td>全动态属性基签名</td></tr>
+<tr><td><code>KIND_LINKABLE_RING</code></td><td>5</td><td>Scope-LRS 签名</td></tr>
+<tr><td><code>KIND_LINKABLE_RING_BATCH</code></td><td>6</td><td>批量 Scope-LRS 签名</td></tr>
 </tbody>
 </table>
 </div>
 <h3 id="52-序列化内容"><a class="header" href="#52-序列化内容">5.2 序列化内容</a></h3>
-<p>Payload 包含三个主要部分：</p>
+<p>共享部分包含三个主要部分：</p>
 <ol>
 <li><code>CommitmentMessage</code>：校正子（correction）比特向量
 <ul>
@@ -561,7 +563,7 @@ squeeze() → opening_challenge
 <ol>
 <li>尾部零多余数据：<code>finish()</code> 检查 <code>offset == input.len()</code>，拒绝任何尾随字节</li>
 <li>唯一定义性：所有变长字段使用精确长度前缀，任何非规范编码（如尾部未使用比特非零）被拒绝</li>
-<li>F128 值的规范反序列化：使用 <code>F128b::from_bytes</code> 而非 <code>from_uniform_bytes</code>，拒绝非规范的域元素表示</li>
+<li>F128 值的固定宽度反序列化：使用 <code>F128b::from_bytes</code> 读取每个 16 字节域元素</li>
 <li>集合大小上限：<code>MAX_COLLECTION_ITEMS = 1,000,000</code> 防止拒绝服务攻击</li>
 </ol>
 <h2 id="六跨语言调用架构总结"><a class="header" href="#六跨语言调用架构总结">六、跨语言调用架构总结</a></h2>

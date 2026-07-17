@@ -57,10 +57,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-d54d9d87.js";
+            window.path_to_searchindex_js = "searchindex-325ae966.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-513cb83f.js"></script>
+        <script src="toc-97dc7667.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -201,7 +201,7 @@
 <h2 id="一已落地的关键实现"><a class="header" href="#一已落地的关键实现">一、已落地的关键实现</a></h2>
 <h3 id="1-多线性扩展折叠与求和交换"><a class="header" href="#1-多线性扩展折叠与求和交换">1. 多线性扩展折叠与求和交换</a></h3>
 <p>代码先通过交换求和顺序得到 $\chi’<em>h = \sum \chi_i b</em>{i,h}$，再用多线性扩展的蝴蝶网络求值。该过程按 $c$ 层处理 $2^c$ 个系数，实际开销由块数、矩阵扫描和缓存访问共同决定。</p>
-<p><code>implicit_eval.rs</code> 实现了这一过程：先以 Gray 码预计算字节子集 XOR 表（<code>build_byte_subset_xor_table</code>），再以原地蝴蝶折叠完成求值。对于 $2^c \le 256$ 的场景，使用栈分配缓冲数组 <code>[F; 256]</code>。</p>
+<p><code>implicit_eval.rs</code> 实现了这一过程：先以最低有效位递推预计算字节子集 XOR 表（<code>build_byte_subset_xor_table</code>），再以原地蝴蝶折叠完成求值。对于 $2^c \le 256$ 的场景，使用栈分配缓冲数组 <code>[F; 256]</code>。</p>
 <h3 id="2-流式生成矩阵"><a class="header" href="#2-流式生成矩阵">2. 流式生成矩阵</a></h3>
 <p>伪随机矩阵由种子确定。<code>StreamingMatrixCols</code> 按需生成矩阵列，降低常驻内存；在满足编译条件时，<code>streaming_matrix.rs</code> 使用 AES-NI 实时展开 PRG 种子生成矩阵列，完成 XOR 累加后释放临时数据。</p>
 <h3 id="3-fdabs-单矩阵叶子关系"><a class="header" href="#3-fdabs-单矩阵叶子关系">3. FDABS 单矩阵叶子关系</a></h3>
@@ -210,7 +210,7 @@
 <p>代码提供共享 VOLE 树的 batch LRS 接口，并计算 key image $I$。批处理逻辑复用同一棵 VOLE 树完成多条签名，性能结果见模块十。</p>
 <h2 id="二后续优化方向"><a class="header" href="#二后续优化方向">二、后续优化方向</a></h2>
 <h3 id="1-塔域加速大域乘法"><a class="header" href="#1-塔域加速大域乘法">1. 塔域加速大域乘法</a></h3>
-<p>可将 $\mathbb{F}<em>{2^{128}}$ 运算同构分解到塔域 $\mathbb{F}</em>{2^8}$ 上，以探索进一步的乘法加速。当前有限域运算由 <code>swanky_field</code> 提供，目标架构可使用 PCLMULQDQ/PMULL，性能由 <code>gf128_bench</code> 测量。</p>
+<p>可将 $\mathbb{F}<em>{2^{128}}$ 运算同构分解到塔域 $\mathbb{F}</em>{2^8}$ 上，以探索进一步的乘法加速。当前有限域运算由 <code>swanky_field</code> 提供，单项操作可由 <code>gf128_bench</code> 测量；本项目当前 i5-13500H 的端到端数据见模块十。</p>
 <h3 id="2-群签名随机数承诺优化"><a class="header" href="#2-群签名随机数承诺优化">2. 群签名随机数承诺优化</a></h3>
 <p>可计算 $G_{1,R}$ 的左零空间矩阵 $H_R$，以消去随机噪音 $r_1,r_2$ 对应的线性项，从而缩短 witness。该方向需要同时评估稠密矩阵乘法对流式求值路径的影响。</p>
 <h3 id="3-qrom-模型与-salted-rsd"><a class="header" href="#3-qrom-模型与-salted-rsd">3. QROM 模型与 Salted-RSD</a></h3>
