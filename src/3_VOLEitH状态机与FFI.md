@@ -4,14 +4,14 @@
 
 本模块是整个 ZKP 系统的核心引擎——它负责将密码学约束系统与底层的延迟 VOLE 功能（Delayed VOLE functionality, $\mathcal{F}\_{\text{sVOLE}}$）衔接起来。架构上采用两层级联设计：
 
-1. C 层（FAEST）：提供 GGM/BAVC 所需的承诺、打开和重构例程。$\tau$ 是并行重复数，$\lambda$ 是安全参数；树的形状由 FAEST profile 中的树参数决定，不能把 $\lambda$ 直接称为树深度。
+1. C 层（FAEST）：提供 GGM/BAVC 所需的承诺、打开和重构例程。$\tau$ 是并行重复数，$\lambda$ 是安全参数；树的形状由 FAEST profile 中的树参数确定。
 2. Rust 层：通过 FFI 安全封装 C 层状态机，并在此基础上实现 Prover/Verifier 的协议状态机，负责挑战生成、相关性提取（correlation extraction）、约束绑定等高层协议逻辑。
 
 ## 二、为什么需要 FFI 复用 FAEST 的 C 代码？
 
 ### 2.1 GGM 树形向量承诺（BAVC）的密码学角色
 
-在 VOLE-in-the-Head 范式中，Prover 需要承诺 $\tau$ 个伪随机种子 $K_1, \dots, K_\tau$，然后对每个种子应用 GGM 伪随机函数树（Goldreich-Goldwasser-Micali 树）展开出 $\lambda$ 层的叶子。这些叶子形成了 VOLE 关系中 Prover 的秘密向量：
+在 VOLE-in-the-Head 范式中，Prover 需要承诺 $\tau$ 个伪随机种子 $K_1, \dots, K_\tau$，然后对每个种子应用 GGM 伪随机函数树（Goldreich-Goldwasser-Micali 树）展开。树的层数和叶子数由 FAEST 参数确定，这些叶子形成 VOLE 关系中 Prover 的秘密向量：
 
 $$
 \{(u_i, v_i)\}\_{i=1}^\tau \xrightarrow{\text{GGM 展开}} \{(u, \mathbf{v})\} \in \mathbb{F}\_2^\ell \times \mathbb{F}\_{2^{128}}^\ell
@@ -27,7 +27,7 @@ BAVC（Binary Auxiliary Vector Commitment）是 FAEST 使用的一种优化的 G
 如果完全用 Rust 重新实现 BAVC：
 - 需要重新实现 $\tau$ 棵 GGM 树的构建、密钥扩展、Merkle 哈希聚合——这是数千行经过审计的 C 代码
 - 需要保证与 FAEST 规范的行为完全一致（包括常数时间执行、字节序、SHA-3 用法等）
-- 复用固定参考实现可以避免在本仓库重新定义 BAVC 的字节级行为，但不能把 FFI 接入自动解释为继承完整安全保证；参数、组合方式和本地关系证明仍需单独分析。
+- 复用参考实现可保持 BAVC 的字节级行为一致；参数、协议组合和本地关系证明由本项目的实现与论文共同定义。
 
 ### 2.3 代码组织
 
@@ -173,7 +173,7 @@ if bavc.h.is_null() || bavc.k.is_null() || bavc.com.is_null() || bavc.sd.is_null
 
 ### 3.4 VOLE 哈希：同一算法的两种实现
 
-FAEST C 的 `universal_hashing.c` 已经提供 `vole_hash_128`，仓库同时保留了一个 Rust 等价实现 `vole_hash_128f_rust`。运行路径选择 Rust 版本，不是因为 C 版本不可用，而是因为两者的有限域乘法实现不同：Rust 使用 `F128b` 和可用时的 PCLMULQDQ，C 的 `bf128_mul`/`bf64_mul` 是逐 bit 的 shift-and-XOR 实现。
+FAEST C 的 `universal_hashing.c` 提供 `vole_hash_128`，仓库同时保留 Rust 等价实现 `vole_hash_128f_rust`。运行路径选用 Rust 版本：Rust 使用 `F128b` 和可用时的 PCLMULQDQ，C 的 `bf128_mul`/`bf64_mul` 使用逐 bit 的 shift-and-XOR 实现。
 
 ```rust
 fn vole_hash_128f_rust(seed, input, hash_ell_bits) -> [u8; 18]
@@ -206,7 +206,7 @@ low ^ high ^ (high << 1) ^ (high << 3) ^ (high << 4)
 
 这约简多项式 $x^{64} + x^4 + x^3 + x + 1$。
 
-正确性保障：`test_rust_vole_hash_matches_faest_c_reference` 在多种输入长度（0 ~ 28176 比特）和多种随机种子下，逐字节比对 Rust 实现与 C 参考实现的输出。优化构建的性能审计测试显示，在当前 x86_64 主机上 Rust 版本约为 C 版本的 50–86 倍；因此这里的重复实现是有性能依据的，不应机械替换为 FFI。
+`test_rust_vole_hash_matches_faest_c_reference` 在多种输入长度（0 ~ 28176 比特）和随机种子下，逐字节比对 Rust 实现与 C 参考实现的输出。优化构建的测试显示，在当前 x86_64 主机上 Rust 版本约为 C 版本的 50–86 倍。
 
 ## 四、状态机设计：`voleith.rs`
 
@@ -406,7 +406,7 @@ graph TD
     end
 
     subgraph C_Lib [C 语言层 faest-ref]
-        C["vole.c / bavc.c<br/><br/>• BAVC 树构建 τ × λ 深度<br/>• GGM 伪随机展开<br/>• 承诺哈希 SHA-3 聚合<br/>• 选择性打开验证"]
+        C["vole.c / bavc.c<br/><br/>• BAVC 树构建与参数实例化<br/>• GGM 伪随机展开<br/>• 承诺哈希 SHA-3 聚合<br/>• 选择性打开验证"]
     end
 
     A -->|FFI 调用| B

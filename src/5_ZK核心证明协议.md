@@ -33,7 +33,7 @@ sequenceDiagram
     Note over P, V: Step 1: 承诺 (Commit)
     Note over P: corr ← w ⊕ u
     P->>V: corr
-    Note over V: 吸收承诺:<br/>q̃_i ← q_i + corr_i·Δ<br/>(即 q̃ = v)
+    Note over V: 吸收承诺:<br/>q̃_i ← q_i + corr_i·Δ<br/>(即 q̃_i = v_i + w_i·Δ)
 
     Note over P, V: Step 2: 挑战 (Challenge)
     Note over V: χ_i ← Random / Fiat-Shamir
@@ -83,9 +83,9 @@ $$
 $$
 
 由 $v_i=q_i+u_i\Delta$ 可得校正后的量为
-\[
+$$
 \tilde q_i=q_i+(w_i\oplus u_i)\Delta=v_i+w_i\Delta,
-\]
+$$
 而不是单独的 $v_i$。这正是后续在点 $\Delta$ 上评价 witness 约束所需的 affine 视图。它对应论文验证步骤中的 $Q^\star=Q_{[1,l]}+d\cdot GC\cdot\operatorname{diag}(\Delta)$；Verifier 不需要恢复 $u$ 或 $v$ 的明文向量，只需检查该视图与响应多项式相符。
 
 常数时间实现：`corrected_q_from_bitvec` 使用 `conditional_select`（来自 `subtle` crate）逐字节展开校正子位，避免秘密依赖的分支。
@@ -475,6 +475,6 @@ Verifier:
 | 安全属性 | 实现机制 |
 |---------|---------|
 | 零知识性 | VOLE 校正子 $w \oplus u$ 隐藏 witness；盲化系数 $\tilde{a}\_j$ 隐藏多项式系数 |
-| 可靠性 | 论文定理 1 的界为 $1/p^{r\tau}+d/|S_\Delta|$；当前 `F128b` profile 的具体数值和 grinding 解释见模块八，不能简写为严格的 $2^{-\lambda}$ |
+| 可靠性 | 论文定理 1 的界为 $1/p^{r\tau}+d/|S_\Delta|$；当前 `F128b` 参数的具体数值和 grinding 说明见模块八 |
 | 非交互性 | Fiat-Shamir 变换将 Verifier 的随机挑战替换为 SHA-3 哈希输出 |
 | transcript 绑定 | 带标签吸收、域分离和确定性重算；哈希抗碰撞假设属于安全模型 |
