@@ -8,7 +8,7 @@ $\Pi^t_{dD-Rep}$（degree-$d$ Representation）协议是关系证明的核心。
 
 本模块包含两个层面：
 1. `protocol_dd_rep.rs` — $\Pi^t_{dD-Rep}$ 协议的三步实现（承诺 → 挑战 → 响应/验证）
-2. `transcript.rs` — Fiat-Shamir 变换的 Random Oracle 实例化（SHA-3 Keccak-256）
+2. `transcript.rs` — Fiat-Shamir 变换的 Random Oracle 实例化（Keccak-256）
 
 ## 二、$\Pi^t_{dD-Rep}$ 协议三步曲
 
@@ -110,7 +110,7 @@ ChallengeMessage { challenges: f128_challenges_from_seed(seed, challenge_count) 
 
 ### 2.4 Step 3：Prover 响应（`respond` / `respond_resolved_plus_implicit`）
 
-Prover 面对的核心任务是：计算 $\tilde{G}(Y) = \sum_{i=1}^t \chi_i \cdot \tilde{g}\_i(Y)$ 在 $c+1$ 个插值点上的值，然后插值恢复多项式系数，最后用辅助 VOLE 进行盲化。
+Prover 面对的核心任务是：计算 $\tilde{G}(Y) = \sum_{i=1}^t \chi_i \cdot \tilde{g}\_i(Y)$ 在 $d+1$ 个插值点上的值，然后插值恢复多项式系数，最后用辅助 VOLE 进行盲化。对 ReSolveD+，$d=c$，因此专用接口使用 $c+1$ 个点。
 
 代码提供三种响应模式：
 
@@ -281,7 +281,7 @@ fn fill_interpolation_points<F: FiniteField>(points: &mut [F]) {
 
 Fiat-Shamir 启发式将交互式协议转换为非交互式零知识证明（NIZK），其核心是将 Verifier 的随机挑战替换为对协议 transcript 的 密码学哈希。
 
-`Transcript` 使用 SHA-3 Keccak-256 作为底层哈希函数实例化 Random Oracle：
+`Transcript` 使用 Keccak-256 作为底层哈希函数实例化 Random Oracle：
 
 ```rust
 use sha3::{Digest, Keccak256};
@@ -462,12 +462,11 @@ Verifier:
   (pk, msg, σ) → 接受/拒绝
 
 1. 反序列化 σ → (commitment, proof, transcript)
-2. VOLE 重构: faest_vole_reconstruct(iv, challenge, opening, c) → (q, commitment_hash)
-3. 验证 commitment_hash 一致性
-4. Fiat-Shamir 重建所有挑战
+2. 检查 opening challenge 的 grinding 位
+3. VOLE 重构: faest_vole_reconstruct(iv, challenge, opening, c) → (q, commitment_hash)
+4. 验证 commitment_hash 一致性，并重建 Fiat-Shamir 挑战
 5. 吸收校正子: corrected_q = q + correction · Δ
 6. 验证核心等式: LHS ?= RHS
-7. 验证 Grinding 条件
 ```
 
 ### 安全性总结
@@ -476,5 +475,5 @@ Verifier:
 |---------|---------|
 | 零知识性 | VOLE 校正子 $w \oplus u$ 隐藏 witness；盲化系数 $\tilde{a}\_j$ 隐藏多项式系数 |
 | 可靠性 | 论文定理 1 的界为 $1/p^{r\tau}+d/|S_\Delta|$；当前 `F128b` 参数的具体数值和 grinding 说明见模块八 |
-| 非交互性 | Fiat-Shamir 变换将 Verifier 的随机挑战替换为 SHA-3 哈希输出 |
+| 非交互性 | Fiat-Shamir 变换将 Verifier 的随机挑战替换为 Keccak-256 派生值 |
 | transcript 绑定 | 带标签吸收、域分离和确定性重算；哈希抗碰撞假设属于安全模型 |

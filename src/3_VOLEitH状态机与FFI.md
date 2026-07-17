@@ -206,7 +206,7 @@ low ^ high ^ (high << 1) ^ (high << 3) ^ (high << 4)
 
 这约简多项式 $x^{64} + x^4 + x^3 + x + 1$。
 
-`test_rust_vole_hash_matches_faest_c_reference` 在多种输入长度（0 ~ 28176 比特）和随机种子下，逐字节比对 Rust 实现与 C 参考实现的输出。优化构建的测试显示，在当前 x86_64 主机上 Rust 版本约为 C 版本的 50–86 倍。
+`test_rust_vole_hash_matches_faest_c_reference` 在多种输入长度（0 ~ 28176 比特）和随机种子下，逐字节比对 Rust 实现与 C 参考实现的输出。该哈希步骤的端到端影响已计入模块十的签名和验证时间。
 
 ## 四、状态机设计：`voleith.rs`
 
@@ -306,7 +306,7 @@ graph TD
 
 ### 4.5 Fiat-Shamir 挑战派生序列
 
-协议使用四轮 Fiat-Shamir 变换将交互式协议转化为 NIZK：
+协议使用三个阶段的 Fiat-Shamir 派生将交互式协议转化为 NIZK：
 
 第 1 轮挑战 `challenge_1`：源自 BAVC 承诺 + 一致性证明
 ```
@@ -345,7 +345,7 @@ fn challenge_has_required_grind_bits(challenge, w_grind) -> bool {
 
 ### 5.1 版本化规范格式
 
-`wire.rs` 实现了一个自描述、版本化的规范序列化字节格式，用于所有签名类型的存储与传输。
+`wire.rs` 实现了应用签名共享部分的自描述、版本化规范字节格式。各应用可在共享部分后追加自身的公开字段。
 
 格式结构：
 
@@ -366,10 +366,12 @@ fn challenge_has_required_grind_bits(challenge, w_grind) -> bool {
 | `KIND_RING` | 2 | 环签名 |
 | `KIND_GROUP` | 3 | 群签名 |
 | `KIND_FDABS` | 4 | 全动态属性基签名 |
+| `KIND_LINKABLE_RING` | 5 | Scope-LRS 签名 |
+| `KIND_LINKABLE_RING_BATCH` | 6 | 批量 Scope-LRS 签名 |
 
 ### 5.2 序列化内容
 
-Payload 包含三个主要部分：
+共享部分包含三个主要部分：
 1. `CommitmentMessage`：校正子（correction）比特向量
    - 编码方式：长度前缀（u64）+ 紧凑位编码（`extend_exact_bits_to_bytes`）
 2. `ProofMessage<F128b>`：盲化系数向量（blinded coefficients）
@@ -390,7 +392,7 @@ Payload 包含三个主要部分：
 
 1. 尾部零多余数据：`finish()` 检查 `offset == input.len()`，拒绝任何尾随字节
 2. 唯一定义性：所有变长字段使用精确长度前缀，任何非规范编码（如尾部未使用比特非零）被拒绝
-3. F128 值的规范反序列化：使用 `F128b::from_bytes` 而非 `from_uniform_bytes`，拒绝非规范的域元素表示
+3. F128 值的固定宽度反序列化：使用 `F128b::from_bytes` 读取每个 16 字节域元素
 4. 集合大小上限：`MAX_COLLECTION_ITEMS = 1,000,000` 防止拒绝服务攻击
 
 ## 六、跨语言调用架构总结
