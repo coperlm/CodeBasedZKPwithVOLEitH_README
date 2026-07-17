@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-f256a2a8.js";
+            window.path_to_searchindex_js = "searchindex-d54d9d87.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -200,7 +200,7 @@
 <p>本文档说明本项目如何将 VOLE-in-the-Head 零知识证明用于 ReSolveD+、环签名、群签名和属性基签名：从有限域与矩阵运算出发，经由 VOLEitH 证明协议，最终形成可运行的签名与验证流程。</p>
 <h2 id="论文与实现的关系"><a class="header" href="#论文与实现的关系">论文与实现的关系</a></h2>
 <p>论文为 Ying Ouyang、Deng Tang、Yanhong Xu，<em>Code-Based Zero-Knowledge from VOLE-in-the-Head and Their Applications: Simpler, Faster, and Smaller</em>，ASIACRYPT 2024，LNCS 15488，2025，DOI: <a href="https://doi.org/10.1007/978-981-96-0935-2_14">10.1007/978-981-96-0935-2_14</a>。</p>
-<p>当前版本实现了关系证明、在线签名/验证及其序列化格式。其中，群签名的成员注册、开封和撤销，以及 FDABS 的属性机构、注册、更新和撤销流程属于完整系统的管理功能，后续可在现有签名验证接口上继续扩展。当前可执行证明域为 <code>F128b = GF(2^128)</code>；完整实现边界见仓库根目录的 <code>LIMITATIONS.md</code>。</p>
+<p>当前版本实现了关系证明、在线签名/验证及其序列化格式。其中，群签名的成员注册、开封和撤销，以及 FDABS 的属性机构、注册、更新和撤销流程属于完整系统的管理功能，后续可在现有签名验证接口上继续扩展。代码类型 <code>F128b</code> 对应数学有限域 $\mathbb F_{2^{128}}$；完整实现边界见仓库根目录的 <code>LIMITATIONS.md</code>。</p>
 <h2 id="证明对象的共同形式"><a class="header" href="#证明对象的共同形式">证明对象的共同形式</a></h2>
 <p>应用层最终都把待证明语句写成</p>
 <p>$$

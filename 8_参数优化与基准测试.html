@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-f256a2a8.js";
+            window.path_to_searchindex_js = "searchindex-d54d9d87.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -264,7 +264,7 @@ degree=9, combination=128, delta=120 → bit_security ≈ 116.829
 <p>环签名等方案度数 $d = c+1 = 9$（因方向比特多一度），但安全分析仍适用相同的 bound 公式。</p>
 <h2 id="三resolved-紧凑序列化artifact_bundlers"><a class="header" href="#三resolved-紧凑序列化artifact_bundlers">三、ReSolveD+ 紧凑序列化：<code>artifact_bundle.rs</code></a></h2>
 <h3 id="31-签名体积的理论基础"><a class="header" href="#31-签名体积的理论基础">3.1 签名体积的理论基础</a></h3>
-<p>论文表 7 的优化 ReSolveD+ 条目为 3054 B；本仓库的可独立解码 ReSolveD+ wire bundle 为 3159 B。传统基于 Stern 协议的 ZKP 签名：每次 repetition 需要约 $k$ 比特的承诺 + 打开数据，重复 $\lambda$ 次（$\lambda = 128$），总签名体积通常在 兆字节（MB）级别。</p>
+<p>论文表 7 的优化 ReSolveD+ 条目为 3054 B；本仓库的可独立解码 ReSolveD+ 签名字节包为 3159 B。传统基于 Stern 协议的 ZKP 签名：每次重复需要约 $k$ 比特的承诺和打开数据，重复 $\lambda$ 次（$\lambda = 128$），总签名体积通常在兆字节（MB）级别。</p>
 <p>VOLEitH 方法：通过 $\tau$ 棵 GGM 树并行承诺 + 选择性打开，签名体积压缩到 KB 级别。核心压缩机制：</p>
 <div class="table-wrapper">
 <table>
@@ -282,7 +282,7 @@ degree=9, combination=128, delta=120 → bit_security ≈ 116.829
 <tr><td>VOLE subtotal</td><td></td><td>~3 KB</td></tr>
 <tr><td>Correction</td><td>$k$ 比特</td><td>~56 B</td></tr>
 <tr><td>Proof Coeffs</td><td>$d$ 个 $\mathbb{F}_{2^{128}}$ 元素</td><td>$d \times 16$ B</td></tr>
-<tr><td>ReSolveD+ bundle total</td><td></td><td>3159 B</td></tr>
+<tr><td>ReSolveD+ 签名字节包总计</td><td></td><td>3159 B</td></tr>
 </tbody>
 </table>
 </div>
@@ -295,7 +295,7 @@ pub const ARTIFACT_ROWS: usize = 453;
 pub const ARTIFACT_SIGNATURE_BYTES: usize = 3159;
 <span class="boring">}</span></code></pre>
 <h3 id="32-压缩策略详解"><a class="header" href="#32-压缩策略详解">3.2 压缩策略详解</a></h3>
-<h4 id="策略一resolved-bundle-以种子代替矩阵"><a class="header" href="#策略一resolved-bundle-以种子代替矩阵">策略一：ReSolveD+ bundle 以种子代替矩阵</a></h4>
+<h4 id="策略一resolved-签名字节包以种子代替矩阵"><a class="header" href="#策略一resolved-签名字节包以种子代替矩阵">策略一：ReSolveD+ 签名字节包以种子代替矩阵</a></h4>
 <p>公钥中的 $B$ 矩阵不序列化 $n \times m$ 比特（$453 \times 1208 \approx 547$ Kb $\approx 68$ KB），而是仅序列化 16 字节的种子 $\sigma$：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -336,20 +336,20 @@ pub const ARTIFACT_SIGNATURE_BYTES: usize = 3159;
 </tbody>
 </table>
 </div>
-<p>当前协议响应携带 $d$ 个 $\mathbb{F}_{2^{128}}$ 系数；完整大小还包含 correction、VOLE transcript、应用公开数据和 wire framing。</p>
+<p>当前协议响应携带 $d$ 个 $\mathbb{F}_{2^{128}}$ 系数；完整大小还包含校正子、VOLE 通信记录、应用公开数据和序列化边界信息。</p>
 <h3 id="33-格式版本化和严格验证"><a class="header" href="#33-格式版本化和严格验证">3.3 格式版本化和严格验证</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>const MAGIC: &amp;[u8; 8] = b"CBZKRPB1";  // ReSolveD+ Bundle 魔术字
+</span>const MAGIC: &amp;[u8; 8] = b"CBZKRPB1";  // ReSolveD+ 字节包格式标识符
 const VERSION: u16 = 1;
 <span class="boring">}</span></code></pre>
 <ul>
-<li>魔术字：8 字节 <code>CBZKRPB1</code> 用于快速识别格式</li>
+<li>格式标识符：8 字节 <code>CBZKRPB1</code>，用于识别 ReSolveD+ 字节包格式</li>
 <li>版本号：支持未来扩展</li>
 <li>尾部拒绝：<code>decoder.finish()</code> 检查无多余字节，防止格式混淆攻击</li>
 <li>参数硬编码检查：解码时验证 <code>(k, c, rows, cols, y_bits)</code> 必须匹配常量，防止跨参数集误用</li>
 </ul>
-<h3 id="34-当前-wire-体积与论文分析值"><a class="header" href="#34-当前-wire-体积与论文分析值">3.4 当前 wire 体积与论文分析值</a></h3>
+<h3 id="34-当前序列化签名体积与论文分析值"><a class="header" href="#34-当前序列化签名体积与论文分析值">3.4 当前序列化签名体积与论文分析值</a></h3>
 <p>论文表 3–5 给出的是参数化通信量分析；本项目的签名采用版本化编码，实际体积如下（完整性能表见模块十）：</p>
 <div class="table-wrapper">
 <table>
@@ -408,7 +408,7 @@ let (linear1, linear2) = if rayon::current_num_threads() &gt; 1 {
 } else { /* 串行版本 */ };
 <span class="boring">}</span></code></pre>
 <h3 id="43-par_chunks_mut-的列并行"><a class="header" href="#43-par_chunks_mut-的列并行">4.3 <code>par_chunks_mut</code> 的列并行</a></h3>
-<p>在 χ’ 计算的热路径上，使用 <code>par_chunks_mut</code> 将列划分为连续 chunk，每个 worker 拥有独立的 <code>column_bytes</code> 缓冲区：</p>
+<p>在 χ’ 计算的性能关键循环中，使用 <code>par_chunks_mut</code> 将列划分为连续分块；每个 Rayon 工作线程拥有独立的 <code>column_bytes</code> 缓冲区：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn compute_chi_prime_streaming_f128_range_with_table(..., col_start, col_count) {
@@ -416,7 +416,7 @@ let (linear1, linear2) = if rayon::current_num_threads() &gt; 1 {
         chi_prime.par_chunks_mut(CHI_PRIME_PAR_COL_CHUNK)
             .enumerate()
             .for_each_init(
-                || vec![0u8; byte_len],  // 每个 worker 独立缓冲区
+                || vec![0u8; byte_len],  // 每个工作线程的独立缓冲区
                 |column_bytes, (chunk_idx, chunk)| {
                     for (offset, chi) in chunk.iter_mut().enumerate() {
                         b_cols.fill_column_bytes_prechecked(base_col + offset, column_bytes);
@@ -427,7 +427,7 @@ let (linear1, linear2) = if rayon::current_num_threads() &gt; 1 {
     }
 }
 <span class="boring">}</span></code></pre>
-<p>关键设计：<code>for_each_init</code> 为每个 Rayon worker 分配独立的列字节缓冲区，避免锁竞争和缓存行乒乓。</p>
+<p>关键设计：<code>for_each_init</code> 为每个 Rayon 工作线程分配独立的列字节缓冲区，避免锁竞争和缓存行争用。</p>
 <h3 id="44-硬件指令级加速"><a class="header" href="#44-硬件指令级加速">4.4 硬件指令级加速</a></h3>
 <div class="table-wrapper">
 <table>
@@ -465,7 +465,7 @@ if byte_len == 160 {
     xor_32!(acc, &amp;tables[128..160], &amp;bytes[128..160]);
 }
 <span class="boring">}</span></code></pre>
-<p>栈分配工作区：对于 $2^c \le 256$ 的小域，蝴蝶求值使用栈分配的 <code>[F; 256]</code> 定长数组，避免热路径上的堆分配：</p>
+<p>栈分配工作区：对于 $2^c \le 256$ 的小域，蝴蝶求值使用栈分配的 <code>[F; 256]</code> 定长数组，避免性能关键循环中的堆分配：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>if domain_size &lt;= STACK_BUTTERFLY_DOMAIN {  // 256
@@ -516,12 +516,12 @@ const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 <tbody>
 <tr><td>算法</td><td>隐式求值/蝴蝶折叠</td><td>先聚合 $\chi’$，再按块进行 $c$ 层折叠；成本取决于块数和 $2^c$</td></tr>
 <tr><td>内存</td><td><code>StreamingMatrixCols</code> 流式列生成</td><td>避免常驻完整矩阵，工作空间由列缓冲区和 PRG 状态主导</td></tr>
-<tr><td>序列化</td><td>种子代替矩阵、紧凑位编码</td><td>ReSolveD+ bundle 为 3.08 KiB；各应用签名体积见模块十</td></tr>
+<tr><td>序列化</td><td>种子代替矩阵、紧凑位编码</td><td>ReSolveD+ 签名字节包为 3.08 KiB；各应用签名体积见模块十</td></tr>
 <tr><td>并行</td><td>Rayon <code>par_iter</code> / <code>par_chunks_mut</code> / <code>join</code></td><td>加速取决于线程数、CPU 和内存带宽</td></tr>
 <tr><td>硬件</td><td>PCLMULQDQ / AES-NI / BMI2</td><td>具体效果由 benchmark 测量</td></tr>
-<tr><td>微架构</td><td>循环展开、栈分配、四累加器</td><td>减少热路径开销，不作为协议结论</td></tr>
+<tr><td>微架构</td><td>循环展开、栈分配、四累加器</td><td>减少性能关键循环的开销，不作为协议结论</td></tr>
 <tr><td>安全</td><td>Grinding 8-bit、掩码/常数时间路径</td><td>与关系证明 bound、工作因子分开报告</td></tr>
-<tr><td>工程</td><td>双后端切换（HW/SW fallback）</td><td>跨平台兼容</td></tr>
+<tr><td>工程</td><td>硬件实现与可移植实现的双路径切换</td><td>跨平台兼容</td></tr>
 </tbody>
 </table>
 </div>

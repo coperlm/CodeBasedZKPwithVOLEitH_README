@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-f256a2a8.js";
+            window.path_to_searchindex_js = "searchindex-d54d9d87.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -399,13 +399,13 @@ pub struct AndGate {
 }
 <span class="boring">}</span></code></pre>
 <h3 id="34-与环签名的关键区别单矩阵叶哈希"><a class="header" href="#34-与环签名的关键区别单矩阵叶哈希">3.4 与环签名的关键区别：单矩阵叶哈希</a></h3>
-<p>论文式 (21) 写为 $C_0\operatorname{RE}(a)\oplus C_1\operatorname{RE}(r)$。代码将 $[C_0\mid C_1]$ 表示成单个列流式矩阵 <code>B_leaf</code>，所以等价地计算：（del</p>
+<p>论文式 (21) 写为 $C_0\operatorname{RE}(a)\oplus C_1\operatorname{RE}(r)$。代码将 $[C_0\mid C_1]$ 表示为单个按列生成的矩阵 <code>B_leaf</code>，从而等价地计算：</p>
 <p>FDABS 中，叶节点由单个矩阵 $B_\text{leaf}$ 计算，而非环签名的双矩阵配对：</p>
 <p>$$
 v_\ell = B_\text{leaf} \cdot \text{RE}(a | \text{rand})
 $$</p>
 <p>这是因为 FDABS 没有 “左右兄弟节点” 的交换概念——叶节点是属性 + 随机数的直接哈希。</p>
-<p>这里的单矩阵只是把论文的两个列块拼接为一个流式矩阵；叶节点输入是属性与随机数的拼接。（del</p>
+<p>该单矩阵由论文中的两个列块拼接而成；叶节点输入为属性与随机数的拼接。</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// fdabs.rs 中: build_hash_terms（单矩阵版本）
@@ -419,7 +419,7 @@ let leaf_terms = build_hash_terms(
 <span class="boring">}</span></code></pre>
 <h3 id="35-叶奇偶性约束"><a class="header" href="#35-叶奇偶性约束">3.5 叶奇偶性约束</a></h3>
 <p>FDABS 要求叶哈希的汉明重量为奇数。这是一个重要的合法性标记——它防止攻击者使用一个无效的（但 ANF 上满足的）叶节点替代真正的认证叶节点。</p>
-<p>论文式 (22) 要求叶哈希的汉明重量为奇数；附录 C.6 以此区分有效属性承诺与注册表中的零叶子。代码把该条件实现为一个线性约束。（del</p>
+<p>论文式 (22) 要求叶哈希的汉明重量为奇数；附录 C.6 以此区分有效属性承诺与注册表中的零叶子。代码将该条件实现为一个线性约束。</p>
 <p>实现为单个方程：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -571,12 +571,11 @@ Output: FdabsSignature
 <tr><td>底层问题</td><td>2-RNSD + Merkle</td><td>2-RNSD + Merkle + McEliece</td><td>2-RNSD + Merkle + 电路可满足性</td></tr>
 <tr><td>矩阵数量</td><td>2 (B0, B1)</td><td>4 (B0, B1, G1, G2)</td><td>3 (B0, B1, B_leaf)</td></tr>
 <tr><td>Witness 组成</td><td>方向 + 路径 + 叶子</td><td>方向 + 路径 + 叶子 + 加密随机数 + 噪声</td><td>方向 + 路径 + 属性 + 随机化 + 门输出</td></tr>
-<tr><td>特殊约束</td><td>无</td><td>两个密文加密同一 $\operatorname{bin}(j)$</td><td>NAND 形式乘法门 + 叶奇偶性（del</td></tr>
-<tr><td>特殊约束</td><td>无</td><td>McEliece 加密 $c = G\cdot x \oplus \text{RE}(e’)$</td><td>NAND 门 $x_{\text{out}} = \neg(x_{\text{in1}} \land x_{\text{in2}})$ + 叶奇偶性</td></tr>
+<tr><td>特殊约束</td><td>无</td><td>两个密文关联同一 $\operatorname{bin}(j)$</td><td>NAND 门 $x_{\text{out}} = \neg(x_{\text{in1}} \land x_{\text{in2}})$ 与叶奇偶性</td></tr>
 <tr><td>约束数量</td><td>$(\ell+1)n$</td><td>$(\ell+1)n + 2n_e$</td><td>$(\ell+1)n + G + 2$</td></tr>
-<tr><td>签名额外数据</td><td>无</td><td>$c_1, c_2$（加密身份和消息）（同一身份的两次加密del）</td><td>无</td></tr>
-<tr><td>可追踪性</td><td>❌</td><td>✅（管理员解密 $c_1$）</td><td>❌</td></tr>
-<tr><td>策略控制</td><td>❌</td><td>❌</td><td>✅（布尔电路策略）（给定电路、<code>info</code>、<code>epoch</code>del）</td></tr>
+<tr><td>签名额外数据</td><td>无</td><td>$c_1,c_2$（同一身份的两次随机化密文）</td><td>无</td></tr>
+<tr><td>身份管理关系</td><td>无</td><td>身份密文与成员关系共同受证明约束</td><td>无</td></tr>
+<tr><td>策略控制</td><td>无</td><td>无</td><td>给定布尔电路、<code>info</code> 与 <code>epoch</code> 的属性策略关系</td></tr>
 </tbody>
 </table>
 </div>

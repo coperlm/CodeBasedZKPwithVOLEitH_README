@@ -58,7 +58,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-f256a2a8.js";
+            window.path_to_searchindex_js = "searchindex-d54d9d87.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -201,7 +201,7 @@
 <p>本文档说明本项目如何将 VOLE-in-the-Head 零知识证明用于 ReSolveD+、环签名、群签名和属性基签名：从有限域与矩阵运算出发，经由 VOLEitH 证明协议，最终形成可运行的签名与验证流程。</p>
 <h2 id="论文与实现的关系"><a class="header" href="#论文与实现的关系">论文与实现的关系</a></h2>
 <p>论文为 Ying Ouyang、Deng Tang、Yanhong Xu，<em>Code-Based Zero-Knowledge from VOLE-in-the-Head and Their Applications: Simpler, Faster, and Smaller</em>，ASIACRYPT 2024，LNCS 15488，2025，DOI: <a href="https://doi.org/10.1007/978-981-96-0935-2_14">10.1007/978-981-96-0935-2_14</a>。</p>
-<p>当前版本实现了关系证明、在线签名/验证及其序列化格式。其中，群签名的成员注册、开封和撤销，以及 FDABS 的属性机构、注册、更新和撤销流程属于完整系统的管理功能，后续可在现有签名验证接口上继续扩展。当前可执行证明域为 <code>F128b = GF(2^128)</code>；完整实现边界见仓库根目录的 <code>LIMITATIONS.md</code>。</p>
+<p>当前版本实现了关系证明、在线签名/验证及其序列化格式。其中，群签名的成员注册、开封和撤销，以及 FDABS 的属性机构、注册、更新和撤销流程属于完整系统的管理功能，后续可在现有签名验证接口上继续扩展。代码类型 <code>F128b</code> 对应数学有限域 $\mathbb F_{2^{128}}$；完整实现边界见仓库根目录的 <code>LIMITATIONS.md</code>。</p>
 <h2 id="证明对象的共同形式"><a class="header" href="#证明对象的共同形式">证明对象的共同形式</a></h2>
 <p>应用层最终都把待证明语句写成</p>
 <p>$$
@@ -312,10 +312,10 @@ $$</p>
 </pre>
 
 <h3 id="34-内存管理策略详解"><a class="header" href="#34-内存管理策略详解">3.4 内存管理策略详解</a></h3>
-<h4 id="策略一零物化"><a class="header" href="#策略一零物化">策略一：零物化</a></h4>
-<p>矩阵默认不完整存储在内存中。<code>StreamingMatrixCols</code> 保存 16 字节种子、维度、尾部掩码和 PRG 状态；每次调用 <code>column(j)</code> 生成一列的 <code>n</code> 个比特，用完即丢弃。因此主要工作空间从物化矩阵的 $\mathcal{O}(nm)$ 降为一列缓冲区和 PRG 状态，具体字节数随硬件后端而变。</p>
+<h4 id="策略一按需生成不存储完整矩阵"><a class="header" href="#策略一按需生成不存储完整矩阵">策略一：按需生成，不存储完整矩阵</a></h4>
+<p>矩阵默认不完整存储在内存中。<code>StreamingMatrixCols</code> 保存 16 字节种子、维度、尾部掩码和 PRG 状态；每次调用 <code>column(j)</code> 生成一列的 $n$ 个比特，完成计算后释放临时列数据。因此主要工作空间从物化矩阵的 $\mathcal{O}(nm)$ 降为一列缓冲区和 PRG 状态，具体字节数随所选实现路径而变。</p>
 <h4 id="策略二延迟生成"><a class="header" href="#策略二延迟生成">策略二：延迟生成</a></h4>
-<p><code>fill_column_bytes</code> 使用按需填充模式。只有 <code>column(j)</code> 或 <code>fill_column_bytes</code> 被显式调用时，数据才被生成。<code>materialize()</code> 方法虽然提供了全矩阵物化的接口用于测试，但在正式实验的代码中不使用，正式实验只使用 <code>iter()</code> 逐个消费列。</p>
+<p><code>fill_column_bytes</code> 使用按需填充模式。只有 <code>column(j)</code> 或 <code>fill_column_bytes</code> 被显式调用时，数据才被生成。<code>materialize()</code> 方法提供全矩阵物化接口用于测试；正式实验通过 <code>iter()</code> 依次生成并处理矩阵列。</p>
 <h4 id="策略三aes-ctr-作为向量-prg"><a class="header" href="#策略三aes-ctr-作为向量-prg">策略三：AES-CTR 作为向量 PRG</a></h4>
 <p>每一列 $B_{:,j}$ 通过 AES-128 在 CTR 模式下生成：</p>
 <p>$$
@@ -431,7 +431,7 @@ fn test_streaming_matrix_is_deterministic() {
 <span class="boring">}</span></code></pre>
 <p>保证行为等价：无论底层使用 AES-NI 还是 FAEST-FFI，PRG 输出必须逐字节一致。</p>
 <h3 id="53-域公理验证"><a class="header" href="#53-域公理验证">5.3 域公理验证</a></h3>
-<p><code>test_gf128_axioms</code> 验证了加法交换律、结合律、分配律以及恒等元——确保 $F_{128b}$ 确实构成一个域，这是上层代数推理的正确性前提。</p>
+<p><code>test_gf128_axioms</code> 验证了加法交换律、结合律、分配律以及恒等元，确认代码类型 <code>F128b</code> 所实现的 $\mathbb F_{2^{128}}$ 运算满足这些域公理。</p>
 <h2 id="六性能总结"><a class="header" href="#六性能总结">六、性能总结</a></h2>
 <div class="table-wrapper">
 <table>
@@ -772,7 +772,7 @@ $$</p>
 <h2 id="一概述-2"><a class="header" href="#一概述-2">一、概述</a></h2>
 <p>本模块是整个 ZKP 系统的核心引擎——它负责将密码学约束系统与底层的延迟 VOLE 功能（Delayed VOLE functionality, $\mathcal{F}_{\text{sVOLE}}$）衔接起来。架构上采用两层级联设计：</p>
 <ol>
-<li>C 层（FAEST）：提供 GGM/BAVC 所需的承诺、打开和重构例程。$\tau$ 是并行重复数，$\lambda$ 是安全参数；树的形状由 FAEST profile 中的树参数确定。</li>
+<li>C 层（FAEST）：提供 GGM/BAVC 所需的承诺、打开和重构例程。$\tau$ 是并行重复数，$\lambda$ 是安全参数；树的形状由 FAEST 参数配置中的树参数确定。</li>
 <li>Rust 层：通过 FFI 安全封装 C 层状态机，并在此基础上实现 Prover/Verifier 的协议状态机，负责挑战生成、相关性提取（correlation extraction）、约束绑定等高层协议逻辑。</li>
 </ol>
 <h2 id="二为什么需要-ffi-复用-faest-的-c-代码"><a class="header" href="#二为什么需要-ffi-复用-faest-的-c-代码">二、为什么需要 FFI 复用 FAEST 的 C 代码？</a></h2>
@@ -930,7 +930,7 @@ if bavc.h.is_null() || bavc.k.is_null() || bavc.com.is_null() || bavc.sd.is_null
 </span><span class="boring">fn main() {
 </span>fn vole_hash_128f_rust(seed, input, hash_ell_bits) -&gt; [u8; 18]
 <span class="boring">}</span></code></pre>
-<p>这实现了一个基于 F128b 域运算的密钥哈希（Keyed Hash），核心计算为：</p>
+<p>这实现了一个基于代码类型 <code>F128b</code>（对应 $\mathbb F_{2^{128}}$）运算的密钥哈希，核心计算为：</p>
 <p>$$
 H = (h_2, h_3) = (r_0 \cdot h_0 + r_1 \cdot h_1,; r_2 \cdot h_0 + r_3 \cdot h_1)
 $$</p>
@@ -1007,7 +1007,7 @@ $$</p>
 
 <h3 id="43-verifier-状态机voleithverifier"><a class="header" href="#43-verifier-状态机voleithverifier">4.3 Verifier 状态机：<code>VoleitHVerifier</code></a></h3>
 <pre class="mermaid">graph TD
-    A([reconstruct]) --&gt; B[验证 profile 与参数]
+    A([reconstruct]) --&gt; B[验证参数配置与参数值]
     B --&gt; C{Grinding&lt;br/&gt;有效?}
     
     C --&gt;|否| Reject([验证失败/拒绝])
@@ -1074,10 +1074,10 @@ squeeze() → opening_challenge
     ((λ - w_grind)..λ).all(|bit| !bit_lsb(challenge, bit))
 }
 <span class="boring">}</span></code></pre>
-<p>这要求 Prover 在最终确定签名前，平均需要约 $2^{w_\text{grind}}$ 次尝试。对于当前 <code>w_grind = 8</code> 的 profile，平均工作量约为 256 次。该工作量是 FAEST opening 规则的一部分；<code>security.rs</code> 将其作为单独的工作因子记录，不把它直接加到关系证明的统计 soundness bound 中。</p>
-<h2 id="五线缆编码wirers"><a class="header" href="#五线缆编码wirers">五、线缆编码：<code>wire.rs</code></a></h2>
+<p>这要求 Prover 在最终确定签名前，平均需要约 $2^{w_\text{grind}}$ 次尝试。对于当前 <code>w_grind = 8</code> 的参数配置，平均工作量约为 256 次。该工作量是 FAEST opening 规则的一部分；<code>security.rs</code> 将其作为单独的工作因子记录，不把它直接加到关系证明的统计 soundness bound 中。</p>
+<h2 id="五序列化字节格式wirers"><a class="header" href="#五序列化字节格式wirers">五、序列化字节格式：<code>wire.rs</code></a></h2>
 <h3 id="51-版本化规范格式"><a class="header" href="#51-版本化规范格式">5.1 版本化规范格式</a></h3>
-<p><code>wire.rs</code> 实现了一个自描述、版本化、严格规范的序列化格式，用于所有签名类型的线缆传输。</p>
+<p><code>wire.rs</code> 实现了一个自描述、版本化的规范序列化字节格式，用于所有签名类型的存储与传输。</p>
 <p>格式结构：</p>
 <pre><code>┌─────────┬──────────┬────────┬──────────┬──────────────┬──────┐
 │  Magic  │ Version  │  Kind  │ Reserved │   Payload    │ Tail │
@@ -1085,7 +1085,7 @@ squeeze() → opening_challenge
 └─────────┴──────────┴────────┴──────────┴──────────────┴──────┘
 </code></pre>
 <ul>
-<li>Magic：<code>CBZKVSIG</code>（8 字节魔术数，用于快速识别和版本过滤）</li>
+<li>格式标识符：<code>CBZKVSIG</code>（8 字节，用于识别格式类型）</li>
 <li>Version：当前为 <code>1</code>（小端编码）</li>
 <li>Kind：签名类型标识</li>
 </ul>
@@ -1117,7 +1117,7 @@ squeeze() → opening_challenge
 </li>
 <li><code>VoleitHTranscript</code>：完整的 VOLE 协议通信轨迹
 <ul>
-<li>profile（1 字节）</li>
+<li>参数配置标识符（1 字节）</li>
 <li>commitment_hash（32 字节）</li>
 <li>IV（16 字节）</li>
 <li>consistency_c（长度前缀 + 变长）</li>
@@ -1168,7 +1168,7 @@ squeeze() → opening_challenge
 <tr><td>VOLE 哈希保留 Rust 等价实现</td><td>C 版本可作参考校验，但其有限域乘法为逐 bit 实现；Rust 路径可利用 PCLMULQDQ/PMULL</td></tr>
 <tr><td>BAVC 树承诺保留在 C 侧</td><td>复用 FAEST 参考实现的字节级承诺/打开行为，并由 Rust 包装层管理其资源</td></tr>
 <tr><td>列转置在 Rust 侧执行</td><td>需要 Rust 的 <code>rayon</code> 并行框架；使用 BMI2 <code>PEXT</code> 指令优化逐位列提取</td></tr>
-<tr><td>Grinding 在 Rust 侧完成</td><td>不依赖 C 状态；当前实现逐个 counter 搜索满足 profile 要求的挑战</td></tr>
+<tr><td>Grinding 在 Rust 侧完成</td><td>不依赖 C 状态；当前实现逐个 counter 搜索满足参数配置要求的挑战</td></tr>
 <tr><td>序列化手动编码</td><td>避免通用序列化框架的开销和版本漂移；精确的位紧凑编码</td></tr>
 </tbody>
 </table>
@@ -1321,7 +1321,7 @@ $$</p>
 }
 <span class="boring">}</span></code></pre>
 <p>更进一步，代码对手工展开的 $160$ 字节场景（$n=1280$ 的典型字节长度）做了 SIMD 风格的手动循环展开（<code>xor_32!</code> 宏同时处理 32 个字节，每次迭代处理 5 块共 160 字节），将循环开销降至最低。</p>
-<p>并行化：当列数 $\ge 8192$ 时，自动启用 <code>rayon</code> 并行，每 256 列为一个 chunk，每个 worker 拥有独立的 <code>column_bytes</code> 缓冲区。</p>
+<p>并行化：当列数 $\ge 8192$ 时，自动启用 <code>rayon</code> 并行，每 256 列构成一个分块任务；每个工作线程使用独立的 <code>column_bytes</code> 缓冲区。</p>
 <h4 id="步骤-2仿射基变换"><a class="header" href="#步骤-2仿射基变换">步骤 2：仿射基变换</a></h4>
 <p>将 witness 的每个比特 $w_i$ 和 VOLE 相关性 $v_i$ 组合成仿射基：</p>
 <p>$$
@@ -1394,7 +1394,7 @@ work[0] = (χ'_0(p+x_0) ⊕ χ'_1 x_0)(p+x_1) ⊕ (χ'_2(p+x_0) ⊕ χ'_3 x_0) x
 <p>Butterfly 从 LSB 到 MSB 处理（与 <code>(2*i, 2*i+1)</code> 配对一致），因此遍历 <code>x_vars</code> 时需要反向：<code>x_vars[c-1-k]</code> 即对应 LSB 优先顺序。</p>
 </blockquote>
 <p>这确保了 <code>monomial_from_table_index(table_idx, block_start, c)</code> 中的大端序变量索引与蝴蝶配对的正确对齐。</p>
-<p>栈优化：当 $2^c \le 256$ 时，使用栈分配的定长数组<code>[F; 256]</code> 代替堆分配的 <code>Vec</code>，避免热路径上的内存分配。</p>
+<p>栈优化：当 $2^c \le 256$ 时，使用栈分配的定长数组 <code>[F; 256]</code> 代替堆分配的 <code>Vec</code>，避免性能关键循环中的动态内存分配。</p>
 <h4 id="完整流水线集成"><a class="header" href="#完整流水线集成">完整流水线集成</a></h4>
 <p><code>implicit_evaluate_polynomials</code> 函数组合了上述三个步骤：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -2493,13 +2493,13 @@ pub struct AndGate {
 }
 <span class="boring">}</span></code></pre>
 <h3 id="34-与环签名的关键区别单矩阵叶哈希"><a class="header" href="#34-与环签名的关键区别单矩阵叶哈希">3.4 与环签名的关键区别：单矩阵叶哈希</a></h3>
-<p>论文式 (21) 写为 $C_0\operatorname{RE}(a)\oplus C_1\operatorname{RE}(r)$。代码将 $[C_0\mid C_1]$ 表示成单个列流式矩阵 <code>B_leaf</code>，所以等价地计算：（del</p>
+<p>论文式 (21) 写为 $C_0\operatorname{RE}(a)\oplus C_1\operatorname{RE}(r)$。代码将 $[C_0\mid C_1]$ 表示为单个按列生成的矩阵 <code>B_leaf</code>，从而等价地计算：</p>
 <p>FDABS 中，叶节点由单个矩阵 $B_\text{leaf}$ 计算，而非环签名的双矩阵配对：</p>
 <p>$$
 v_\ell = B_\text{leaf} \cdot \text{RE}(a | \text{rand})
 $$</p>
 <p>这是因为 FDABS 没有 “左右兄弟节点” 的交换概念——叶节点是属性 + 随机数的直接哈希。</p>
-<p>这里的单矩阵只是把论文的两个列块拼接为一个流式矩阵；叶节点输入是属性与随机数的拼接。（del</p>
+<p>该单矩阵由论文中的两个列块拼接而成；叶节点输入为属性与随机数的拼接。</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// fdabs.rs 中: build_hash_terms（单矩阵版本）
@@ -2513,7 +2513,7 @@ let leaf_terms = build_hash_terms(
 <span class="boring">}</span></code></pre>
 <h3 id="35-叶奇偶性约束"><a class="header" href="#35-叶奇偶性约束">3.5 叶奇偶性约束</a></h3>
 <p>FDABS 要求叶哈希的汉明重量为奇数。这是一个重要的合法性标记——它防止攻击者使用一个无效的（但 ANF 上满足的）叶节点替代真正的认证叶节点。</p>
-<p>论文式 (22) 要求叶哈希的汉明重量为奇数；附录 C.6 以此区分有效属性承诺与注册表中的零叶子。代码把该条件实现为一个线性约束。（del</p>
+<p>论文式 (22) 要求叶哈希的汉明重量为奇数；附录 C.6 以此区分有效属性承诺与注册表中的零叶子。代码将该条件实现为一个线性约束。</p>
 <p>实现为单个方程：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -2665,12 +2665,11 @@ Output: FdabsSignature
 <tr><td>底层问题</td><td>2-RNSD + Merkle</td><td>2-RNSD + Merkle + McEliece</td><td>2-RNSD + Merkle + 电路可满足性</td></tr>
 <tr><td>矩阵数量</td><td>2 (B0, B1)</td><td>4 (B0, B1, G1, G2)</td><td>3 (B0, B1, B_leaf)</td></tr>
 <tr><td>Witness 组成</td><td>方向 + 路径 + 叶子</td><td>方向 + 路径 + 叶子 + 加密随机数 + 噪声</td><td>方向 + 路径 + 属性 + 随机化 + 门输出</td></tr>
-<tr><td>特殊约束</td><td>无</td><td>两个密文加密同一 $\operatorname{bin}(j)$</td><td>NAND 形式乘法门 + 叶奇偶性（del</td></tr>
-<tr><td>特殊约束</td><td>无</td><td>McEliece 加密 $c = G\cdot x \oplus \text{RE}(e’)$</td><td>NAND 门 $x_{\text{out}} = \neg(x_{\text{in1}} \land x_{\text{in2}})$ + 叶奇偶性</td></tr>
+<tr><td>特殊约束</td><td>无</td><td>两个密文关联同一 $\operatorname{bin}(j)$</td><td>NAND 门 $x_{\text{out}} = \neg(x_{\text{in1}} \land x_{\text{in2}})$ 与叶奇偶性</td></tr>
 <tr><td>约束数量</td><td>$(\ell+1)n$</td><td>$(\ell+1)n + 2n_e$</td><td>$(\ell+1)n + G + 2$</td></tr>
-<tr><td>签名额外数据</td><td>无</td><td>$c_1, c_2$（加密身份和消息）（同一身份的两次加密del）</td><td>无</td></tr>
-<tr><td>可追踪性</td><td>❌</td><td>✅（管理员解密 $c_1$）</td><td>❌</td></tr>
-<tr><td>策略控制</td><td>❌</td><td>❌</td><td>✅（布尔电路策略）（给定电路、<code>info</code>、<code>epoch</code>del）</td></tr>
+<tr><td>签名额外数据</td><td>无</td><td>$c_1,c_2$（同一身份的两次随机化密文）</td><td>无</td></tr>
+<tr><td>身份管理关系</td><td>无</td><td>身份密文与成员关系共同受证明约束</td><td>无</td></tr>
+<tr><td>策略控制</td><td>无</td><td>无</td><td>给定布尔电路、<code>info</code> 与 <code>epoch</code> 的属性策略关系</td></tr>
 </tbody>
 </table>
 </div>
@@ -2743,7 +2742,7 @@ degree=9, combination=128, delta=120 → bit_security ≈ 116.829
 <p>环签名等方案度数 $d = c+1 = 9$（因方向比特多一度），但安全分析仍适用相同的 bound 公式。</p>
 <h2 id="三resolved-紧凑序列化artifact_bundlers"><a class="header" href="#三resolved-紧凑序列化artifact_bundlers">三、ReSolveD+ 紧凑序列化：<code>artifact_bundle.rs</code></a></h2>
 <h3 id="31-签名体积的理论基础"><a class="header" href="#31-签名体积的理论基础">3.1 签名体积的理论基础</a></h3>
-<p>论文表 7 的优化 ReSolveD+ 条目为 3054 B；本仓库的可独立解码 ReSolveD+ wire bundle 为 3159 B。传统基于 Stern 协议的 ZKP 签名：每次 repetition 需要约 $k$ 比特的承诺 + 打开数据，重复 $\lambda$ 次（$\lambda = 128$），总签名体积通常在 兆字节（MB）级别。</p>
+<p>论文表 7 的优化 ReSolveD+ 条目为 3054 B；本仓库的可独立解码 ReSolveD+ 签名字节包为 3159 B。传统基于 Stern 协议的 ZKP 签名：每次重复需要约 $k$ 比特的承诺和打开数据，重复 $\lambda$ 次（$\lambda = 128$），总签名体积通常在兆字节（MB）级别。</p>
 <p>VOLEitH 方法：通过 $\tau$ 棵 GGM 树并行承诺 + 选择性打开，签名体积压缩到 KB 级别。核心压缩机制：</p>
 <div class="table-wrapper">
 <table>
@@ -2761,7 +2760,7 @@ degree=9, combination=128, delta=120 → bit_security ≈ 116.829
 <tr><td>VOLE subtotal</td><td></td><td>~3 KB</td></tr>
 <tr><td>Correction</td><td>$k$ 比特</td><td>~56 B</td></tr>
 <tr><td>Proof Coeffs</td><td>$d$ 个 $\mathbb{F}_{2^{128}}$ 元素</td><td>$d \times 16$ B</td></tr>
-<tr><td>ReSolveD+ bundle total</td><td></td><td>3159 B</td></tr>
+<tr><td>ReSolveD+ 签名字节包总计</td><td></td><td>3159 B</td></tr>
 </tbody>
 </table>
 </div>
@@ -2774,7 +2773,7 @@ pub const ARTIFACT_ROWS: usize = 453;
 pub const ARTIFACT_SIGNATURE_BYTES: usize = 3159;
 <span class="boring">}</span></code></pre>
 <h3 id="32-压缩策略详解"><a class="header" href="#32-压缩策略详解">3.2 压缩策略详解</a></h3>
-<h4 id="策略一resolved-bundle-以种子代替矩阵"><a class="header" href="#策略一resolved-bundle-以种子代替矩阵">策略一：ReSolveD+ bundle 以种子代替矩阵</a></h4>
+<h4 id="策略一resolved-签名字节包以种子代替矩阵"><a class="header" href="#策略一resolved-签名字节包以种子代替矩阵">策略一：ReSolveD+ 签名字节包以种子代替矩阵</a></h4>
 <p>公钥中的 $B$ 矩阵不序列化 $n \times m$ 比特（$453 \times 1208 \approx 547$ Kb $\approx 68$ KB），而是仅序列化 16 字节的种子 $\sigma$：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -2815,20 +2814,20 @@ pub const ARTIFACT_SIGNATURE_BYTES: usize = 3159;
 </tbody>
 </table>
 </div>
-<p>当前协议响应携带 $d$ 个 $\mathbb{F}_{2^{128}}$ 系数；完整大小还包含 correction、VOLE transcript、应用公开数据和 wire framing。</p>
+<p>当前协议响应携带 $d$ 个 $\mathbb{F}_{2^{128}}$ 系数；完整大小还包含校正子、VOLE 通信记录、应用公开数据和序列化边界信息。</p>
 <h3 id="33-格式版本化和严格验证"><a class="header" href="#33-格式版本化和严格验证">3.3 格式版本化和严格验证</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>const MAGIC: &amp;[u8; 8] = b"CBZKRPB1";  // ReSolveD+ Bundle 魔术字
+</span>const MAGIC: &amp;[u8; 8] = b"CBZKRPB1";  // ReSolveD+ 字节包格式标识符
 const VERSION: u16 = 1;
 <span class="boring">}</span></code></pre>
 <ul>
-<li>魔术字：8 字节 <code>CBZKRPB1</code> 用于快速识别格式</li>
+<li>格式标识符：8 字节 <code>CBZKRPB1</code>，用于识别 ReSolveD+ 字节包格式</li>
 <li>版本号：支持未来扩展</li>
 <li>尾部拒绝：<code>decoder.finish()</code> 检查无多余字节，防止格式混淆攻击</li>
 <li>参数硬编码检查：解码时验证 <code>(k, c, rows, cols, y_bits)</code> 必须匹配常量，防止跨参数集误用</li>
 </ul>
-<h3 id="34-当前-wire-体积与论文分析值"><a class="header" href="#34-当前-wire-体积与论文分析值">3.4 当前 wire 体积与论文分析值</a></h3>
+<h3 id="34-当前序列化签名体积与论文分析值"><a class="header" href="#34-当前序列化签名体积与论文分析值">3.4 当前序列化签名体积与论文分析值</a></h3>
 <p>论文表 3–5 给出的是参数化通信量分析；本项目的签名采用版本化编码，实际体积如下（完整性能表见模块十）：</p>
 <div class="table-wrapper">
 <table>
@@ -2887,7 +2886,7 @@ let (linear1, linear2) = if rayon::current_num_threads() &gt; 1 {
 } else { /* 串行版本 */ };
 <span class="boring">}</span></code></pre>
 <h3 id="43-par_chunks_mut-的列并行"><a class="header" href="#43-par_chunks_mut-的列并行">4.3 <code>par_chunks_mut</code> 的列并行</a></h3>
-<p>在 χ’ 计算的热路径上，使用 <code>par_chunks_mut</code> 将列划分为连续 chunk，每个 worker 拥有独立的 <code>column_bytes</code> 缓冲区：</p>
+<p>在 χ’ 计算的性能关键循环中，使用 <code>par_chunks_mut</code> 将列划分为连续分块；每个 Rayon 工作线程拥有独立的 <code>column_bytes</code> 缓冲区：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn compute_chi_prime_streaming_f128_range_with_table(..., col_start, col_count) {
@@ -2895,7 +2894,7 @@ let (linear1, linear2) = if rayon::current_num_threads() &gt; 1 {
         chi_prime.par_chunks_mut(CHI_PRIME_PAR_COL_CHUNK)
             .enumerate()
             .for_each_init(
-                || vec![0u8; byte_len],  // 每个 worker 独立缓冲区
+                || vec![0u8; byte_len],  // 每个工作线程的独立缓冲区
                 |column_bytes, (chunk_idx, chunk)| {
                     for (offset, chi) in chunk.iter_mut().enumerate() {
                         b_cols.fill_column_bytes_prechecked(base_col + offset, column_bytes);
@@ -2906,7 +2905,7 @@ let (linear1, linear2) = if rayon::current_num_threads() &gt; 1 {
     }
 }
 <span class="boring">}</span></code></pre>
-<p>关键设计：<code>for_each_init</code> 为每个 Rayon worker 分配独立的列字节缓冲区，避免锁竞争和缓存行乒乓。</p>
+<p>关键设计：<code>for_each_init</code> 为每个 Rayon 工作线程分配独立的列字节缓冲区，避免锁竞争和缓存行争用。</p>
 <h3 id="44-硬件指令级加速"><a class="header" href="#44-硬件指令级加速">4.4 硬件指令级加速</a></h3>
 <div class="table-wrapper">
 <table>
@@ -2944,7 +2943,7 @@ if byte_len == 160 {
     xor_32!(acc, &amp;tables[128..160], &amp;bytes[128..160]);
 }
 <span class="boring">}</span></code></pre>
-<p>栈分配工作区：对于 $2^c \le 256$ 的小域，蝴蝶求值使用栈分配的 <code>[F; 256]</code> 定长数组，避免热路径上的堆分配：</p>
+<p>栈分配工作区：对于 $2^c \le 256$ 的小域，蝴蝶求值使用栈分配的 <code>[F; 256]</code> 定长数组，避免性能关键循环中的堆分配：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>if domain_size &lt;= STACK_BUTTERFLY_DOMAIN {  // 256
@@ -2995,12 +2994,12 @@ const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 <tbody>
 <tr><td>算法</td><td>隐式求值/蝴蝶折叠</td><td>先聚合 $\chi’$，再按块进行 $c$ 层折叠；成本取决于块数和 $2^c$</td></tr>
 <tr><td>内存</td><td><code>StreamingMatrixCols</code> 流式列生成</td><td>避免常驻完整矩阵，工作空间由列缓冲区和 PRG 状态主导</td></tr>
-<tr><td>序列化</td><td>种子代替矩阵、紧凑位编码</td><td>ReSolveD+ bundle 为 3.08 KiB；各应用签名体积见模块十</td></tr>
+<tr><td>序列化</td><td>种子代替矩阵、紧凑位编码</td><td>ReSolveD+ 签名字节包为 3.08 KiB；各应用签名体积见模块十</td></tr>
 <tr><td>并行</td><td>Rayon <code>par_iter</code> / <code>par_chunks_mut</code> / <code>join</code></td><td>加速取决于线程数、CPU 和内存带宽</td></tr>
 <tr><td>硬件</td><td>PCLMULQDQ / AES-NI / BMI2</td><td>具体效果由 benchmark 测量</td></tr>
-<tr><td>微架构</td><td>循环展开、栈分配、四累加器</td><td>减少热路径开销，不作为协议结论</td></tr>
+<tr><td>微架构</td><td>循环展开、栈分配、四累加器</td><td>减少性能关键循环的开销，不作为协议结论</td></tr>
 <tr><td>安全</td><td>Grinding 8-bit、掩码/常数时间路径</td><td>与关系证明 bound、工作因子分开报告</td></tr>
-<tr><td>工程</td><td>双后端切换（HW/SW fallback）</td><td>跨平台兼容</td></tr>
+<tr><td>工程</td><td>硬件实现与可移植实现的双路径切换</td><td>跨平台兼容</td></tr>
 </tbody>
 </table>
 </div>
