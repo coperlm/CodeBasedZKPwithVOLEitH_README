@@ -58,7 +58,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-325ae966.js";
+            window.path_to_searchindex_js = "searchindex-a7db92e5.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-97dc7667.js"></script>
@@ -3055,19 +3055,19 @@ const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>方案</th><th>参数</th><th style="text-align: right">签名并编码 (ms)</th><th style="text-align: right">解码并验证 (ms)</th><th style="text-align: right">签名体积</th></tr>
+<tr><th>方案</th><th>参数</th><th style="text-align: right">签名并编码 (ms)</th><th style="text-align: right">解码并验证 (ms)</th><th style="text-align: right">签名体积 (KiB)</th></tr>
 </thead>
 <tbody>
-<tr><td>ReSolveD+</td><td><code>n=453,c=3</code></td><td style="text-align: right">15.727</td><td style="text-align: right">9.715</td><td style="text-align: right">3.08 KiB</td></tr>
-<tr><td>RingSig</td><td><code>ell=5</code></td><td style="text-align: right">20.033</td><td style="text-align: right">14.704</td><td style="text-align: right">34.90 KiB</td></tr>
-<tr><td>RingSig</td><td><code>ell=10</code></td><td style="text-align: right">34.196</td><td style="text-align: right">22.867</td><td style="text-align: right">59.92 KiB</td></tr>
-<tr><td>Scope-LRS（扩展）</td><td><code>ell=5</code></td><td style="text-align: right">21.355</td><td style="text-align: right">15.188</td><td style="text-align: right">35.06 KiB</td></tr>
-<tr><td>Scope-LRS（扩展）</td><td><code>ell=10</code></td><td style="text-align: right">33.946</td><td style="text-align: right">24.538</td><td style="text-align: right">60.08 KiB</td></tr>
-<tr><td>Batch Scope-LRS（扩展，10 条）</td><td><code>ell=5</code></td><td style="text-align: right">168.146</td><td style="text-align: right">111.611</td><td style="text-align: right">306.64 KiB</td></tr>
-<tr><td>GroupSig</td><td><code>ell=5,c_e=6</code></td><td style="text-align: right">20.878</td><td style="text-align: right">17.212</td><td style="text-align: right">50.40 KiB</td></tr>
-<tr><td>GroupSig</td><td><code>ell=10,c_e=6</code></td><td style="text-align: right">34.435</td><td style="text-align: right">25.455</td><td style="text-align: right">75.38 KiB</td></tr>
-<tr><td>FDABS</td><td><code>ell=5,L=128,K=512</code></td><td style="text-align: right">21.450</td><td style="text-align: right">13.540</td><td style="text-align: right">34.15 KiB</td></tr>
-<tr><td>FDABS</td><td><code>ell=10,L=128,K=512</code></td><td style="text-align: right">33.508</td><td style="text-align: right">21.809</td><td style="text-align: right">59.17 KiB</td></tr>
+<tr><td>ReSolveD+</td><td><code>n=453,c=3</code></td><td style="text-align: right">15.727</td><td style="text-align: right">9.715</td><td style="text-align: right">3.08</td></tr>
+<tr><td>RingSig</td><td><code>ell=5</code></td><td style="text-align: right">20.033</td><td style="text-align: right">14.704</td><td style="text-align: right">34.90</td></tr>
+<tr><td>RingSig</td><td><code>ell=10</code></td><td style="text-align: right">34.196</td><td style="text-align: right">22.867</td><td style="text-align: right">59.92</td></tr>
+<tr><td>Scope-LRS（扩展）</td><td><code>ell=5</code></td><td style="text-align: right">21.355</td><td style="text-align: right">15.188</td><td style="text-align: right">35.06</td></tr>
+<tr><td>Scope-LRS（扩展）</td><td><code>ell=10</code></td><td style="text-align: right">33.946</td><td style="text-align: right">24.538</td><td style="text-align: right">60.08</td></tr>
+<tr><td>Batch Scope-LRS（扩展，10 条）</td><td><code>ell=5</code></td><td style="text-align: right">168.146</td><td style="text-align: right">111.611</td><td style="text-align: right">306.64</td></tr>
+<tr><td>GroupSig</td><td><code>ell=5,c_e=6</code></td><td style="text-align: right">20.878</td><td style="text-align: right">17.212</td><td style="text-align: right">50.40</td></tr>
+<tr><td>GroupSig</td><td><code>ell=10,c_e=6</code></td><td style="text-align: right">34.435</td><td style="text-align: right">25.455</td><td style="text-align: right">75.38</td></tr>
+<tr><td>FDABS</td><td><code>ell=5,L=128,K=512</code></td><td style="text-align: right">21.450</td><td style="text-align: right">13.540</td><td style="text-align: right">34.15</td></tr>
+<tr><td>FDABS</td><td><code>ell=10,L=128,K=512</code></td><td style="text-align: right">33.508</td><td style="text-align: right">21.809</td><td style="text-align: right">59.17</td></tr>
 </tbody>
 </table>
 </div>
