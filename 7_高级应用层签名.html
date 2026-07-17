@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-4dd76be5.js";
+            window.path_to_searchindex_js = "searchindex-f256a2a8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -198,34 +198,19 @@
                     <main>
                         <h1 id="模块七高级应用层群签名与全动态属性基签名-fdabs"><a class="header" href="#模块七高级应用层群签名与全动态属性基签名-fdabs">模块七：高级应用层——群签名与全动态属性基签名 (FDABS)</a></h1>
 <h2 id="一概述"><a class="header" href="#一概述">一、概述</a></h2>
-<p>本模块对应论文 §5.3、§5.5 的高级应用关系。论文描述的是完整 GroupSig/FDABS 方案；当前仓库实现其中的在线关系证明、签名和验证，未实现全部机构和生命周期算法。本模块构建在环签名（模块六）的基础上，增加了两个重要的密码学功能：</p>
+<p>本模块对应论文 §5.3、§5.5 的高级应用关系，并在环签名的 Merkle 成员证明基础上实现两类在线签名：</p>
 <ol>
-<li>
-<p>群签名（Group Signature, GS）：论文附录 C.5 让签名者用两次随机化 McEliece 加密同一身份 $\operatorname{bin}(j)$，并用第一把私钥开封 $c_1$。当前实现只证明两个密文关系及其与成员见证的一致性；不包含群成员注册、McEliece 私钥、<code>GOpen</code> 或撤销。除了环签名的匿名性外，群签名允许一个群管理员在必要时撤销匿名性，追踪出签名者的身份。这通过 McEliece 加密将身份信息 $j$ 和消息 $2m$ 嵌入密文 $(c_1, c_2)$ 实现。</p>
-</li>
-<li>
-<p>全动态属性基签名（Fully Dynamic Attribute-Based Signature, FDABS）：论文附录 C.6 包含属性机构、注册表、更新和撤销等算法。当前实现验证“给定属性见证、Merkle 路径、策略电路、<code>info</code> 和 <code>epoch</code> 时的签名关系”；<code>info</code>、<code>epoch</code> 被绑定到 transcript，但这本身不实现更新或撤销服务。签名者拥有一个属性向量，只有当属性满足某个布尔电路策略（Policy） 时才能生成有效签名。代码将布尔电路编码为 AND 门约束，并利用 Merkle 树累加器证明属性集的有效性。</p>
-</li>
+<li>群签名（Group Signature, GS）：签名者以两次随机化 McEliece 加密同一身份 $\operatorname{bin}(j)$，并将两个密文与成员见证纳入同一零知识证明。消息通过签名语句摘要绑定。</li>
+<li>全动态属性基签名（Fully Dynamic Attribute-Based Signature, FDABS）：签名者以属性向量、Merkle 路径和策略电路作为见证；属性满足策略时即可生成可验证签名，<code>info</code> 与 <code>epoch</code> 作为签名上下文参与绑定。</li>
 </ol>
+<p>当前版本覆盖上述关系证明、签名、验证和序列化。群成员注册、开封与撤销，以及 FDABS 的属性机构、注册、更新与撤销属于完整应用系统的管理流程，可在现有接口上继续扩展。</p>
 <h2 id="二群签名group-signature"><a class="header" href="#二群签名group-signature">二、群签名（Group Signature）</a></h2>
 <h3 id="21-安全问题域"><a class="header" href="#21-安全问题域">2.1 安全问题域</a></h3>
-<p>群签名同时证明三个断言：</p>
+<p>群签名关系由以下三部分组成：</p>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>断言</th><th>安全目标</th><th>实现机制</th></tr>
-</thead>
-<tbody>
-<tr><td>签名者属于群</td><td>匿名性</td><td>Merkle 树累加器（同环签名）</td></tr>
-<tr><td>签名者的身份是 $j$</td><td>可追踪性</td><td>McEliece 加密 $c_1 = G_1 \cdot \binom{r_1}{\text{bin}(j)} \oplus \text{RE}(e’_1)$</td></tr>
-<tr><td>消息绑定</td><td>不可伪造性</td><td>$c_2 = G_2 \cdot \binom{r_2}{\text{bin}(m)} \oplus \text{RE}(e’_2)$</td></tr>
-</tbody>
-</table>
-</div>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>断言</th><th>安全目标</th><th>实现机制</th></tr>
+<tr><th>断言</th><th>作用</th><th>实现机制</th></tr>
 </thead>
 <tbody>
 <tr><td>成员关系</td><td>Merkle 成员关系</td><td>Merkle 树累加器（同环签名）</td></tr>
@@ -234,7 +219,6 @@
 </tbody>
 </table>
 </div>
-<p>论文以 <code>GOpen</code> 解密 $c_1$ 得到身份；本仓库没有该算法，因此不能把上表的关系证明表述为当前已提供“可追踪群签名”服务。</p>
 <h3 id="22-witness-结构"><a class="header" href="#22-witness-结构">2.2 Witness 结构</a></h3>
 <p>群签名的 witness 在环签名 witness 基础上增加了加密随机数和噪声种子：</p>
 <pre><code>witness = [j_0..j_{ell-1}]                    // ell 个方向比特
@@ -293,8 +277,7 @@ $$</p>
 <li><code>append_re_terms</code> 处理正则噪声 $\text{RE}(e’)$：$\text{RE}(e’)_i$ 在约束层面被展开为多个 degree-$c_e$ 的 ANF 单项式的 XOR 求和（通过 <code>append_re_terms</code> 注入每个单项式）</li>
 <li>最后翻转常数项使方程等于 0</li>
 </ul>
-<p>这与公式 $c = G \cdot \binom{u}{m} \oplus \text{RE}(e’)$ 完美对应——只不过这个关系被编码在约束方程 $g_i(\cdot) = 0$ 中，而不是直接计算。</p>
-<p>这与论文式 (19) 对应：两个密文都含 $\operatorname{bin}(j)$，而非其中一个密文含消息。该关系被编码为 $g_i(\cdot)=0$，同时 <code>message</code> 通过 statement digest 绑定到 Fiat-Shamir transcript。（del</p>
+<p>两个密文均按 $c_\theta=G_\theta\cdot(r_\theta|\operatorname{bin}(j))\oplus\operatorname{RE}(e’_\theta)$ 构造；约束系统将这一关系写为 $g_i(\cdot)=0$，并将 <code>message</code> 纳入 statement digest。</p>
 <h3 id="24-签名流程"><a class="header" href="#24-签名流程">2.4 签名流程</a></h3>
 <pre><code>Algorithm: Group Sign(pk, sk, msg)
 Input:  pk = (B0, B1, G1, G2, root_u, ...), sk = membership_witness, msg
@@ -331,8 +314,7 @@ Output: GroupSignature
 
 9.  Return σ = (CommitmentMessage, ProofMessage, VoleitHTranscript, c1_bits, c2_bits)
 </code></pre>
-<p>注意：密文 $(c_1, c_2)$ 被显式包含在签名中（Verifier 需要它们来验证约束）。由于这些密文本身就是公开值（任何知道公钥的人都可以验证其结构），这不影响匿名性。</p>
-<p>密文 $(c_1,c_2)$ 被显式包含在签名中，Verifier 用它们重建关系。密文公开是论文方案设计的一部分；当前关系验证和测试不能单独证明完整的匿名性或 CCA2 性质。（del</p>
+<p>签名中显式携带密文 $(c_1,c_2)$，验证者据此重建并检查相应的加密约束。</p>
 <h3 id="25-公式-代码映射"><a class="header" href="#25-公式-代码映射">2.5 公式-代码映射</a></h3>
 <div class="table-wrapper">
 <table>
@@ -354,20 +336,7 @@ Output: GroupSignature
 </div>
 <h2 id="三全动态属性基签名-fdabs"><a class="header" href="#三全动态属性基签名-fdabs">三、全动态属性基签名 (FDABS)</a></h2>
 <h3 id="31-安全问题域"><a class="header" href="#31-安全问题域">3.1 安全问题域</a></h3>
-<p>当前实现的 FDABS 关系同时证明下列断言。论文的“fully dynamic”还需要附录 C.6 的 <code>Setupinit</code>、<code>Setupauth</code>、<code>AttrGen</code>、<code>Update</code> 等生命周期算法；这些不在本仓库的在线路径中：</p>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>断言</th><th>实现机制</th></tr>
-</thead>
-<tbody>
-<tr><td>属性向量 $a$ 已被群管理员认证</td><td>Merkle 叶哈希 $v_\ell = B_\text{leaf} \cdot \text{RE}(a | \text{rand})$</td></tr>
-<tr><td>叶哈希的汉明重量为奇数</td><td>$\text{wt}(v_\ell) \equiv 1 \pmod{2}$（奇偶性约束）</td></tr>
-<tr><td>属性 $a$ 满足布尔电路策略</td><td>AND 门约束和最终输出约束</td></tr>
-<tr><td>属性属于已认证集合</td><td>Merkle 累加器路径（同环签名）</td></tr>
-</tbody>
-</table>
-</div>
+<p>当前实现的 FDABS 关系同时证明下列断言：</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -378,7 +347,6 @@ Output: GroupSignature
 <tr><td>叶哈希的汉明重量为奇数</td><td>$\text{wt}(v_\ell) \equiv 1 \pmod{2}$（奇偶性约束）</td></tr>
 <tr><td>属性 $a$ 满足布尔电路策略</td><td>NAND 形式乘法门约束和最终输出约束</td></tr>
 <tr><td>叶子位于当前公开根</td><td>Merkle 累加器路径（同环签名）</td></tr>
-<tr><td>（del</td><td></td></tr>
 </tbody>
 </table>
 </div>
@@ -469,7 +437,6 @@ $$</p>
 <p>测试 <code>test_fdabs_constraints_reject_even_leaf_weight</code> 验证了当叶哈希的汉明重量为偶数时约束被违反。</p>
 <h3 id="36-乘法门的-nand-形式二次约束"><a class="header" href="#36-乘法门的-nand-形式二次约束">3.6 乘法门的 NAND 形式二次约束</a></h3>
 <p>任何布尔电路都可以用 NAND 门单独构建。代码中的门使用结构体名 <code>AndGate</code>，但约束实际实现的是 NAND（与非）门，对应论文里的 <code>multiplication gates</code>（乘法门），数学本质上是与非门。对于每个门，要求 $x_{\text{out}} = \neg(x_{\text{in1}} \land x_{\text{in2}})$，在 $\mathbb{F}_2$ 上的 ANF 约束为：</p>
-<p>论文式 (25) 用乘法门关系 $x_\alpha x_\beta\oplus x_\text{out}\oplus1=0$ 表示电路。代码的结构体历史名称为 <code>AndGate</code>，但它实现的正是该 NAND 形式：$x_\text{out}=\neg(x_\text{in1}\land x_\text{in2})$。（del</p>
 <p>$$
 x_{\text{out}} + x_{\text{in1}} \cdot x_{\text{in2}} + 1 = 0
 $$</p>
@@ -574,8 +541,7 @@ Output: FdabsSignature
 
 6. Return σ
 </code></pre>
-<p>信息字段 <code>info</code> 和 <code>epoch</code> 使 FDABS 支持动态撤销和策略更新——签名还绑定到特定时期 <code>epoch</code> 和上下文 <code>info</code>。</p>
-<p><code>info</code> 和 <code>epoch</code> 被吸收进 statement digest，故签名验证会拒绝不同的上下文或时期。它们是实现动态系统时所需的绑定输入，但当前仓库没有实现论文附录 C.6 的 <code>Update</code>、撤销和信息发布流程。（del</p>
+<p><code>info</code> 和 <code>epoch</code> 被吸收进 statement digest，使签名与特定的上下文和时期绑定；验证时使用相同的字段重建摘要。</p>
 <h3 id="311-公式-代码映射"><a class="header" href="#311-公式-代码映射">3.11 公式-代码映射</a></h3>
 <div class="table-wrapper">
 <table>

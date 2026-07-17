@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-4dd76be5.js";
+            window.path_to_searchindex_js = "searchindex-f256a2a8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -198,10 +198,10 @@
                     <main>
                         <h1 id="模块八参数配置工程优化与基准测试安全分析与性能报告"><a class="header" href="#模块八参数配置工程优化与基准测试安全分析与性能报告">模块八：参数配置、工程优化与基准测试——安全分析与性能报告</a></h1>
 <h2 id="一概述"><a class="header" href="#一概述">一、概述</a></h2>
-<p>本模块把安全参数、签名表示和实验口径放在一起；并只在必要处说明实现优化：</p>
+<p>本模块说明安全参数、签名表示和性能实现：</p>
 <ol>
-<li><code>security.rs</code> — 对当前关系证明上界进行 concrete accounting，不替代完整安全证明</li>
-<li><code>artifact_bundle.rs</code> — 极紧凑的签名序列化格式，将签名体积压缩到 KB 级别</li>
+<li><code>security.rs</code> — 计算当前关系证明的可靠性上界</li>
+<li><code>artifact_bundle.rs</code> — ReSolveD+ 的紧凑签名序列化格式</li>
 <li><code>benches/paper_benchmarks.rs</code> + <code>scripts/</code> — 端到端基准测试框架和性能调优</li>
 </ol>
 <h2 id="二安全参数分析securityrs"><a class="header" href="#二安全参数分析securityrs">二、安全参数分析：<code>security.rs</code></a></h2>
@@ -240,7 +240,7 @@ $$</p>
 <pre><code>degree=9, combination=128, delta=128 → bit_security ≈ 124.678
 degree=9, combination=128, delta=120 → bit_security ≈ 116.829
 </code></pre>
-<p>该数值可与论文中的保守参数分析作对照；它不是对所有应用参数自动成立的统一安全等级。</p>
+<p>该数值用于说明当前参数下关系证明的可靠性量级，并可与论文中的参数分析对照。</p>
 <p>单独记录 grinding：$w_\text{grind} = 8$ 比特意味着平均约 $2^8$ 次 opening challenge 尝试。代码把它作为工作因子单独报告：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -248,16 +248,16 @@ degree=9, combination=128, delta=120 → bit_security ≈ 116.829
     self.bit_security + grinding_bits as f64
 }
 <span class="boring">}</span></code></pre>
-<p>这不能直接改写为 statistical soundness 达到 $116.8+8$ bit；它只是对接受一个满足 opening 条件的 transcript 所需计算工作的另一种解释。</p>
+<p>因此，表中的 grinding 位数作为额外工作因子单独列出。</p>
 <h3 id="24-参数套件"><a class="header" href="#24-参数套件">2.4 参数套件</a></h3>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>方案</th><th>$n$</th><th>$c$</th><th>$d$</th><th>挑战域</th><th>$\Delta$ 预估比特</th><th style="text-align: center">$w_\text{grind}$</th><th>安全估计算</th></tr>
+<tr><th>方案</th><th>$n$</th><th>$c$</th><th>$d$</th><th>挑战域</th><th>$\Delta$ 预估比特</th><th style="text-align: right">关系证明可靠性估计</th><th style="text-align: right">Grinding 工作因子</th></tr>
 </thead>
 <tbody>
-<tr><td>ReSolveD+（论文表 6 Var2）</td><td>453</td><td>3</td><td>3</td><td>128</td><td>120</td><td style="text-align: center">8</td><td>~118.4 + 8</td></tr>
-<tr><td>环签名 / 群签名 / FDABS</td><td>1280</td><td>8</td><td>9</td><td>128</td><td>120</td><td style="text-align: center">8</td><td>~116.8 + 8</td></tr>
+<tr><td>ReSolveD+（论文表 6 Var2）</td><td>453</td><td>3</td><td>3</td><td>128</td><td>120</td><td style="text-align: right">~118.4 bit</td><td style="text-align: right">8 bit</td></tr>
+<tr><td>环签名 / 群签名 / FDABS</td><td>1280</td><td>8</td><td>9</td><td>128</td><td>120</td><td style="text-align: right">~116.8 bit</td><td style="text-align: right">8 bit</td></tr>
 </tbody>
 </table>
 </div>
@@ -350,20 +350,17 @@ const VERSION: u16 = 1;
 <li>参数硬编码检查：解码时验证 <code>(k, c, rows, cols, y_bits)</code> 必须匹配常量，防止跨参数集误用</li>
 </ul>
 <h3 id="34-当前-wire-体积与论文分析值"><a class="header" href="#34-当前-wire-体积与论文分析值">3.4 当前 wire 体积与论文分析值</a></h3>
-<p>论文表 3–5 的 KB 数是参数化通信量分析；当前实现的版本化 wire 体积必须以模块十及 <code>just speed-table</code> 输出为准。历史单线程记录中，$\ell=5$ 的 RingSig、GroupSig、FDABS 分别为 34.90 KiB、50.40 KiB、34.15 KiB；它们不能写成 4–8 KB。Scope-LRS 和 batch Scope-LRS 是仓库扩展，不应混入论文方案体积比较。</p>
-<p>从 <code>justfile</code> 的 report 测试可观察到（以 $\ell=5$ 的环签名和群签名为例）：</p>
+<p>论文表 3–5 给出的是参数化通信量分析；本项目的签名采用版本化编码，实际体积如下（完整性能表见模块十）：</p>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>方案</th><th style="text-align: center">签名体积</th><th style="text-align: center">相比 Stern 基方法</th></tr>
+<tr><th>方案</th><th>参数</th><th style="text-align: right">签名体积</th></tr>
 </thead>
 <tbody>
-<tr><td>ReSolveD+</td><td style="text-align: center">~3.1 KB</td><td style="text-align: center">~1/330（相比 1 MB）</td></tr>
-<tr><td>环签名 ($\ell=5$)</td><td style="text-align: center">~4 KB</td><td style="text-align: center">~1/250</td></tr>
-<tr><td>环签名 ($\ell=10$)</td><td style="text-align: center">~4 KB</td><td style="text-align: center">~1/250</td></tr>
-<tr><td>群签名 ($\ell=5$)</td><td style="text-align: center">~8 KB（含 $c_1, c_2$）</td><td style="text-align: center">—</td></tr>
-<tr><td>FDABS</td><td style="text-align: center">~4 KB</td><td style="text-align: center">—</td></tr>
-<tr><td>批量化 LRS（10 签名）</td><td style="text-align: center">~25 KB（摊销 ~2.5 KB/个）</td><td style="text-align: center">—</td></tr>
+<tr><td>ReSolveD+</td><td>$n=453,c=3$</td><td style="text-align: right">3.08 KiB</td></tr>
+<tr><td>RingSig</td><td>$\ell=5$ / $\ell=10$</td><td style="text-align: right">34.90 / 59.92 KiB</td></tr>
+<tr><td>GroupSig</td><td>$\ell=5$ / $\ell=10$</td><td style="text-align: right">50.40 / 75.38 KiB</td></tr>
+<tr><td>FDABS</td><td>$\ell=5$ / $\ell=10$</td><td style="text-align: right">34.15 / 59.17 KiB</td></tr>
 </tbody>
 </table>
 </div>
@@ -376,8 +373,8 @@ const VERSION: u16 = 1;
 <tr><th>位置</th><th>并行内容</th><th style="text-align: center">阈值</th><th style="text-align: center">加速效果</th></tr>
 </thead>
 <tbody>
-<tr><td><code>implicit_eval.rs</code></td><td>χ’ 列聚合</td><td style="text-align: center">列数 $\ge 8192$</td><td style="text-align: center">接近线性</td></tr>
-<tr><td><code>implicit_eval.rs</code></td><td>蝴蝶求值块</td><td style="text-align: center">块数 $\ge 128$</td><td style="text-align: center">接近线性</td></tr>
+<tr><td><code>implicit_eval.rs</code></td><td>χ’ 列聚合</td><td style="text-align: center">列数 $\ge 8192$</td><td style="text-align: center">多核分块计算</td></tr>
+<tr><td><code>implicit_eval.rs</code></td><td>蝴蝶求值块</td><td style="text-align: center">块数 $\ge 128$</td><td style="text-align: center">多核分块计算</td></tr>
 <tr><td><code>implicit_eval.rs</code></td><td>配对 χ’ 左右矩阵</td><td style="text-align: center">列数 $\ge 8192$</td><td style="text-align: center">$2\times$</td></tr>
 <tr><td><code>implicit_eval.rs</code></td><td>VOLE 行哈希</td><td style="text-align: center">输入 $\ge 64$ KB</td><td style="text-align: center">行并行</td></tr>
 <tr><td><code>voleith.rs</code></td><td>列转置</td><td style="text-align: center">列数 $\ge 8$ KB</td><td style="text-align: center">BMI2 加速</td></tr>
@@ -510,7 +507,6 @@ const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 <span class="boring">}</span></code></pre>
 <h3 id="47-性能对比"><a class="header" href="#47-性能对比">4.7 性能对比</a></h3>
 <p>详见 <a href="./10_原始数据.html">10_原始数据.md</a></p>
-<p>（具体毫秒值可通过 <code>just bench-paper</code> 或 <code>just speed-table</code> 运行获取）</p>
 <h2 id="五工程优化总结"><a class="header" href="#五工程优化总结">五、工程优化总结</a></h2>
 <div class="table-wrapper">
 <table>
@@ -520,7 +516,7 @@ const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 <tbody>
 <tr><td>算法</td><td>隐式求值/蝴蝶折叠</td><td>先聚合 $\chi’$，再按块进行 $c$ 层折叠；成本取决于块数和 $2^c$</td></tr>
 <tr><td>内存</td><td><code>StreamingMatrixCols</code> 流式列生成</td><td>避免常驻完整矩阵，工作空间由列缓冲区和 PRG 状态主导</td></tr>
-<tr><td>序列化</td><td>种子代替矩阵、紧凑位编码</td><td>签名体积 MB → KB</td></tr>
+<tr><td>序列化</td><td>种子代替矩阵、紧凑位编码</td><td>ReSolveD+ bundle 为 3.08 KiB；各应用签名体积见模块十</td></tr>
 <tr><td>并行</td><td>Rayon <code>par_iter</code> / <code>par_chunks_mut</code> / <code>join</code></td><td>加速取决于线程数、CPU 和内存带宽</td></tr>
 <tr><td>硬件</td><td>PCLMULQDQ / AES-NI / BMI2</td><td>具体效果由 benchmark 测量</td></tr>
 <tr><td>微架构</td><td>循环展开、栈分配、四累加器</td><td>减少热路径开销，不作为协议结论</td></tr>

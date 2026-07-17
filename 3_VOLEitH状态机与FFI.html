@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-4dd76be5.js";
+            window.path_to_searchindex_js = "searchindex-f256a2a8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -200,12 +200,12 @@
 <h2 id="一概述"><a class="header" href="#一概述">一、概述</a></h2>
 <p>本模块是整个 ZKP 系统的核心引擎——它负责将密码学约束系统与底层的延迟 VOLE 功能（Delayed VOLE functionality, $\mathcal{F}_{\text{sVOLE}}$）衔接起来。架构上采用两层级联设计：</p>
 <ol>
-<li>C 层（FAEST）：提供 GGM/BAVC 所需的承诺、打开和重构例程。$\tau$ 是并行重复数，$\lambda$ 是安全参数；树的形状由 FAEST profile 中的树参数决定，不能把 $\lambda$ 直接称为树深度。</li>
+<li>C 层（FAEST）：提供 GGM/BAVC 所需的承诺、打开和重构例程。$\tau$ 是并行重复数，$\lambda$ 是安全参数；树的形状由 FAEST profile 中的树参数确定。</li>
 <li>Rust 层：通过 FFI 安全封装 C 层状态机，并在此基础上实现 Prover/Verifier 的协议状态机，负责挑战生成、相关性提取（correlation extraction）、约束绑定等高层协议逻辑。</li>
 </ol>
 <h2 id="二为什么需要-ffi-复用-faest-的-c-代码"><a class="header" href="#二为什么需要-ffi-复用-faest-的-c-代码">二、为什么需要 FFI 复用 FAEST 的 C 代码？</a></h2>
 <h3 id="21-ggm-树形向量承诺bavc的密码学角色"><a class="header" href="#21-ggm-树形向量承诺bavc的密码学角色">2.1 GGM 树形向量承诺（BAVC）的密码学角色</a></h3>
-<p>在 VOLE-in-the-Head 范式中，Prover 需要承诺 $\tau$ 个伪随机种子 $K_1, \dots, K_\tau$，然后对每个种子应用 GGM 伪随机函数树（Goldreich-Goldwasser-Micali 树）展开出 $\lambda$ 层的叶子。这些叶子形成了 VOLE 关系中 Prover 的秘密向量：</p>
+<p>在 VOLE-in-the-Head 范式中，Prover 需要承诺 $\tau$ 个伪随机种子 $K_1, \dots, K_\tau$，然后对每个种子应用 GGM 伪随机函数树（Goldreich-Goldwasser-Micali 树）展开。树的层数和叶子数由 FAEST 参数确定，这些叶子形成 VOLE 关系中 Prover 的秘密向量：</p>
 <p>$$
 {(u_i, v_i)}_{i=1}^\tau \xrightarrow{\text{GGM 展开}} {(u, \mathbf{v})} \in \mathbb{F}_2^\ell \times \mathbb{F}_{2^{128}}^\ell
 $$</p>
@@ -220,7 +220,7 @@ $$</p>
 <ul>
 <li>需要重新实现 $\tau$ 棵 GGM 树的构建、密钥扩展、Merkle 哈希聚合——这是数千行经过审计的 C 代码</li>
 <li>需要保证与 FAEST 规范的行为完全一致（包括常数时间执行、字节序、SHA-3 用法等）</li>
-<li>复用固定参考实现可以避免在本仓库重新定义 BAVC 的字节级行为，但不能把 FFI 接入自动解释为继承完整安全保证；参数、组合方式和本地关系证明仍需单独分析。</li>
+<li>复用参考实现可保持 BAVC 的字节级行为一致；参数、协议组合和本地关系证明由本项目的实现与论文共同定义。</li>
 </ul>
 <h3 id="23-代码组织"><a class="header" href="#23-代码组织">2.3 代码组织</a></h3>
 <pre><code>faest-ref/           ← C 源码（子模块）
@@ -353,7 +353,7 @@ if bavc.h.is_null() || bavc.k.is_null() || bavc.com.is_null() || bavc.sd.is_null
 <span class="boring">}</span></code></pre>
 <p>这种防御式编程模式确保即使 C 侧返回异常状态，Rust 侧也不会在空指针上继续操作。</p>
 <h3 id="34-vole-哈希同一算法的两种实现"><a class="header" href="#34-vole-哈希同一算法的两种实现">3.4 VOLE 哈希：同一算法的两种实现</a></h3>
-<p>FAEST C 的 <code>universal_hashing.c</code> 已经提供 <code>vole_hash_128</code>，仓库同时保留了一个 Rust 等价实现 <code>vole_hash_128f_rust</code>。运行路径选择 Rust 版本，不是因为 C 版本不可用，而是因为两者的有限域乘法实现不同：Rust 使用 <code>F128b</code> 和可用时的 PCLMULQDQ，C 的 <code>bf128_mul</code>/<code>bf64_mul</code> 是逐 bit 的 shift-and-XOR 实现。</p>
+<p>FAEST C 的 <code>universal_hashing.c</code> 提供 <code>vole_hash_128</code>，仓库同时保留 Rust 等价实现 <code>vole_hash_128f_rust</code>。运行路径选用 Rust 版本：Rust 使用 <code>F128b</code> 和可用时的 PCLMULQDQ，C 的 <code>bf128_mul</code>/<code>bf64_mul</code> 使用逐 bit 的 shift-and-XOR 实现。</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn vole_hash_128f_rust(seed, input, hash_ell_bits) -&gt; [u8; 18]
@@ -387,7 +387,7 @@ low ^ high ^ (high &lt;&lt; 1) ^ (high &lt;&lt; 3) ^ (high &lt;&lt; 4)
     ^ overflow ^ (overflow &lt;&lt; 1) ^ (overflow &lt;&lt; 3) ^ (overflow &lt;&lt; 4)
 <span class="boring">}</span></code></pre>
 <p>这约简多项式 $x^{64} + x^4 + x^3 + x + 1$。</p>
-<p>正确性保障：<code>test_rust_vole_hash_matches_faest_c_reference</code> 在多种输入长度（0 ~ 28176 比特）和多种随机种子下，逐字节比对 Rust 实现与 C 参考实现的输出。优化构建的性能审计测试显示，在当前 x86_64 主机上 Rust 版本约为 C 版本的 50–86 倍；因此这里的重复实现是有性能依据的，不应机械替换为 FFI。</p>
+<p><code>test_rust_vole_hash_matches_faest_c_reference</code> 在多种输入长度（0 ~ 28176 比特）和随机种子下，逐字节比对 Rust 实现与 C 参考实现的输出。优化构建的测试显示，在当前 x86_64 主机上 Rust 版本约为 C 版本的 50–86 倍。</p>
 <h2 id="四状态机设计voleithrs"><a class="header" href="#四状态机设计voleithrs">四、状态机设计：<code>voleith.rs</code></a></h2>
 <h3 id="41-延迟-vole-功能delayed-vole"><a class="header" href="#41-延迟-vole-功能delayed-vole">4.1 延迟 VOLE 功能（Delayed VOLE）</a></h3>
 <p>在 VOLEitH 协议中，Prover 和 Verifier 需要建立以下 VOLE 关系：</p>
@@ -575,7 +575,7 @@ squeeze() → opening_challenge
     end
 
     subgraph C_Lib [C 语言层 faest-ref]
-        C["vole.c / bavc.c&lt;br/&gt;&lt;br/&gt;• BAVC 树构建 τ × λ 深度&lt;br/&gt;• GGM 伪随机展开&lt;br/&gt;• 承诺哈希 SHA-3 聚合&lt;br/&gt;• 选择性打开验证"]
+        C["vole.c / bavc.c&lt;br/&gt;&lt;br/&gt;• BAVC 树构建与参数实例化&lt;br/&gt;• GGM 伪随机展开&lt;br/&gt;• 承诺哈希 SHA-3 聚合&lt;br/&gt;• 选择性打开验证"]
     end
 
     A --&gt;|FFI 调用| B

@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-4dd76be5.js";
+            window.path_to_searchindex_js = "searchindex-f256a2a8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -215,7 +215,7 @@ $$</p>
 <li>$u_0, u_1 \in \mathbb{F}_2^{n}$ 是 $n$ 比特的输入</li>
 <li>$\text{RE}: \mathbb{F}_2^{n} \to \mathbb{F}_2^{m}$ 是正则编码函数（Regular Encoding），将 $n$ 比特输入映射为 $m = \frac{n}{c} \cdot 2^c$ 比特的稀疏二元向量，其汉明重量恰为 $n/c$</li>
 </ul>
-<p>在论文的编码型安全背景下，该结构与 2-RNSD 类关系相联系。就本仓库代码而言，能够直接确认的是哈希定义、维度检查、regular encoding 求值以及约束等价性测试；“碰撞等价于某个困难问题”属于方案安全分析，不能由实现函数单独推出。</p>
+<p>在论文的编码型安全背景下，该结构与 2-RNSD 类关系相联系。代码实现了哈希定义、维度检查、regular encoding 求值以及约束等价性测试；其安全性质由论文的方案分析给出。</p>
 <h3 id="22-正则编码-regular-encoding-详解"><a class="header" href="#22-正则编码-regular-encoding-详解">2.2 正则编码 (Regular Encoding) 详解</a></h3>
 <h4 id="221-数学定义"><a class="header" href="#221-数学定义">2.2.1 数学定义</a></h4>
 <p>令 $c$ 为块大小（chunk size），$n$ 必须能被 $c$ 整除。正则编码将输入 $x$ 划分为 $\frac{n}{c}$ 个各长为 $c$ 比特的块。每个块 $x^{(i)} \in \mathbb{F}_2^{c}$ 被映射为一个独热向量（one-hot vector）：</p>
@@ -471,7 +471,7 @@ $$</p>
 c_{2,i} = \left(\bigoplus_{j: G_{2,i,j}=1} (r_2 ;|; \text{bin}(j))_j\right) \oplus \text{RE}(e’_2)_i
 $$</p>
 <p>这实现了论文要求的“$c_1,c_2$ 是同一 $\operatorname{bin}(j)$ 的两次随机化加密”这一代数关系。</p>
-<h3 id="34-现在后端设计是两套"><a class="header" href="#34-现在后端设计是两套">3.4 现在后端设计是两套</a></h3>
+<h3 id="34-矩阵-prg-的双后端设计"><a class="header" href="#34-矩阵-prg-的双后端设计">3.4 矩阵 PRG 的双后端设计</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[cfg(all(feature = "hardware-accel", target_arch = "x86_64", target_feature = "aes"))]
@@ -498,7 +498,7 @@ $$</p>
 <li>$B_0$ 编码左子节点的影响，$B_1$ 编码右子节点的影响</li>
 <li>最终根哈希 $u_0 = v_0$ 被公开作为哈希链承诺</li>
 </ul>
-<p>而 McEliece 加密则在群签名中提供追踪机制：管理方可利用私钥解密密文 $(c_1, c_2)$ 获取签名者的身份索引 $j$ 与消息 $m$，实现匿名性中的可控可追踪。追踪部分代码暂未实现</p>
+<p>McEliece 加密在群签名中承载身份索引 $j$：签名生成两个关于同一 $j$ 的随机化密文 $(c_1,c_2)$，并将它们与 Merkle 成员见证共同纳入零知识证明。消息作为公开语句的一部分参与摘要计算，从而与签名绑定。</p>
 <h2 id="五工程要点总结"><a class="header" href="#五工程要点总结">五、工程要点总结</a></h2>
 <div class="table-wrapper">
 <table>

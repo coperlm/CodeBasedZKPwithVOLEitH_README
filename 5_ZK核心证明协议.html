@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-4dd76be5.js";
+            window.path_to_searchindex_js = "searchindex-f256a2a8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -224,7 +224,7 @@ $$</p>
     Note over P, V: Step 1: 承诺 (Commit)
     Note over P: corr ← w ⊕ u
     P-&gt;&gt;V: corr
-    Note over V: 吸收承诺:&lt;br/&gt;q̃_i ← q_i + corr_i·Δ&lt;br/&gt;(即 q̃ = v)
+    Note over V: 吸收承诺:&lt;br/&gt;q̃_i ← q_i + corr_i·Δ&lt;br/&gt;(即 q̃_i = v_i + w_i·Δ)
 
     Note over P, V: Step 2: 挑战 (Challenge)
     Note over V: χ_i ← Random / Fiat-Shamir
@@ -264,9 +264,9 @@ $$</p>
 \tilde{q}_i = q_i + (w_i \oplus u_i) \cdot \Delta
 $$</p>
 <p>由 $v_i=q_i+u_i\Delta$ 可得校正后的量为
-[
+$$
 \tilde q_i=q_i+(w_i\oplus u_i)\Delta=v_i+w_i\Delta,
-]
+$$
 而不是单独的 $v_i$。这正是后续在点 $\Delta$ 上评价 witness 约束所需的 affine 视图。它对应论文验证步骤中的 $Q^\star=Q_{[1,l]}+d\cdot GC\cdot\operatorname{diag}(\Delta)$；Verifier 不需要恢复 $u$ 或 $v$ 的明文向量，只需检查该视图与响应多项式相符。</p>
 <p>常数时间实现：<code>corrected_q_from_bitvec</code> 使用 <code>conditional_select</code>（来自 <code>subtle</code> crate）逐字节展开校正子位，避免秘密依赖的分支。</p>
 <h3 id="23-step-2挑战生成challengemessage"><a class="header" href="#23-step-2挑战生成challengemessage">2.3 Step 2：挑战生成（<code>ChallengeMessage</code>）</a></h3>

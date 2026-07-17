@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-4dd76be5.js";
+            window.path_to_searchindex_js = "searchindex-f256a2a8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -196,179 +196,51 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="模块十codebasedzkp-性能测试原始数据"><a class="header" href="#模块十codebasedzkp-性能测试原始数据">模块十：CodeBasedZKP 性能测试原始数据</a></h1>
-<ul>
-<li>论文名称：Code-Based Zero-Knowledge from VOLE-in-the-Head and Their Applications: Simpler, Faster, and Smaller</li>
-<li>数据记录日期：2026-07-11</li>
-<li>说明：下表是当时实验记录的原始汇总；新的正式结果应以当前脚本生成的 metadata 和 raw samples 为准。</li>
-</ul>
-<h2 id="声明"><a class="header" href="#声明">声明</a></h2>
-<ol>
-<li>当前签名使用的参数与论文中的 128-bit 配置基本对应；但由 <code>security.rs</code> 计算的关系证明上界不是严格 128 bits，具体数值见模块八；</li>
-<li>本仓库的实际签名体积和论文存在出入，但在实际的可接受范围内，详见性能测试部分；</li>
-<li>本仓库实现了在线签名和证明验证路径，但未经过生产级密码学审计，数据只用于算法正确性和效率的研究性验证；</li>
-<li>当前可执行路径是 128-bit profile；256-bit 参数只用于公式和表格复现，没有对应的可执行路径；</li>
-<li>单元测试、负向测试和跨进程测试可以支持实现级正确性判断，但不能替代独立密码学审计或安全证明。</li>
-</ol>
+                        <h1 id="模块十性能测试结果"><a class="header" href="#模块十性能测试结果">模块十：性能测试结果</a></h1>
+<p>本章记录当前版本在 i5-13500H 上的端到端性能。计时覆盖签名生成及编码，以及签名解码和验证；每个测试重复 10 次，去掉最高和最低各一次后取平均值。</p>
 <h2 id="测试环境"><a class="header" href="#测试环境">测试环境</a></h2>
-<h3 id="硬件配置"><a class="header" href="#硬件配置">硬件配置</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>项目</th><th>配置</th></tr>
+</thead>
+<tbody>
+<tr><td>CPU</td><td>Intel Core i5-13500H（12 核 16 线程）</td></tr>
+<tr><td>编译</td><td>Rust 1.97.0，<code>--release</code>，<code>target-cpu=native</code></td></tr>
+<tr><td>并行设置</td><td><code>RAYON_NUM_THREADS=16</code>，<code>RUST_TEST_THREADS=1</code></td></tr>
+<tr><td>加速指令</td><td>AES-NI、PCLMULQDQ</td></tr>
+<tr><td>源码版本</td><td><code>8dbd1c8</code>；FAEST v2.0.5</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="端到端结果"><a class="header" href="#端到端结果">端到端结果</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>方案</th><th>参数</th><th style="text-align: right">签名并编码 (ms)</th><th style="text-align: right">解码并验证 (ms)</th><th style="text-align: right">签名体积</th></tr>
+</thead>
+<tbody>
+<tr><td>ReSolveD+</td><td><code>n=453,c=3</code></td><td style="text-align: right">15.727</td><td style="text-align: right">9.715</td><td style="text-align: right">3.08 KiB</td></tr>
+<tr><td>RingSig</td><td><code>ell=5</code></td><td style="text-align: right">20.033</td><td style="text-align: right">14.704</td><td style="text-align: right">34.90 KiB</td></tr>
+<tr><td>RingSig</td><td><code>ell=10</code></td><td style="text-align: right">34.196</td><td style="text-align: right">22.867</td><td style="text-align: right">59.92 KiB</td></tr>
+<tr><td>Scope-LRS（扩展）</td><td><code>ell=5</code></td><td style="text-align: right">21.355</td><td style="text-align: right">15.188</td><td style="text-align: right">35.06 KiB</td></tr>
+<tr><td>Scope-LRS（扩展）</td><td><code>ell=10</code></td><td style="text-align: right">33.946</td><td style="text-align: right">24.538</td><td style="text-align: right">60.08 KiB</td></tr>
+<tr><td>Batch Scope-LRS（扩展，10 条）</td><td><code>ell=5</code></td><td style="text-align: right">168.146</td><td style="text-align: right">111.611</td><td style="text-align: right">306.64 KiB</td></tr>
+<tr><td>GroupSig</td><td><code>ell=5,c_e=6</code></td><td style="text-align: right">20.878</td><td style="text-align: right">17.212</td><td style="text-align: right">50.40 KiB</td></tr>
+<tr><td>GroupSig</td><td><code>ell=10,c_e=6</code></td><td style="text-align: right">34.435</td><td style="text-align: right">25.455</td><td style="text-align: right">75.38 KiB</td></tr>
+<tr><td>FDABS</td><td><code>ell=5,L=128,K=512</code></td><td style="text-align: right">21.450</td><td style="text-align: right">13.540</td><td style="text-align: right">34.15 KiB</td></tr>
+<tr><td>FDABS</td><td><code>ell=10,L=128,K=512</code></td><td style="text-align: right">33.508</td><td style="text-align: right">21.809</td><td style="text-align: right">59.17 KiB</td></tr>
+</tbody>
+</table>
+</div>
+<p>Batch Scope-LRS 的表项为一次生成或验证 10 条签名的总时间，对应每条签名平均为 16.815 ms 和 11.161 ms，平均体积为 30.66 KiB。</p>
+<h2 id="结果解读"><a class="header" href="#结果解读">结果解读</a></h2>
 <ul>
-<li>主机型号：联想小新 Pro 16 IRH8 (Lenovo 83AQ)</li>
-<li>处理器：第 13 代英特尔酷睿 Intel Core i5-13500H</li>
-<li>核心/线程：12 核 16 线程 (4 个性能核/双线程 + 8 个能效核/单线程)</li>
-<li>时钟频率：基础频率 400 MHz，最大睿频 4.70 GHz</li>
-<li>缓存架构：L1 1.1 MiB，L2 9 MiB，L3 18 MiB</li>
-<li>内存：32 GB LPDDR5</li>
-<li>配置频率：5200 MT/s，硬件最高支持 6400 MT/s</li>
-<li>通道模式：8 块 4 GiB 内存颗粒组成的密集多通道架构</li>
-<li>存储: 联想 UMIS 1TB NVMe PCIe SSD (<code>/dev/nvme0n1</code>)</li>
+<li>RingSig、GroupSig、FDABS 在多核下完成一次签名约需 20–34 ms，验证约需 14–25 ms。</li>
+<li>从 <code>ell=5</code> 增加到 <code>ell=10</code> 时，认证路径和约束规模增加，运行时间与签名体积相应上升。</li>
+<li>ReSolveD+ 的关系规模较小，线程调度开销较为显著；其余较大关系可利用并行计算缩短端到端时间。</li>
 </ul>
-<h3 id="软件与操作系统配置-software--os-configuration"><a class="header" href="#软件与操作系统配置-software--os-configuration">软件与操作系统配置 (Software &amp; OS Configuration)</a></h3>
-<ul>
-<li>操作系统：CachyOS</li>
-<li>桌面环境：KDE Plasma 6.7.2</li>
-<li>系统内核：Linux-CachyOS 7.1.3-2-cachyos</li>
-<li>微架构编译层级：x86-64-v3</li>
-<li>核心编译器：Clang/LLVM: v22.1.6，GCC: v16.1.1；rust版本为 cargo 1.96.1 (356927216 2026-06-26) (Arch Linux rust 1:1.96.1-1.1)，其他依赖环境详见 <code>Cargo.toml</code></li>
-</ul>
-<h2 id="测试结果"><a class="header" href="#测试结果">测试结果</a></h2>
-<p>下面内容为测试十次取平均值（删除最低和最高各 1 次，报告中间 8 次的平均值）。其中 <code>l</code> 代表 witness 比特长度，<code>t</code> 代表多项式约束数量，<code>d</code> 代表关系多项式的最高次数；测试阶段启用了硬件加速。Sign/Verify 的计时边界应结合当前 <code>scripts/paper_speed_table.sh</code> 的定义理解，不能与仅测关系求值的旧数据混用。</p>
-<h3 id="单核运行结果"><a class="header" href="#单核运行结果">单核运行结果</a></h3>
-<p>（旨在对齐 Stern 协议，同样运行在单核处理器上）</p>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>方案</th><th>参数</th><th style="text-align: right">Sign(ms)</th><th style="text-align: right">verify(ms)</th><th style="text-align: right">签名体积(KiB)</th></tr>
-</thead>
-<tbody>
-<tr><td>ReSolveD+</td><td><code>n=453,c=3</code>, <code>l=453</code>, <code>t=453</code>, <code>d=3</code></td><td style="text-align: right">24.303</td><td style="text-align: right">11.494</td><td style="text-align: right">3.08</td></tr>
-<tr><td>RingSig</td><td><code>n=1280,ell=5,c=8</code>, <code>l=15365</code>, <code>t=7680</code>, <code>d=9</code></td><td style="text-align: right">194.156</td><td style="text-align: right">131.733</td><td style="text-align: right">34.90</td></tr>
-<tr><td>RingSig</td><td><code>n=1280,ell=10,c=8</code>, <code>l=28170</code>, <code>t=14080</code>, <code>d=9</code></td><td style="text-align: right">366.457</td><td style="text-align: right">233.974</td><td style="text-align: right">59.92</td></tr>
-<tr><td>Scope-LRS</td><td><code>n=1280,ell=5,c=8</code>, <code>l=15365</code>, <code>t=8960</code>, <code>d=9</code></td><td style="text-align: right">221.053</td><td style="text-align: right">145.913</td><td style="text-align: right">35.06</td></tr>
-<tr><td>Scope-LRS</td><td><code>n=1280,ell=10,c=8</code>, <code>l=28170</code>, <code>t=15360</code>, <code>d=9</code></td><td style="text-align: right">390.338</td><td style="text-align: right">232.530</td><td style="text-align: right">60.08</td></tr>
-<tr><td>GroupSig</td><td><code>n=1280,ell=5,c_hash=8,c_e=6</code>, <code>l=22779</code>, <code>t=15872</code>, <code>d=9</code></td><td style="text-align: right">214.564</td><td style="text-align: right">153.355</td><td style="text-align: right">50.40</td></tr>
-<tr><td>GroupSig</td><td><code>n=1280,ell=10,c_hash=8,c_e=6</code>, <code>l=35574</code>, <code>t=22272</code>, <code>d=9</code></td><td style="text-align: right">380.978</td><td style="text-align: right">258.342</td><td style="text-align: right">75.38</td></tr>
-<tr><td>FDABS</td><td><code>n=1280,ell=5,L=128,K=512</code>, <code>l=14981</code>, <code>t=8194</code>, <code>d=9</code></td><td style="text-align: right">183.634</td><td style="text-align: right">126.490</td><td style="text-align: right">34.15</td></tr>
-<tr><td>FDABS</td><td><code>n=1280,ell=10,L=128,K=512</code>, <code>l=27786</code>, <code>t=14594</code>, <code>d=9</code></td><td style="text-align: right">347.470</td><td style="text-align: right">228.504</td><td style="text-align: right">59.17</td></tr>
-</tbody>
-</table>
-</div>
-<h2 id="全部逻辑-cpu-运行结果"><a class="header" href="#全部逻辑-cpu-运行结果">全部逻辑 CPU 运行结果</a></h2>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>方案</th><th>参数</th><th style="text-align: right">Sign(ms)</th><th style="text-align: right">verify(ms)</th><th style="text-align: right">签名体积(KiB)</th></tr>
-</thead>
-<tbody>
-<tr><td>ReSolveD+</td><td><code>n=453,c=3</code>, <code>l=453</code>, <code>t=453</code>, <code>d=3</code></td><td style="text-align: right">18.304</td><td style="text-align: right">9.606</td><td style="text-align: right">3.08</td></tr>
-<tr><td>RingSig</td><td><code>n=1280,ell=5,c=8</code>, <code>l=15365</code>, <code>t=7680</code>, <code>d=9</code></td><td style="text-align: right">54.288</td><td style="text-align: right">44.020</td><td style="text-align: right">34.90</td></tr>
-<tr><td>RingSig</td><td><code>n=1280,ell=10,c=8</code>, <code>l=28170</code>, <code>t=14080</code>, <code>d=9</code></td><td style="text-align: right">79.921</td><td style="text-align: right">71.091</td><td style="text-align: right">59.92</td></tr>
-<tr><td>Scope-LRS</td><td><code>n=1280,ell=5,c=8</code>, <code>l=15365</code>, <code>t=8960</code>, <code>d=9</code></td><td style="text-align: right">51.077</td><td style="text-align: right">50.178</td><td style="text-align: right">35.06</td></tr>
-<tr><td>Scope-LRS</td><td><code>n=1280,ell=10,c=8</code>, <code>l=28170</code>, <code>t=15360</code>, <code>d=9</code></td><td style="text-align: right">96.943</td><td style="text-align: right">75.939</td><td style="text-align: right">60.08</td></tr>
-<tr><td>GroupSig</td><td><code>n=1280,ell=5,c_hash=8,c_e=6</code>, <code>l=22779</code>, <code>t=15872</code>, <code>d=9</code></td><td style="text-align: right">61.120</td><td style="text-align: right">63.048</td><td style="text-align: right">50.40</td></tr>
-<tr><td>GroupSig</td><td><code>n=1280,ell=10,c_hash=8,c_e=6</code>, <code>l=35574</code>, <code>t=22272</code>, <code>d=9</code></td><td style="text-align: right">111.099</td><td style="text-align: right">94.115</td><td style="text-align: right">75.38</td></tr>
-<tr><td>FDABS</td><td><code>n=1280,ell=5,L=128,K=512</code>, <code>l=14981</code>, <code>t=8194</code>, <code>d=9</code></td><td style="text-align: right">50.508</td><td style="text-align: right">38.476</td><td style="text-align: right">34.15</td></tr>
-<tr><td>FDABS</td><td><code>n=1280,ell=10,L=128,K=512</code>, <code>l=27786</code>, <code>t=14594</code>, <code>d=9</code></td><td style="text-align: right">74.390</td><td style="text-align: right">66.292</td><td style="text-align: right">59.17</td></tr>
-</tbody>
-</table>
-</div>
-<h2 id="2026-07-16-可复现端到端结果"><a class="header" href="#2026-07-16-可复现端到端结果">2026-07-16 可复现端到端结果</a></h2>
-<p>下面结果由当前 <code>scripts/paper_speed_compare.sh</code> 生成，而非由上面的历史均值反推。每个 case 独立运行 10 次，去掉 1 个最高值和 1 个最低值，报告中间 8 次均值。计时范围为：</p>
-<ul>
-<li>Sign：FAEST <code>vole_commit</code>、BAVC opening、关系响应、grinding 与 canonical encoding；</li>
-<li>Verify：canonical decoding、FAEST <code>vole_reconstruct</code>、Fiat-Shamir 检查与关系验证。</li>
-</ul>
-<p>本次运行命令等价于：</p>
-<pre><code class="language-bash">PAPER_SPEED_REPEATS=10 \
-PAPER_SPEED_SINGLE_CPUSET=0 \
-PAPER_SPEED_ALL_CPUSET=0-15 \
-PAPER_SPEED_COMPARE_OUT_DIR=target/paper_speed_comparison_2026-07-16 \
-bash scripts/paper_speed_compare.sh
-</code></pre>
-<h3 id="可复现环境"><a class="header" href="#可复现环境">可复现环境</a></h3>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>项目</th><th>记录值</th></tr>
-</thead>
-<tbody>
-<tr><td>时间（UTC）</td><td>单 worker：2026-07-16T14:59:56Z；16 worker：2026-07-16T15:00:59Z</td></tr>
-<tr><td>源码提交</td><td><code>8dbd1c820de28776fb32a9b45fbe94a24dda86ce</code>；运行时主仓库 clean</td></tr>
-<tr><td>FAEST revision</td><td><code>55b52681b4d962df9f55f4e403a68bca98b10d37</code>（v2.0.5）</td></tr>
-<tr><td>CPU</td><td>Intel Core i5-13500H；16 个逻辑 CPU；AES-NI/PCLMULQDQ 可用</td></tr>
-<tr><td>操作系统</td><td>Linux-CachyOS 7.1.3-2-cachyos，x86_64</td></tr>
-<tr><td>Rust/Cargo</td><td>rustc 1.97.0；cargo 1.97.0</td></tr>
-<tr><td>编译设置</td><td><code>.cargo/config.toml</code>：<code>-C target-cpu=native</code>；hardware acceleration enabled</td></tr>
-<tr><td>频率策略</td><td><code>powersave</code> governor；CPU 0 energy preference 为 <code>performance</code></td></tr>
-<tr><td>其他</td><td>transparent huge pages：<code>always</code>；未设置 <code>RUSTFLAGS</code>、<code>CFLAGS</code>、<code>LD_PRELOAD</code></td></tr>
-</tbody>
-</table>
-</div>
-<h3 id="单-workerrayon_num_threads1"><a class="header" href="#单-workerrayon_num_threads1">单 worker：<code>RAYON_NUM_THREADS=1</code></a></h3>
-<p>进程经 <code>taskset</code> 请求绑定到逻辑 CPU 0，<code>RUST_TEST_THREADS=1</code>。</p>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>方案</th><th>参数</th><th style="text-align: right">Sign+encode (ms)</th><th style="text-align: right">Decode+verify (ms)</th><th style="text-align: right">Wire size</th></tr>
-</thead>
-<tbody>
-<tr><td>ReSolveD+</td><td><code>n=453,c=3</code></td><td style="text-align: right">12.078</td><td style="text-align: right">7.686</td><td style="text-align: right">3.08 KiB</td></tr>
-<tr><td>RingSig</td><td><code>ell=5</code></td><td style="text-align: right">82.174</td><td style="text-align: right">41.352</td><td style="text-align: right">34.90 KiB</td></tr>
-<tr><td>RingSig</td><td><code>ell=10</code></td><td style="text-align: right">149.301</td><td style="text-align: right">73.404</td><td style="text-align: right">59.92 KiB</td></tr>
-<tr><td>Scope-LRS（扩展）</td><td><code>ell=5</code></td><td style="text-align: right">91.244</td><td style="text-align: right">46.983</td><td style="text-align: right">35.06 KiB</td></tr>
-<tr><td>Scope-LRS（扩展）</td><td><code>ell=10</code></td><td style="text-align: right">158.420</td><td style="text-align: right">78.677</td><td style="text-align: right">60.08 KiB</td></tr>
-<tr><td>Batch Scope-LRS（工程扩展，10 条）</td><td><code>ell=5</code></td><td style="text-align: right">855.150（85.515/条）</td><td style="text-align: right">430.868（43.087/条）</td><td style="text-align: right">306.64 KiB（30.66/条）</td></tr>
-<tr><td>GroupSig</td><td><code>ell=5,c_e=6</code></td><td style="text-align: right">86.489</td><td style="text-align: right">44.737</td><td style="text-align: right">50.40 KiB</td></tr>
-<tr><td>GroupSig</td><td><code>ell=10,c_e=6</code></td><td style="text-align: right">153.720</td><td style="text-align: right">69.406</td><td style="text-align: right">75.38 KiB</td></tr>
-<tr><td>FDABS</td><td><code>ell=5,L=128,K=512</code></td><td style="text-align: right">77.925</td><td style="text-align: right">39.228</td><td style="text-align: right">34.15 KiB</td></tr>
-<tr><td>FDABS</td><td><code>ell=10,L=128,K=512</code></td><td style="text-align: right">145.488</td><td style="text-align: right">70.584</td><td style="text-align: right">59.17 KiB</td></tr>
-</tbody>
-</table>
-</div>
-<p>ReSolveD+ 的 setup 平均为 43.338 ms；其余表项的 setup 在本脚本中于计时前构造，故标为不适用而不是 0。</p>
-<h3 id="16-workerrayon_num_threads16"><a class="header" href="#16-workerrayon_num_threads16">16 worker：<code>RAYON_NUM_THREADS=16</code></a></h3>
-<p>进程经 <code>taskset</code> 请求绑定到逻辑 CPU <code>0-15</code>，<code>RUST_TEST_THREADS=1</code>。这不是“16 个独立签名并发吞吐量”测试，而是单次算法调用内部 Rayon 并行的端到端延迟。</p>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>方案</th><th>参数</th><th style="text-align: right">Sign+encode (ms)</th><th style="text-align: right">Decode+verify (ms)</th><th style="text-align: right">相对单 worker Sign / Verify</th></tr>
-</thead>
-<tbody>
-<tr><td>ReSolveD+</td><td><code>n=453,c=3</code></td><td style="text-align: right">15.727</td><td style="text-align: right">9.715</td><td style="text-align: right">0.77x / 0.79x</td></tr>
-<tr><td>RingSig</td><td><code>ell=5</code></td><td style="text-align: right">20.033</td><td style="text-align: right">14.704</td><td style="text-align: right">4.10x / 2.81x</td></tr>
-<tr><td>RingSig</td><td><code>ell=10</code></td><td style="text-align: right">34.196</td><td style="text-align: right">22.867</td><td style="text-align: right">4.37x / 3.21x</td></tr>
-<tr><td>Scope-LRS（扩展）</td><td><code>ell=5</code></td><td style="text-align: right">21.355</td><td style="text-align: right">15.188</td><td style="text-align: right">4.27x / 3.09x</td></tr>
-<tr><td>Scope-LRS（扩展）</td><td><code>ell=10</code></td><td style="text-align: right">33.946</td><td style="text-align: right">24.538</td><td style="text-align: right">4.67x / 3.21x</td></tr>
-<tr><td>Batch Scope-LRS（工程扩展，10 条）</td><td><code>ell=5</code></td><td style="text-align: right">168.146</td><td style="text-align: right">111.611</td><td style="text-align: right">5.09x / 3.86x</td></tr>
-<tr><td>GroupSig</td><td><code>ell=5,c_e=6</code></td><td style="text-align: right">20.878</td><td style="text-align: right">17.212</td><td style="text-align: right">4.14x / 2.60x</td></tr>
-<tr><td>GroupSig</td><td><code>ell=10,c_e=6</code></td><td style="text-align: right">34.435</td><td style="text-align: right">25.455</td><td style="text-align: right">4.46x / 2.73x</td></tr>
-<tr><td>FDABS</td><td><code>ell=5,L=128,K=512</code></td><td style="text-align: right">21.450</td><td style="text-align: right">13.540</td><td style="text-align: right">3.63x / 2.90x</td></tr>
-<tr><td>FDABS</td><td><code>ell=10,L=128,K=512</code></td><td style="text-align: right">33.508</td><td style="text-align: right">21.809</td><td style="text-align: right">4.34x / 3.24x</td></tr>
-</tbody>
-</table>
-</div>
-<p>ReSolveD+ 很小，线程调度成本超过可并行工作量，因此多 worker 反而更慢；其他较大关系获得约 2.6–5.1 倍端到端加速。不要将该结果概括为“近线性加速”。</p>
-<h3 id="原始证据位置"><a class="header" href="#原始证据位置">原始证据位置</a></h3>
-<p>下列文件已在工作区生成，保留了每次原始输出、机器 metadata 和自动计算的对照表：</p>
-<ul>
-<li><code>target/paper_speed_comparison_2026-07-16/single_core/metadata.txt</code></li>
-<li><code>target/paper_speed_comparison_2026-07-16/single_core/&lt;case&gt;/run_*.log</code></li>
-<li><code>target/paper_speed_comparison_2026-07-16/all_cores/metadata.txt</code></li>
-<li><code>target/paper_speed_comparison_2026-07-16/all_cores/&lt;case&gt;/run_*.log</code></li>
-<li><code>target/paper_speed_comparison_2026-07-16/comparison.md</code></li>
-</ul>
-<p>历史表缺失的精确线程数、CPU affinity、原始样本和当时的完整 metadata 不能由平均值可靠恢复，故仍保持“历史汇总”身份；上面的新结果才可作为当前可复现记录引用。</p>
-<h3 id="与历史单-worker-汇总的差异"><a class="header" href="#与历史单-worker-汇总的差异">与历史单 worker 汇总的差异</a></h3>
-<p>在相同方案、参数和 wire size 下，新单 worker 结果系统性快于历史单 worker 汇总：Sign 低 50.3%–59.7%（ReSolveD+ 为 50.3%），Verify 低 33.1%–73.1%。所有对应方案的 wire size 与历史表一致，说明签名格式和参数规模没有变化。</p>
-<p>这不是可直接发表的“性能提升”结论：历史表没有保存其精确源码 revision、线程绑定、原始样本、完整编译选项和环境 metadata。新记录使用 commit <code>8dbd1c8</code>、<code>target-cpu=native</code>、CPU 0 affinity 和逐次样本；历史记录只标注了 <code>x86-64-v3</code> 等摘要信息。因此可以确认两组数据不应混用，但不能严谨地把全部差异归因于某一项代码优化。</p>
-<h2 id="数据的直接观察"><a class="header" href="#数据的直接观察">数据的直接观察</a></h2>
-<ol>
-<li><code>ell</code> 从 5 增加到 10 时，RingSig、Scope-LRS、GroupSig 和 FDABS 的 witness 长度 <code>l</code>、约束数 <code>t</code> 与签名体积都明显增加；这反映的是认证路径/电路关系规模的增加，而不是单纯的哈希调用次数变化。</li>
-<li>全部逻辑 CPU 的结果通常低于单核运行结果，但 Sign 和 Verify 的缩放并不相同：Sign 包含 VOLE commit、建树、关系响应和 opening，Verify 包含 reconstruct 和关系验证，受内存带宽及并行粒度的影响不同。</li>
-<li>ReSolveD+ 的签名体积约为 3 KiB；其余应用的体积主要随 VOLE opening、witness correction、证明系数和应用关系数据增长。这里的体积是该次实验的签名表示大小，不应与论文中的纯理论通信量直接等同。</li>
-<li>Scope-LRS 是仓库扩展，不能用它的速度或体积数据替代论文主方案的实验结果。</li>
-</ol>
-<p>若重新生成结果，应记录 <code>RAYON_NUM_THREADS</code>、<code>RUST_TEST_THREADS</code>、CPU 指令集、源码 commit、FAEST revision、重复次数和原始样本；仅保留平均值不足以复现实验。本次文档修订时的源码提交为 <code>8dbd1c8</code>，FAEST 子模块为 <code>55b52681b4d962df9f55f4e403a68bca98b10d37</code>（v2.0.5），但这不能反向补足本表的历史 raw samples。</p>
+<p>完整的逐次测试输出与机器信息保存在 <code>target/paper_speed_comparison_2026-07-16/all_cores/</code>。</p>
 
                     </main>
 

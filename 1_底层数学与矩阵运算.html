@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-4dd76be5.js";
+            window.path_to_searchindex_js = "searchindex-f256a2a8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-513cb83f.js"></script>
@@ -228,9 +228,9 @@ $$</p>
 </div>
 <p>代码没有自己实现域运算，而是复用 <code>swanky</code> 的有限域接口。支持的硬件路径由编译特性和目标架构决定：</p>
 <p>x86_64 下使用 <code>PCLMULQDQ</code> 指令 + AES-NI 的 <code>AESDEC</code> 做多项式约简，单条指令在一个时钟周期内完成 64-bit 无进位乘法，约简阶段复用 AES 轮函数加速。</p>
-<p><code>benches/gf128_bench.rs</code> 可用于测量域乘法；具体耗时随 CPU、编译参数和线程环境变化，不能把某次微基准数字写成协议性质。</p>
+<p><code>benches/gf128_bench.rs</code> 用于测量域乘法；具体耗时随 CPU、编译参数和线程环境变化。</p>
 <h3 id="23-安全注意事项"><a class="header" href="#23-安全注意事项">2.3 安全注意事项</a></h3>
-<p>有限域函数的实现路径避免了显式的秘密相关分支，但完整侧信道安全仍取决于编译器、硬件、调用上下文和整个协议，不能仅由使用硬件指令推出。</p>
+<p>有限域函数的实现路径避免了显式的秘密相关分支；侧信道特性还与编译器、硬件、调用上下文和整个协议有关。</p>
 <h2 id="三大矩阵流式计算streaming_matrixrs"><a class="header" href="#三大矩阵流式计算streaming_matrixrs">三、大矩阵流式计算：<code>streaming_matrix.rs</code></a></h2>
 <h3 id="31-问题与设计思想"><a class="header" href="#31-问题与设计思想">3.1 问题与设计思想</a></h3>
 <p>在基于编码的 ZK 协议中（AFS 哈希和相关线性关系），需要使用伪随机矩阵。以 RingSig/GroupSig/FDABS 的单个哈希矩阵为例：</p>
