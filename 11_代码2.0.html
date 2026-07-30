@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>模块十：原始数据</title>
+        <title>模块十一：代码2.0</title>
 
 
         <!-- Custom HTML head -->
@@ -196,63 +196,90 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="模块十性能测试结果"><a class="header" href="#模块十性能测试结果">模块十：性能测试结果</a></h1>
-<p>本章记录当前版本在指定环境下的端到端性能（详见测试环境一节）。计时覆盖签名生成及编码，以及签名解码和验证；每个测试重复 10 次，去掉最高和最低各一次后取平均值。</p>
-<h2 id="测试环境"><a class="header" href="#测试环境">测试环境</a></h2>
+                        <h1 id="模块1120-原子阶段性能测试结果"><a class="header" href="#模块1120-原子阶段性能测试结果">模块11：2.0 原子阶段性能测试结果</a></h1>
+<p>每项独立执行 10 次；删除最大与最小各一次后，对其余 8 次取平均。单位均为 ms/operation。</p>
+<h2 id="原子阶段结果"><a class="header" href="#原子阶段结果">原子阶段结果</a></h2>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>项目</th><th>配置</th></tr>
+<tr><th>基准阶段</th><th>原始 10 次样本 (ms)</th><th style="text-align: right">去极值平均 (ms)</th></tr>
 </thead>
 <tbody>
-<tr><td>CPU</td><td>Intel Core i5-13500H（12 核 16 线程）</td></tr>
-<tr><td>编译</td><td>Rust 1.97.0，<code>--release</code>，<code>target-cpu=native</code></td></tr>
-<tr><td>并行设置</td><td><code>RAYON_NUM_THREADS=16</code>，<code>RUST_TEST_THREADS=1</code></td></tr>
-<tr><td>加速指令</td><td>AES-NI、PCLMULQDQ</td></tr>
-<tr><td>源码版本</td><td><code>8dbd1c8</code>；FAEST v2.0.5</td></tr>
+<tr><td>Atomic_FDABS_ell10 / EpochInfo</td><td>16.665, 9.836, 9.778, 9.814, 9.710, 9.849, 9.724, 9.661, 16.485, 9.736</td><td style="text-align: right">10.617</td></tr>
+<tr><td>Atomic_FDABS_ell10 / Issue</td><td>0.330, 0.308, 0.335, 0.345, 0.326, 0.330, 0.332, 0.325, 0.543, 0.314</td><td style="text-align: right">0.329</td></tr>
+<tr><td>Atomic_FDABS_ell10 / Setup</td><td>0.240, 0.170, 0.145, 0.177, 0.146, 0.193, 0.146, 0.145, 0.147, 0.146</td><td style="text-align: right">0.159</td></tr>
+<tr><td>Atomic_FDABS_ell10 / Sign</td><td>52.262, 43.783, 42.738, 52.668, 40.600, 41.087, 40.334, 51.871, 42.049, 41.056</td><td style="text-align: right">44.431</td></tr>
+<tr><td>Atomic_FDABS_ell10 / UpdateRevoke</td><td>10.158, 9.973, 10.104, 9.972, 9.947, 10.056, 9.973, 12.127, 23.690, 9.758</td><td style="text-align: right">10.289</td></tr>
+<tr><td>Atomic_FDABS_ell10 / Verify</td><td>32.565, 36.034, 43.062, 29.482, 34.404, 32.254, 31.997, 41.755, 38.021, 30.641</td><td style="text-align: right">34.709</td></tr>
+<tr><td>Atomic_FDABS_ell5 / EpochInfo</td><td>0.526, 0.348, 0.352, 0.350, 0.349, 0.348, 0.693, 0.343, 0.343, 0.360</td><td style="text-align: right">0.372</td></tr>
+<tr><td>Atomic_FDABS_ell5 / Issue</td><td>0.291, 0.273, 0.283, 0.322, 0.289, 0.308, 0.292, 0.298, 0.299, 0.289</td><td style="text-align: right">0.294</td></tr>
+<tr><td>Atomic_FDABS_ell5 / Setup</td><td>0.005, 0.007, 0.008, 0.007, 0.004, 0.004, 0.004, 0.004, 0.004, 0.004</td><td style="text-align: right">0.005</td></tr>
+<tr><td>Atomic_FDABS_ell5 / Sign</td><td>17.186, 20.072, 30.640, 17.765, 17.284, 17.484, 17.178, 17.442, 17.329, 18.969</td><td style="text-align: right">17.941</td></tr>
+<tr><td>Atomic_FDABS_ell5 / UpdateRevoke</td><td>0.440, 0.337, 0.422, 0.335, 0.468, 0.428, 0.323, 0.331, 0.333, 0.426</td><td style="text-align: right">0.381</td></tr>
+<tr><td>Atomic_FDABS_ell5 / Verify</td><td>17.479, 14.023, 15.404, 33.944, 14.927, 20.283, 25.175, 16.841, 15.037, 19.877</td><td style="text-align: right">18.128</td></tr>
+<tr><td>Atomic_GroupSig_ell10 / KeyGen</td><td>321.128, 339.318, 369.777, 322.541, 328.008, 331.951, 327.165, 314.914, 311.027, 308.267</td><td style="text-align: right">324.507</td></tr>
+<tr><td>Atomic_GroupSig_ell10 / Open</td><td>95.924, 83.680, 128.999, 95.983, 85.488, 98.264, 85.814, 92.877, 81.711, 95.379</td><td style="text-align: right">91.676</td></tr>
+<tr><td>Atomic_GroupSig_ell10 / Setup</td><td>288.132, 378.998, 242.496, 76.427, 193.191, 219.130, 336.668, 555.242, 143.665, 338.884</td><td style="text-align: right">267.646</td></tr>
+<tr><td>Atomic_GroupSig_ell10 / Sign</td><td>72.529, 61.065, 59.405, 69.888, 55.705, 56.437, 70.830, 57.898, 67.200, 61.220</td><td style="text-align: right">62.993</td></tr>
+<tr><td>Atomic_GroupSig_ell10 / Verify</td><td>34.536, 34.309, 35.438, 43.821, 33.280, 36.794, 33.952, 48.190, 33.777, 47.052</td><td style="text-align: right">37.460</td></tr>
+<tr><td>Atomic_GroupSig_ell5 / KeyGen</td><td>37.853, 27.335, 27.449, 33.636, 28.613, 41.503, 28.236, 32.820, 27.618, 28.612</td><td style="text-align: right">30.605</td></tr>
+<tr><td>Atomic_GroupSig_ell5 / Open</td><td>78.889, 92.270, 80.635, 93.619, 96.185, 77.909, 95.653, 86.010, 95.299, 82.067</td><td style="text-align: right">88.055</td></tr>
+<tr><td>Atomic_GroupSig_ell5 / Setup</td><td>238.043, 327.118, 233.599, 479.070, 165.097, 134.411, 99.558, 356.582, 288.299, 210.154</td><td style="text-align: right">244.163</td></tr>
+<tr><td>Atomic_GroupSig_ell5 / Sign</td><td>36.933, 50.152, 36.966, 35.546, 34.179, 33.450, 45.366, 33.304, 33.180, 34.955</td><td style="text-align: right">36.337</td></tr>
+<tr><td>Atomic_GroupSig_ell5 / Verify</td><td>29.613, 29.096, 36.409, 25.733, 30.022, 24.243, 28.401, 30.051, 39.116, 29.367</td><td style="text-align: right">29.836</td></tr>
+<tr><td>Atomic_RingSig_ell10 / Context</td><td>21.957, 14.455, 14.304, 14.361, 30.566, 22.319, 22.569, 22.497, 14.205, 22.268</td><td style="text-align: right">19.341</td></tr>
+<tr><td>Atomic_RingSig_ell10 / KeyGen</td><td>0.325, 0.339, 0.310, 0.347, 0.318, 0.313, 0.298, 0.319, 0.344, 0.335</td><td style="text-align: right">0.325</td></tr>
+<tr><td>Atomic_RingSig_ell10 / Setup</td><td>0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000</td><td style="text-align: right">0.000</td></tr>
+<tr><td>Atomic_RingSig_ell10 / Sign</td><td>60.084, 62.027, 57.100, 70.993, 45.354, 60.751, 47.980, 48.974, 67.205, 58.908</td><td style="text-align: right">57.879</td></tr>
+<tr><td>Atomic_RingSig_ell10 / Verify</td><td>47.796, 49.119, 51.916, 34.940, 50.459, 63.964, 47.995, 37.010, 36.821, 69.061</td><td style="text-align: right">48.135</td></tr>
+<tr><td>Atomic_RingSig_ell5 / Context</td><td>0.673, 0.465, 0.670, 0.581, 0.461, 2.775, 0.583, 0.456, 0.559, 0.618</td><td style="text-align: right">0.576</td></tr>
+<tr><td>Atomic_RingSig_ell5 / KeyGen</td><td>0.287, 0.279, 0.247, 0.287, 0.627, 0.272, 0.270, 0.279, 0.269, 0.267</td><td style="text-align: right">0.276</td></tr>
+<tr><td>Atomic_RingSig_ell5 / Setup</td><td>0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000</td><td style="text-align: right">0.000</td></tr>
+<tr><td>Atomic_RingSig_ell5 / Sign</td><td>18.218, 19.429, 17.483, 17.612, 17.833, 18.379, 17.444, 18.518, 32.167, 18.176</td><td style="text-align: right">18.206</td></tr>
+<tr><td>Atomic_RingSig_ell5 / Verify</td><td>15.256, 12.589, 12.538, 25.052, 12.704, 12.043, 12.749, 12.690, 13.172, 12.945</td><td style="text-align: right">13.080</td></tr>
+<tr><td>Atomic_ScopeLRS_ell10 / Context</td><td>0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001</td><td style="text-align: right">0.001</td></tr>
+<tr><td>Atomic_ScopeLRS_ell10 / KeyGen</td><td>0.261, 0.238, 0.241, 0.259, 0.244, 0.237, 0.240, 0.246, 0.272, 0.243</td><td style="text-align: right">0.247</td></tr>
+<tr><td>Atomic_ScopeLRS_ell10 / Link</td><td>0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000</td><td style="text-align: right">0.000</td></tr>
+<tr><td>Atomic_ScopeLRS_ell10 / Setup</td><td>0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000</td><td style="text-align: right">0.000</td></tr>
+<tr><td>Atomic_ScopeLRS_ell10 / Sign</td><td>33.456, 45.002, 32.619, 32.676, 32.953, 33.110, 44.051, 32.949, 33.391, 34.017</td><td style="text-align: right">34.575</td></tr>
+<tr><td>Atomic_ScopeLRS_ell10 / Verify</td><td>23.378, 25.852, 24.301, 22.218, 33.571, 21.660, 22.677, 24.856, 22.217, 22.803</td><td style="text-align: right">23.538</td></tr>
+<tr><td>Atomic_ScopeLRS_ell5 / Context</td><td>0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001</td><td style="text-align: right">0.001</td></tr>
+<tr><td>Atomic_ScopeLRS_ell5 / KeyGen</td><td>0.251, 0.239, 0.232, 0.734, 0.240, 0.237, 0.241, 0.238, 0.260, 0.226</td><td style="text-align: right">0.242</td></tr>
+<tr><td>Atomic_ScopeLRS_ell5 / Link</td><td>0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000</td><td style="text-align: right">0.000</td></tr>
+<tr><td>Atomic_ScopeLRS_ell5 / Setup</td><td>0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000</td><td style="text-align: right">0.000</td></tr>
+<tr><td>Atomic_ScopeLRS_ell5 / Sign</td><td>21.040, 20.381, 19.611, 20.527, 21.721, 18.319, 19.918, 29.278, 19.841, 18.881</td><td style="text-align: right">20.240</td></tr>
+<tr><td>Atomic_ScopeLRS_ell5 / Verify</td><td>26.298, 14.049, 14.465, 14.683, 14.020, 16.313, 14.242, 13.497, 13.188, 13.283</td><td style="text-align: right">14.319</td></tr>
 </tbody>
 </table>
 </div>
-<h2 id="端到端结果"><a class="header" href="#端到端结果">端到端结果</a></h2>
+<h2 id="整理后的结果"><a class="header" href="#整理后的结果">整理后的结果</a></h2>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>方案</th><th>参数</th><th style="text-align: right">签名并编码 (ms)</th><th style="text-align: right">解码并验证 (ms)</th><th style="text-align: right">签名体积 (KiB)</th></tr>
+<tr><th style="text-align: left">方案大类 (Scheme)</th><th style="text-align: left">参数 ($\ell$)</th><th style="text-align: center">初始化 <br><code>Setup</code></th><th style="text-align: center">密钥/凭证生成 <br><code>KeyGen / Issue</code></th><th style="text-align: center">状态/现场同步 <br><code>Context / EpochInfo</code></th><th style="text-align: center">签名/零知识证明 <br><code>Sign</code></th><th style="text-align: center">验证 <br><code>Verify</code></th><th style="text-align: left">扩展操作 <br><code>Open/Revoke/Link</code></th></tr>
 </thead>
 <tbody>
-<tr><td>ReSolveD+</td><td><code>n=453,c=3</code></td><td style="text-align: right">15.727</td><td style="text-align: right">9.715</td><td style="text-align: right">3.08</td></tr>
-<tr><td>RingSig</td><td><code>ell=5</code></td><td style="text-align: right">20.033</td><td style="text-align: right">14.704</td><td style="text-align: right">34.90</td></tr>
-<tr><td>RingSig</td><td><code>ell=10</code></td><td style="text-align: right">34.196</td><td style="text-align: right">22.867</td><td style="text-align: right">59.92</td></tr>
-<tr><td>Scope-LRS（扩展）</td><td><code>ell=5</code></td><td style="text-align: right">21.355</td><td style="text-align: right">15.188</td><td style="text-align: right">35.06</td></tr>
-<tr><td>Scope-LRS（扩展）</td><td><code>ell=10</code></td><td style="text-align: right">33.946</td><td style="text-align: right">24.538</td><td style="text-align: right">60.08</td></tr>
-<tr><td>Batch Scope-LRS（扩展，10 条）</td><td><code>ell=5</code></td><td style="text-align: right">168.146</td><td style="text-align: right">111.611</td><td style="text-align: right">306.64</td></tr>
-<tr><td>GroupSig</td><td><code>ell=5,c_e=6</code></td><td style="text-align: right">20.878</td><td style="text-align: right">17.212</td><td style="text-align: right">50.40</td></tr>
-<tr><td>GroupSig</td><td><code>ell=10,c_e=6</code></td><td style="text-align: right">34.435</td><td style="text-align: right">25.455</td><td style="text-align: right">75.38</td></tr>
-<tr><td>FDABS</td><td><code>ell=5,L=128,K=512</code></td><td style="text-align: right">21.450</td><td style="text-align: right">13.540</td><td style="text-align: right">34.15</td></tr>
-<tr><td>FDABS</td><td><code>ell=10,L=128,K=512</code></td><td style="text-align: right">33.508</td><td style="text-align: right">21.809</td><td style="text-align: right">59.17</td></tr>
+<tr><td style="text-align: left"><strong>RingSig</strong> <br>(环签名)</td><td style="text-align: left"><code>ell=5</code></td><td style="text-align: center">~0.000</td><td style="text-align: center">0.276</td><td style="text-align: center">0.576</td><td style="text-align: center">18.206</td><td style="text-align: center">13.080</td><td style="text-align: left">-</td></tr>
+<tr><td style="text-align: left"></td><td style="text-align: left"><code>ell=10</code></td><td style="text-align: center">~0.000</td><td style="text-align: center">0.325</td><td style="text-align: center"><strong>19.341</strong></td><td style="text-align: center">57.879</td><td style="text-align: center">48.135</td><td style="text-align: left">-</td></tr>
+<tr><td style="text-align: left"><strong>Scope-LRS</strong> <br>(可链接环)</td><td style="text-align: left"><code>ell=5</code></td><td style="text-align: center">~0.000</td><td style="text-align: center">0.242</td><td style="text-align: center">0.001</td><td style="text-align: center">20.240</td><td style="text-align: center">14.319</td><td style="text-align: left"><code>Link</code>: ~0.000</td></tr>
+<tr><td style="text-align: left"></td><td style="text-align: left"><code>ell=10</code></td><td style="text-align: center">~0.000</td><td style="text-align: center">0.247</td><td style="text-align: center">0.001</td><td style="text-align: center">34.575</td><td style="text-align: center">23.538</td><td style="text-align: left"><code>Link</code>: ~0.000</td></tr>
+<tr><td style="text-align: left"><strong>GroupSig</strong> <br>(群签名)</td><td style="text-align: left"><code>ell=5</code></td><td style="text-align: center"><strong>244.163</strong></td><td style="text-align: center">30.605</td><td style="text-align: center">-</td><td style="text-align: center">36.337</td><td style="text-align: center">29.836</td><td style="text-align: left"><code>Open</code>: 88.055</td></tr>
+<tr><td style="text-align: left"></td><td style="text-align: left"><code>ell=10</code></td><td style="text-align: center"><strong>267.646</strong></td><td style="text-align: center"><strong>324.507</strong></td><td style="text-align: center">-</td><td style="text-align: center">62.993</td><td style="text-align: center">37.460</td><td style="text-align: left"><code>Open</code>: 91.676</td></tr>
+<tr><td style="text-align: left"><strong>FDABS</strong> <br>(动态属性基)</td><td style="text-align: left"><code>ell=5</code></td><td style="text-align: center">0.005</td><td style="text-align: center">0.294</td><td style="text-align: center">0.372</td><td style="text-align: center">17.941</td><td style="text-align: center">18.128</td><td style="text-align: left"><code>Revoke</code>: 0.381</td></tr>
+<tr><td style="text-align: left"></td><td style="text-align: left"><code>ell=10</code></td><td style="text-align: center">0.159</td><td style="text-align: center">0.329</td><td style="text-align: center"><strong>10.617</strong></td><td style="text-align: center">44.431</td><td style="text-align: center">34.709</td><td style="text-align: left"><code>Revoke</code>: <strong>10.289</strong></td></tr>
 </tbody>
 </table>
 </div>
-<p>Batch Scope-LRS 的表项为一次生成或验证 10 条签名的总时间，对应每条签名平均为 16.815 ms 和 11.161 ms，平均体积为 30.66 KiB。</p>
-<h2 id="结果解读"><a class="header" href="#结果解读">结果解读</a></h2>
-<ul>
-<li>RingSig、GroupSig、FDABS 在多核下完成一次签名约需 20–34 ms，验证约需 14–25 ms。</li>
-<li>从 <code>ell=5</code> 增加到 <code>ell=10</code> 时，认证路径和约束规模增加，运行时间与签名体积相应上升。</li>
-<li>ReSolveD+ 的关系规模较小，线程调度开销较为显著；其余较大关系可利用并行计算缩短端到端时间。</li>
-</ul>
-<p>本次记录对应的逐次测试输出和机器信息位于工作区的 <code>target/paper_speed_comparison_2026-07-16/all_cores/</code>。</p>
+<p>当前跑出的结果似乎漏掉了 <code>ReSolveD+</code> 基础版和 <code>Batch Scope-LRS</code> 批量版。</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="9_创新点对接.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="10_原始数据.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
-                            <a rel="next prefetch" href="11_代码2.0.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
-                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -260,13 +287,10 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="9_创新点对接.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="10_原始数据.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
-                    <a rel="next prefetch" href="11_代码2.0.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
-                    </a>
             </nav>
 
         </div>
