@@ -332,7 +332,7 @@ fn absorb_frame(hasher: &mut Keccak256, label: &[u8], bytes: &[u8]) {
 
 帧编码确保域分离：每个字段前有标签长度 + 标签 + 数据长度，保证 $(L_1, D_1)$ 和 $(L_2, D_2)$ 的拼接不会与 $(L_1 \| D_1 \| L_2, D_2)$ 混淆。
 
-`absorb_usize(label, value)` — 吸收整数（转为小端 u64）：
+`absorb_usize(label, value)` 吸收整数（转为小端 u64）：
 
 ```rust
 pub fn absorb_usize(&mut self, label: &[u8], value: usize) {
@@ -340,7 +340,7 @@ pub fn absorb_usize(&mut self, label: &[u8], value: usize) {
 }
 ```
 
-`absorb_bits(label, bits)` — 吸收精确比特数（使用 `update_digest_with_exact_bits` 避免尾部位填充混淆）：
+`absorb_bits(label, bits)` 吸收精确比特数（使用 `update_digest_with_exact_bits` 避免尾部位填充混淆）：
 
 ```rust
 pub fn absorb_bits(&mut self, label: &[u8], bits: &MainBitSlice) {
@@ -351,7 +351,7 @@ pub fn absorb_bits(&mut self, label: &[u8], bits: &MainBitSlice) {
 }
 ```
 
-`absorb_matrix(label, matrix)` — 吸收流式矩阵（只吸收种子，不吸收整个矩阵）：
+`absorb_matrix(label, matrix)` 吸收流式矩阵（只吸收种子，不吸收整个矩阵）：
 
 ```rust
 pub fn absorb_matrix(&mut self, label: &[u8], matrix: &StreamingMatrixCols) {
@@ -361,7 +361,7 @@ pub fn absorb_matrix(&mut self, label: &[u8], matrix: &StreamingMatrixCols) {
 }
 ```
 
-这利用了矩阵的伪随机性质——矩阵由种子 $\sigma$ 确定，吸收 $\sigma$ 就等价于吸收了整个矩阵。
+这利用了矩阵的伪随机性质，矩阵由种子 $\sigma$ 确定，吸收 $\sigma$ 就等价于吸收了整个矩阵。
 
 ### 4.4 Squeeze 方法
 
@@ -474,6 +474,6 @@ Verifier:
 | 安全属性 | 实现机制 |
 |---------|---------|
 | 零知识性 | VOLE 校正子 $w \oplus u$ 隐藏 witness；盲化系数 $\tilde{a}\_j$ 隐藏多项式系数 |
-| 可靠性 | 论文定理 1 的界为 $1/p^{r\tau}+d/|S_\Delta|$；当前 `F128b` 参数的具体数值和 grinding 说明见模块八 |
+| 可靠性 | 论文定理 1 的界为 $1/p^{r\tau}+d/|S\_\Delta|$；当前 `F128b` 参数的具体数值和 grinding 说明见模块八 |
 | 非交互性 | Fiat-Shamir 变换将 Verifier 的随机挑战替换为 Keccak-256 派生值 |
 | transcript 绑定 | 带标签吸收、域分离和确定性重算；哈希抗碰撞假设属于安全模型 |
