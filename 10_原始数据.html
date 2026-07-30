@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-a7db92e5.js";
+            window.path_to_searchindex_js = "searchindex-58b777ba.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-97dc7667.js"></script>
@@ -197,7 +197,7 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="模块十性能测试结果"><a class="header" href="#模块十性能测试结果">模块十：性能测试结果</a></h1>
-<p>本章记录当前版本在 i5-13500H 上的端到端性能。计时覆盖签名生成及编码，以及签名解码和验证；每个测试重复 10 次，去掉最高和最低各一次后取平均值。</p>
+<p>本章记录当前版本在指定环境下的端到端性能（详见测试环境一节）。计时覆盖签名生成及编码，以及签名解码和验证；每个测试重复 10 次，去掉最高和最低各一次后取平均值。</p>
 <h2 id="测试环境"><a class="header" href="#测试环境">测试环境</a></h2>
 <div class="table-wrapper">
 <table>
@@ -240,7 +240,7 @@
 <li>从 <code>ell=5</code> 增加到 <code>ell=10</code> 时，认证路径和约束规模增加，运行时间与签名体积相应上升。</li>
 <li>ReSolveD+ 的关系规模较小，线程调度开销较为显著；其余较大关系可利用并行计算缩短端到端时间。</li>
 </ul>
-<p>本次记录对应的逐次测试输出和机器信息位于工作区的 <code>target/paper_speed_comparison_2026-07-16/all_cores/</code>。对外发布实验结果时，应将该目录中的 <code>summary.md</code>、<code>metadata.txt</code> 和原始样本一并归档。</p>
+<p>本次记录对应的逐次测试输出和机器信息位于工作区的 <code>target/paper_speed_comparison_2026-07-16/all_cores/</code>。</p>
 
                     </main>
 

@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-a7db92e5.js";
+            window.path_to_searchindex_js = "searchindex-58b777ba.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-97dc7667.js"></script>
@@ -300,7 +300,7 @@ Output: y ∈ F_2^{rows(B)} — 哈希输出
 <p>$$
 y = B \cdot \text{RE}(x) = \bigoplus_{i=0}^{n/c-1} B_{:, i \cdot 2^c + \text{idx}(x^{(i)})}
 $$</p>
-<p>由于 $\text{RE}(x)$ 的每个块中仅有一个比特为 1，矩阵-向量乘法退化到只需选取 $n/c$ 个列做 XOR——这是稀疏矩阵的计算优势的又一次体现。</p>
+<p>由于 $\text{RE}(x)$ 的每个块中仅有一个比特为 1，矩阵-向量乘法退化到只需选取 $n/c$ 个列做 XOR，这是稀疏矩阵的计算优势的又一次体现。</p>
 <h4 id="232-流式版本afs_hash_streaming"><a class="header" href="#232-流式版本afs_hash_streaming">2.3.2 流式版本：<code>afs_hash_streaming</code></a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -367,7 +367,7 @@ $$</p>
 <li>$G_1,G_2\in\mathbb{F}_2^{n_e\times k_e}$ 是两个公开矩阵；</li>
 <li>$r_1,r_2\in\mathbb{F}_2^{k_e-\ell}$ 是每次签名新采样的随机数；</li>
 <li>$\operatorname{bin}(j)\in\mathbb{F}_2^\ell$ 是同一个签名者身份的二进制表示；</li>
-<li>$e’_1,e’_2\in\mathbb{F}<em>2^k$ 是正则噪声种子，$\operatorname{RE}(e’</em>\theta)$ 是相应的噪声向量。</li>
+<li>$e’_1,e’_2\in\mathbb{F}_2^k$ 是正则噪声种子，$\operatorname{RE}(e’_\theta)$ 是相应的噪声向量。</li>
 </ul>
 <p>消息 $M$ 不作为 $c_1,c_2$ 的明文写入上述关系；它由签名 API 的 statement digest 吸收并绑定到 Fiat-Shamir transcript。</p>
 <h3 id="32-参数配置"><a class="header" href="#32-参数配置">3.2 参数配置</a></h3>

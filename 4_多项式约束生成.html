@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-a7db92e5.js";
+            window.path_to_searchindex_js = "searchindex-58b777ba.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-97dc7667.js"></script>
@@ -200,7 +200,7 @@
 <h2 id="一概述"><a class="header" href="#一概述">一、概述</a></h2>
 <p>本模块把论文 §3 的正则编码代数化方法落实为约束编译和隐式求值代码。它解决的核心问题是：</p>
 <blockquote>
-<p>如何将正则编码函数（Regular Encoding）——一个看似非线性的、基于查表的操作——转化为 degree-$c$ 的布尔多项式（ANF），然后在 ZK 协议的“隐式空间“中高效地安全求值？</p>
+<p>如何将正则编码函数（Regular Encoding），即一个看似非线性的、基于查表的操作，转化为 degree-$c$ 的布尔多项式（ANF），然后在 ZK 协议的“隐式空间“中高效地安全求值？</p>
 </blockquote>
 <p>这分为两个阶段：</p>
 <ol>
@@ -452,7 +452,7 @@ work[0] = (χ'_0(p+x_0) ⊕ χ'_1 x_0)(p+x_1) ⊕ (χ'_2(p+x_0) ⊕ χ'_3 x_0) x
 <pre><code>Algorithm: Prover.respond_resolved_plus_implicit
 Input: challenge (χ[0..t]), chi_prime, const_term, c
 
-1. 选择 c+1 个插值点 $p_0,\ldots,p_c$；实现取 $0,1,g,g^2,\ldots$，其中 $g=\texttt{F::GENERATOR}$
+1. 选择 c+1 个插值点 $p\_0,\ldots,p\_c$；实现取 $0,1,g,g^2,\ldots$，其中 $g=\texttt{F::GENERATOR}$
 2. 对每个插值点 p_k:
     2a. 构建仿射基 affine[i] = v[i] + witness[i] · p_k
     2b. 蝴蝶折叠求值 → value_k
@@ -484,9 +484,9 @@ Input: challenge (χ[0..t]), chi_prime, const_term, c
 </thead>
 <tbody>
 <tr><td>ANF 系数表 $a_{\text{idx}, u}$</td><td><code>compile_re_constraints(c) -&gt; Vec&lt;MainBitVec&gt;</code></td></tr>
-<tr><td>子集包含条件 $(idx &amp; u) == idx$</td><td><code>coeffs.set(u, (idx &amp; u) == idx)</code></td></tr>
+<tr><td>子集包含条件 $idx$&amp;$u==idx$</td><td><code>coeffs.set(u, (idx &amp; u) == idx)</code></td></tr>
 <tr><td>独热函数 $f_{\text{idx}}$</td><td><code>table[idx]</code>（ANF 系数行）</td></tr>
-<tr><td>聚合系数 $\chi’<em>j = \sum_i \chi_i b</em>{i,j}$</td><td><code>compute_chi_prime(challenges, b_cols)</code></td></tr>
+<tr><td>聚合系数 $\chi’_j = \sum_i \chi_i b_{i,j}$</td><td><code>compute_chi_prime(challenges, b_cols)</code></td></tr>
 <tr><td>流式 χ’ 聚合</td><td><code>compute_chi_prime_streaming_f128(challenges, b_cols)</code></td></tr>
 <tr><td>字节子集 XOR 查找表</td><td><code>build_byte_subset_xor_table</code></td></tr>
 <tr><td>仿射基 $x_i = v_i + w_i \cdot p$</td><td><code>affine_bases[i] = v[i] + witness[i] * point</code></td></tr>

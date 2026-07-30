@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-a7db92e5.js";
+            window.path_to_searchindex_js = "searchindex-58b777ba.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-97dc7667.js"></script>
@@ -473,14 +473,14 @@ pub struct Transcript {
 }
 <span class="boring">}</span></code></pre>
 <p>帧编码确保域分离：每个字段前有标签长度 + 标签 + 数据长度，保证 $(L_1, D_1)$ 和 $(L_2, D_2)$ 的拼接不会与 $(L_1 | D_1 | L_2, D_2)$ 混淆。</p>
-<p><code>absorb_usize(label, value)</code> — 吸收整数（转为小端 u64）：</p>
+<p><code>absorb_usize(label, value)</code> 吸收整数（转为小端 u64）：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub fn absorb_usize(&amp;mut self, label: &amp;[u8], value: usize) {
     self.absorb_labelled_bytes(label, &amp;(value as u64).to_le_bytes());
 }
 <span class="boring">}</span></code></pre>
-<p><code>absorb_bits(label, bits)</code> — 吸收精确比特数（使用 <code>update_digest_with_exact_bits</code> 避免尾部位填充混淆）：</p>
+<p><code>absorb_bits(label, bits)</code> 吸收精确比特数（使用 <code>update_digest_with_exact_bits</code> 避免尾部位填充混淆）：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub fn absorb_bits(&amp;mut self, label: &amp;[u8], bits: &amp;MainBitSlice) {
@@ -490,7 +490,7 @@ pub struct Transcript {
     update_digest_with_exact_bits(&amp;mut self.hasher, bits);
 }
 <span class="boring">}</span></code></pre>
-<p><code>absorb_matrix(label, matrix)</code> — 吸收流式矩阵（只吸收种子，不吸收整个矩阵）：</p>
+<p><code>absorb_matrix(label, matrix)</code> 吸收流式矩阵（只吸收种子，不吸收整个矩阵）：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub fn absorb_matrix(&amp;mut self, label: &amp;[u8], matrix: &amp;StreamingMatrixCols) {
@@ -499,7 +499,7 @@ pub struct Transcript {
     self.absorb_labelled_bytes(label, &amp;matrix.seed());
 }
 <span class="boring">}</span></code></pre>
-<p>这利用了矩阵的伪随机性质——矩阵由种子 $\sigma$ 确定，吸收 $\sigma$ 就等价于吸收了整个矩阵。</p>
+<p>这利用了矩阵的伪随机性质，矩阵由种子 $\sigma$ 确定，吸收 $\sigma$ 就等价于吸收了整个矩阵。</p>
 <h3 id="44-squeeze-方法"><a class="header" href="#44-squeeze-方法">4.4 Squeeze 方法</a></h3>
 <p><code>finalize_seed()</code> — 完成 Keccak-256 哈希，输出 256-bit 种子：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]

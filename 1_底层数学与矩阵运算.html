@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-a7db92e5.js";
+            window.path_to_searchindex_js = "searchindex-58b777ba.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-97dc7667.js"></script>
@@ -367,7 +367,7 @@ for table_idx in 0..domain_size {
     masked_xor_assign_bytes(&amp;mut output, &amp;column, mask);
 }
 <span class="boring">}</span></code></pre>
-<p>这三种模式互不矛盾——它们服务于不同的工程目的：行主序用于验证正确性，非 CT 列流式用于公开输入的快速求值，CT 列流式用于秘密输入的侧信道防御。</p>
+<p>这三种模式服务于不同的工程目的：行主序用于验证正确性，非 CT 列流式用于公开输入的快速求值，CT 列流式用于秘密输入的侧信道防御。</p>
 <h2 id="五工程化保障机制"><a class="header" href="#五工程化保障机制">五、工程化保障机制</a></h2>
 <h3 id="51-确定性验证"><a class="header" href="#51-确定性验证">5.1 确定性验证</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]

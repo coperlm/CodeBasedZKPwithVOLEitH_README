@@ -58,7 +58,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-a7db92e5.js";
+            window.path_to_searchindex_js = "searchindex-58b777ba.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-97dc7667.js"></script>
@@ -235,6 +235,12 @@ $$</p>
 </table>
 </div>
 <p>Scope-LRS 与 batch Scope-LRS 为本仓库在论文方案基础上的工程扩展；其设计和数据在模块七、模块十中单独说明。</p>
+<p>代码还没完成的部分：</p>
+<ol>
+<li>setup 和 签名阶段分开；</li>
+<li>LRS 可链接性判定，群签名的 GOpen，FDABS的Update / Revoke（属性撤销/时代更新）</li>
+<li>理论上还有更多变体可以构建，例如多权威机构MAABS，可问责环签名等</li>
+</ol>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="模块一底层数学与流式矩阵"><a class="header" href="#模块一底层数学与流式矩阵">模块一：底层数学与流式矩阵</a></h1>
 <p>有限域表示、比特向量与大矩阵流式计算</p>
@@ -407,7 +413,7 @@ for table_idx in 0..domain_size {
     masked_xor_assign_bytes(&amp;mut output, &amp;column, mask);
 }
 <span class="boring">}</span></code></pre>
-<p>这三种模式互不矛盾——它们服务于不同的工程目的：行主序用于验证正确性，非 CT 列流式用于公开输入的快速求值，CT 列流式用于秘密输入的侧信道防御。</p>
+<p>这三种模式服务于不同的工程目的：行主序用于验证正确性，非 CT 列流式用于公开输入的快速求值，CT 列流式用于秘密输入的侧信道防御。</p>
 <h2 id="五工程化保障机制"><a class="header" href="#五工程化保障机制">五、工程化保障机制</a></h2>
 <h3 id="51-确定性验证"><a class="header" href="#51-确定性验证">5.1 确定性验证</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -552,7 +558,7 @@ Output: y ∈ F_2^{rows(B)} — 哈希输出
 <p>$$
 y = B \cdot \text{RE}(x) = \bigoplus_{i=0}^{n/c-1} B_{:, i \cdot 2^c + \text{idx}(x^{(i)})}
 $$</p>
-<p>由于 $\text{RE}(x)$ 的每个块中仅有一个比特为 1，矩阵-向量乘法退化到只需选取 $n/c$ 个列做 XOR——这是稀疏矩阵的计算优势的又一次体现。</p>
+<p>由于 $\text{RE}(x)$ 的每个块中仅有一个比特为 1，矩阵-向量乘法退化到只需选取 $n/c$ 个列做 XOR，这是稀疏矩阵的计算优势的又一次体现。</p>
 <h4 id="232-流式版本afs_hash_streaming"><a class="header" href="#232-流式版本afs_hash_streaming">2.3.2 流式版本：<code>afs_hash_streaming</code></a></h4>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -619,7 +625,7 @@ $$</p>
 <li>$G_1,G_2\in\mathbb{F}_2^{n_e\times k_e}$ 是两个公开矩阵；</li>
 <li>$r_1,r_2\in\mathbb{F}_2^{k_e-\ell}$ 是每次签名新采样的随机数；</li>
 <li>$\operatorname{bin}(j)\in\mathbb{F}_2^\ell$ 是同一个签名者身份的二进制表示；</li>
-<li>$e’_1,e’_2\in\mathbb{F}<em>2^k$ 是正则噪声种子，$\operatorname{RE}(e’</em>\theta)$ 是相应的噪声向量。</li>
+<li>$e’_1,e’_2\in\mathbb{F}_2^k$ 是正则噪声种子，$\operatorname{RE}(e’_\theta)$ 是相应的噪声向量。</li>
 </ul>
 <p>消息 $M$ 不作为 $c_1,c_2$ 的明文写入上述关系；它由签名 API 的 statement digest 吸收并绑定到 Fiat-Shamir transcript。</p>
 <h3 id="32-参数配置"><a class="header" href="#32-参数配置">3.2 参数配置</a></h3>
@@ -1180,7 +1186,7 @@ squeeze() → opening_challenge
 <h2 id="一概述-3"><a class="header" href="#一概述-3">一、概述</a></h2>
 <p>本模块把论文 §3 的正则编码代数化方法落实为约束编译和隐式求值代码。它解决的核心问题是：</p>
 <blockquote>
-<p>如何将正则编码函数（Regular Encoding）——一个看似非线性的、基于查表的操作——转化为 degree-$c$ 的布尔多项式（ANF），然后在 ZK 协议的“隐式空间“中高效地安全求值？</p>
+<p>如何将正则编码函数（Regular Encoding），即一个看似非线性的、基于查表的操作，转化为 degree-$c$ 的布尔多项式（ANF），然后在 ZK 协议的“隐式空间“中高效地安全求值？</p>
 </blockquote>
 <p>这分为两个阶段：</p>
 <ol>
@@ -1432,7 +1438,7 @@ work[0] = (χ'_0(p+x_0) ⊕ χ'_1 x_0)(p+x_1) ⊕ (χ'_2(p+x_0) ⊕ χ'_3 x_0) x
 <pre><code>Algorithm: Prover.respond_resolved_plus_implicit
 Input: challenge (χ[0..t]), chi_prime, const_term, c
 
-1. 选择 c+1 个插值点 $p_0,\ldots,p_c$；实现取 $0,1,g,g^2,\ldots$，其中 $g=\texttt{F::GENERATOR}$
+1. 选择 c+1 个插值点 $p\_0,\ldots,p\_c$；实现取 $0,1,g,g^2,\ldots$，其中 $g=\texttt{F::GENERATOR}$
 2. 对每个插值点 p_k:
     2a. 构建仿射基 affine[i] = v[i] + witness[i] · p_k
     2b. 蝴蝶折叠求值 → value_k
@@ -1464,9 +1470,9 @@ Input: challenge (χ[0..t]), chi_prime, const_term, c
 </thead>
 <tbody>
 <tr><td>ANF 系数表 $a_{\text{idx}, u}$</td><td><code>compile_re_constraints(c) -&gt; Vec&lt;MainBitVec&gt;</code></td></tr>
-<tr><td>子集包含条件 $(idx &amp; u) == idx$</td><td><code>coeffs.set(u, (idx &amp; u) == idx)</code></td></tr>
+<tr><td>子集包含条件 $idx$&amp;$u==idx$</td><td><code>coeffs.set(u, (idx &amp; u) == idx)</code></td></tr>
 <tr><td>独热函数 $f_{\text{idx}}$</td><td><code>table[idx]</code>（ANF 系数行）</td></tr>
-<tr><td>聚合系数 $\chi’<em>j = \sum_i \chi_i b</em>{i,j}$</td><td><code>compute_chi_prime(challenges, b_cols)</code></td></tr>
+<tr><td>聚合系数 $\chi’_j = \sum_i \chi_i b_{i,j}$</td><td><code>compute_chi_prime(challenges, b_cols)</code></td></tr>
 <tr><td>流式 χ’ 聚合</td><td><code>compute_chi_prime_streaming_f128(challenges, b_cols)</code></td></tr>
 <tr><td>字节子集 XOR 查找表</td><td><code>build_byte_subset_xor_table</code></td></tr>
 <tr><td>仿射基 $x_i = v_i + w_i \cdot p$</td><td><code>affine_bases[i] = v[i] + witness[i] * point</code></td></tr>
@@ -1756,14 +1762,14 @@ pub struct Transcript {
 }
 <span class="boring">}</span></code></pre>
 <p>帧编码确保域分离：每个字段前有标签长度 + 标签 + 数据长度，保证 $(L_1, D_1)$ 和 $(L_2, D_2)$ 的拼接不会与 $(L_1 | D_1 | L_2, D_2)$ 混淆。</p>
-<p><code>absorb_usize(label, value)</code> — 吸收整数（转为小端 u64）：</p>
+<p><code>absorb_usize(label, value)</code> 吸收整数（转为小端 u64）：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub fn absorb_usize(&amp;mut self, label: &amp;[u8], value: usize) {
     self.absorb_labelled_bytes(label, &amp;(value as u64).to_le_bytes());
 }
 <span class="boring">}</span></code></pre>
-<p><code>absorb_bits(label, bits)</code> — 吸收精确比特数（使用 <code>update_digest_with_exact_bits</code> 避免尾部位填充混淆）：</p>
+<p><code>absorb_bits(label, bits)</code> 吸收精确比特数（使用 <code>update_digest_with_exact_bits</code> 避免尾部位填充混淆）：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub fn absorb_bits(&amp;mut self, label: &amp;[u8], bits: &amp;MainBitSlice) {
@@ -1773,7 +1779,7 @@ pub struct Transcript {
     update_digest_with_exact_bits(&amp;mut self.hasher, bits);
 }
 <span class="boring">}</span></code></pre>
-<p><code>absorb_matrix(label, matrix)</code> — 吸收流式矩阵（只吸收种子，不吸收整个矩阵）：</p>
+<p><code>absorb_matrix(label, matrix)</code> 吸收流式矩阵（只吸收种子，不吸收整个矩阵）：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub fn absorb_matrix(&amp;mut self, label: &amp;[u8], matrix: &amp;StreamingMatrixCols) {
@@ -1782,7 +1788,7 @@ pub struct Transcript {
     self.absorb_labelled_bytes(label, &amp;matrix.seed());
 }
 <span class="boring">}</span></code></pre>
-<p>这利用了矩阵的伪随机性质——矩阵由种子 $\sigma$ 确定，吸收 $\sigma$ 就等价于吸收了整个矩阵。</p>
+<p>这利用了矩阵的伪随机性质，矩阵由种子 $\sigma$ 确定，吸收 $\sigma$ 就等价于吸收了整个矩阵。</p>
 <h3 id="44-squeeze-方法"><a class="header" href="#44-squeeze-方法">4.4 Squeeze 方法</a></h3>
 <p><code>finalize_seed()</code> — 完成 Keccak-256 哈希，输出 256-bit 种子：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -3018,7 +3024,7 @@ const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 <p>本节概括已落地的计算方法，以及可以继续推进的优化方向。</p>
 <h2 id="一已落地的关键实现"><a class="header" href="#一已落地的关键实现">一、已落地的关键实现</a></h2>
 <h3 id="1-多线性扩展折叠与求和交换"><a class="header" href="#1-多线性扩展折叠与求和交换">1. 多线性扩展折叠与求和交换</a></h3>
-<p>代码先通过交换求和顺序得到 $\chi’<em>h = \sum \chi_i b</em>{i,h}$，再用多线性扩展的蝴蝶网络求值。该过程按 $c$ 层处理 $2^c$ 个系数，实际开销由块数、矩阵扫描和缓存访问共同决定。</p>
+<p>代码先通过交换求和顺序得到 $\chi’_h = \sum \chi_i b_{i,h}$，再用多线性扩展的蝴蝶网络求值。该过程按 $c$ 层处理 $2^c$ 个系数，实际开销由块数、矩阵扫描和缓存访问共同决定。</p>
 <p><code>implicit_eval.rs</code> 实现了这一过程：先以最低有效位递推预计算字节子集 XOR 表（<code>build_byte_subset_xor_table</code>），再以原地蝴蝶折叠完成求值。对于 $2^c \le 256$ 的场景，使用栈分配缓冲数组 <code>[F; 256]</code>。</p>
 <h3 id="2-流式生成矩阵"><a class="header" href="#2-流式生成矩阵">2. 流式生成矩阵</a></h3>
 <p>伪随机矩阵由种子确定。<code>StreamingMatrixCols</code> 按需生成矩阵列，降低常驻内存；在满足编译条件时，<code>streaming_matrix.rs</code> 使用 AES-NI 实时展开 PRG 种子生成矩阵列，完成 XOR 累加后释放临时数据。</p>
@@ -3028,14 +3034,15 @@ const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 <p>代码提供共享 VOLE 树的 batch LRS 接口，并计算 key image $I$。批处理逻辑复用同一棵 VOLE 树完成多条签名，性能结果见模块十。</p>
 <h2 id="二后续优化方向"><a class="header" href="#二后续优化方向">二、后续优化方向</a></h2>
 <h3 id="1-塔域加速大域乘法"><a class="header" href="#1-塔域加速大域乘法">1. 塔域加速大域乘法</a></h3>
-<p>可将 $\mathbb{F}<em>{2^{128}}$ 运算同构分解到塔域 $\mathbb{F}</em>{2^8}$ 上，以探索进一步的乘法加速。当前有限域运算由 <code>swanky_field</code> 提供，单项操作可由 <code>gf128_bench</code> 测量；本项目当前 i5-13500H 的端到端数据见模块十。</p>
+<p>可将 $\mathbb{F}_{2^{128}}$ 运算同构分解到塔域 $\mathbb{F}_{2^8}$ 上，以探索进一步的乘法加速。当前有限域运算由 <code>swanky_field</code> 提供，单项操作可由 <code>gf128_bench</code> 测量；本项目当前 i5-13500H 的端到端数据见模块十。</p>
+<p>但是现在的路径更快。</p>
 <h3 id="2-群签名随机数承诺优化"><a class="header" href="#2-群签名随机数承诺优化">2. 群签名随机数承诺优化</a></h3>
 <p>可计算 $G_{1,R}$ 的左零空间矩阵 $H_R$，以消去随机噪音 $r_1,r_2$ 对应的线性项，从而缩短 witness。该方向需要同时评估稠密矩阵乘法对流式求值路径的影响。</p>
 <h3 id="3-qrom-模型与-salted-rsd"><a class="header" href="#3-qrom-模型与-salted-rsd">3. QROM 模型与 Salted-RSD</a></h3>
 <p>未来可研究 QROM 下的哈希吸收变体、Unruh 变换和 Salted-RSD，以扩展协议的安全模型与应用场景。</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="模块十性能测试结果"><a class="header" href="#模块十性能测试结果">模块十：性能测试结果</a></h1>
-<p>本章记录当前版本在 i5-13500H 上的端到端性能。计时覆盖签名生成及编码，以及签名解码和验证；每个测试重复 10 次，去掉最高和最低各一次后取平均值。</p>
+<p>本章记录当前版本在指定环境下的端到端性能（详见测试环境一节）。计时覆盖签名生成及编码，以及签名解码和验证；每个测试重复 10 次，去掉最高和最低各一次后取平均值。</p>
 <h2 id="测试环境"><a class="header" href="#测试环境">测试环境</a></h2>
 <div class="table-wrapper">
 <table>
@@ -3078,7 +3085,7 @@ const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 <li>从 <code>ell=5</code> 增加到 <code>ell=10</code> 时，认证路径和约束规模增加，运行时间与签名体积相应上升。</li>
 <li>ReSolveD+ 的关系规模较小，线程调度开销较为显著；其余较大关系可利用并行计算缩短端到端时间。</li>
 </ul>
-<p>本次记录对应的逐次测试输出和机器信息位于工作区的 <code>target/paper_speed_comparison_2026-07-16/all_cores/</code>。对外发布实验结果时，应将该目录中的 <code>summary.md</code>、<code>metadata.txt</code> 和原始样本一并归档。</p>
+<p>本次记录对应的逐次测试输出和机器信息位于工作区的 <code>target/paper_speed_comparison_2026-07-16/all_cores/</code>。</p>
 
                     </main>
 
