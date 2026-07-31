@@ -58,7 +58,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-1d5dd50b.js";
+            window.path_to_searchindex_js = "searchindex-01d2389d.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-04b28919.js"></script>
@@ -3089,59 +3089,72 @@ const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 </ul>
 <p>本次记录对应的逐次测试输出和机器信息位于工作区的 <code>target/paper_speed_comparison_2026-07-16/all_cores/</code>。</p>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="模块1120-原子阶段性能测试结果"><a class="header" href="#模块1120-原子阶段性能测试结果">模块11：2.0 原子阶段性能测试结果</a></h1>
-<p>每项独立执行 10 次；删除最大与最小各一次后，对其余 8 次取平均。单位均为 ms/operation。</p>
+<h1 id="模块1120-原子阶段性能测试结果单核"><a class="header" href="#模块1120-原子阶段性能测试结果单核">模块11：2.0 原子阶段性能测试结果（单核）</a></h1>
+<p>除 Batch Scope-LRS 小节外，结果来自在 <code>RAYON_NUM_THREADS=1</code> 下运行的 Criterion 默认采样；表中显示 95% 置信区间与 point estimate。单位均为 ms/operation；当数值小于 0.001 ms 时，使用 μs 或 &lt; 0.001 ms 标注。</p>
 <h2 id="原子阶段结果"><a class="header" href="#原子阶段结果">原子阶段结果</a></h2>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>基准阶段</th><th>原始 10 次样本 (ms)</th><th style="text-align: right">去极值平均 (ms)</th></tr>
+<tr><th>基准阶段</th><th>95% CI (ms)</th><th style="text-align: right">Point estimate (ms)</th></tr>
 </thead>
 <tbody>
-<tr><td>Atomic_FDABS_ell10 / EpochInfo</td><td>16.665, 9.836, 9.778, 9.814, 9.710, 9.849, 9.724, 9.661, 16.485, 9.736</td><td style="text-align: right">10.617</td></tr>
-<tr><td>Atomic_FDABS_ell10 / Issue</td><td>0.330, 0.308, 0.335, 0.345, 0.326, 0.330, 0.332, 0.325, 0.543, 0.314</td><td style="text-align: right">0.329</td></tr>
-<tr><td>Atomic_FDABS_ell10 / Setup</td><td>0.240, 0.170, 0.145, 0.177, 0.146, 0.193, 0.146, 0.145, 0.147, 0.146</td><td style="text-align: right">0.159</td></tr>
-<tr><td>Atomic_FDABS_ell10 / Sign</td><td>52.262, 43.783, 42.738, 52.668, 40.600, 41.087, 40.334, 51.871, 42.049, 41.056</td><td style="text-align: right">44.431</td></tr>
-<tr><td>Atomic_FDABS_ell10 / UpdateRevoke</td><td>10.158, 9.973, 10.104, 9.972, 9.947, 10.056, 9.973, 12.127, 23.690, 9.758</td><td style="text-align: right">10.289</td></tr>
-<tr><td>Atomic_FDABS_ell10 / Verify</td><td>32.565, 36.034, 43.062, 29.482, 34.404, 32.254, 31.997, 41.755, 38.021, 30.641</td><td style="text-align: right">34.709</td></tr>
-<tr><td>Atomic_FDABS_ell5 / EpochInfo</td><td>0.526, 0.348, 0.352, 0.350, 0.349, 0.348, 0.693, 0.343, 0.343, 0.360</td><td style="text-align: right">0.372</td></tr>
-<tr><td>Atomic_FDABS_ell5 / Issue</td><td>0.291, 0.273, 0.283, 0.322, 0.289, 0.308, 0.292, 0.298, 0.299, 0.289</td><td style="text-align: right">0.294</td></tr>
-<tr><td>Atomic_FDABS_ell5 / Setup</td><td>0.005, 0.007, 0.008, 0.007, 0.004, 0.004, 0.004, 0.004, 0.004, 0.004</td><td style="text-align: right">0.005</td></tr>
-<tr><td>Atomic_FDABS_ell5 / Sign</td><td>17.186, 20.072, 30.640, 17.765, 17.284, 17.484, 17.178, 17.442, 17.329, 18.969</td><td style="text-align: right">17.941</td></tr>
-<tr><td>Atomic_FDABS_ell5 / UpdateRevoke</td><td>0.440, 0.337, 0.422, 0.335, 0.468, 0.428, 0.323, 0.331, 0.333, 0.426</td><td style="text-align: right">0.381</td></tr>
-<tr><td>Atomic_FDABS_ell5 / Verify</td><td>17.479, 14.023, 15.404, 33.944, 14.927, 20.283, 25.175, 16.841, 15.037, 19.877</td><td style="text-align: right">18.128</td></tr>
-<tr><td>Atomic_GroupSig_ell10 / KeyGen</td><td>321.128, 339.318, 369.777, 322.541, 328.008, 331.951, 327.165, 314.914, 311.027, 308.267</td><td style="text-align: right">324.507</td></tr>
-<tr><td>Atomic_GroupSig_ell10 / Open</td><td>95.924, 83.680, 128.999, 95.983, 85.488, 98.264, 85.814, 92.877, 81.711, 95.379</td><td style="text-align: right">91.676</td></tr>
-<tr><td>Atomic_GroupSig_ell10 / Setup</td><td>288.132, 378.998, 242.496, 76.427, 193.191, 219.130, 336.668, 555.242, 143.665, 338.884</td><td style="text-align: right">267.646</td></tr>
-<tr><td>Atomic_GroupSig_ell10 / Sign</td><td>72.529, 61.065, 59.405, 69.888, 55.705, 56.437, 70.830, 57.898, 67.200, 61.220</td><td style="text-align: right">62.993</td></tr>
-<tr><td>Atomic_GroupSig_ell10 / Verify</td><td>34.536, 34.309, 35.438, 43.821, 33.280, 36.794, 33.952, 48.190, 33.777, 47.052</td><td style="text-align: right">37.460</td></tr>
-<tr><td>Atomic_GroupSig_ell5 / KeyGen</td><td>37.853, 27.335, 27.449, 33.636, 28.613, 41.503, 28.236, 32.820, 27.618, 28.612</td><td style="text-align: right">30.605</td></tr>
-<tr><td>Atomic_GroupSig_ell5 / Open</td><td>78.889, 92.270, 80.635, 93.619, 96.185, 77.909, 95.653, 86.010, 95.299, 82.067</td><td style="text-align: right">88.055</td></tr>
-<tr><td>Atomic_GroupSig_ell5 / Setup</td><td>238.043, 327.118, 233.599, 479.070, 165.097, 134.411, 99.558, 356.582, 288.299, 210.154</td><td style="text-align: right">244.163</td></tr>
-<tr><td>Atomic_GroupSig_ell5 / Sign</td><td>36.933, 50.152, 36.966, 35.546, 34.179, 33.450, 45.366, 33.304, 33.180, 34.955</td><td style="text-align: right">36.337</td></tr>
-<tr><td>Atomic_GroupSig_ell5 / Verify</td><td>29.613, 29.096, 36.409, 25.733, 30.022, 24.243, 28.401, 30.051, 39.116, 29.367</td><td style="text-align: right">29.836</td></tr>
-<tr><td>Atomic_RingSig_ell10 / Context</td><td>21.957, 14.455, 14.304, 14.361, 30.566, 22.319, 22.569, 22.497, 14.205, 22.268</td><td style="text-align: right">19.341</td></tr>
-<tr><td>Atomic_RingSig_ell10 / KeyGen</td><td>0.325, 0.339, 0.310, 0.347, 0.318, 0.313, 0.298, 0.319, 0.344, 0.335</td><td style="text-align: right">0.325</td></tr>
-<tr><td>Atomic_RingSig_ell10 / Setup</td><td>0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000</td><td style="text-align: right">0.000</td></tr>
-<tr><td>Atomic_RingSig_ell10 / Sign</td><td>60.084, 62.027, 57.100, 70.993, 45.354, 60.751, 47.980, 48.974, 67.205, 58.908</td><td style="text-align: right">57.879</td></tr>
-<tr><td>Atomic_RingSig_ell10 / Verify</td><td>47.796, 49.119, 51.916, 34.940, 50.459, 63.964, 47.995, 37.010, 36.821, 69.061</td><td style="text-align: right">48.135</td></tr>
-<tr><td>Atomic_RingSig_ell5 / Context</td><td>0.673, 0.465, 0.670, 0.581, 0.461, 2.775, 0.583, 0.456, 0.559, 0.618</td><td style="text-align: right">0.576</td></tr>
-<tr><td>Atomic_RingSig_ell5 / KeyGen</td><td>0.287, 0.279, 0.247, 0.287, 0.627, 0.272, 0.270, 0.279, 0.269, 0.267</td><td style="text-align: right">0.276</td></tr>
-<tr><td>Atomic_RingSig_ell5 / Setup</td><td>0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000</td><td style="text-align: right">0.000</td></tr>
-<tr><td>Atomic_RingSig_ell5 / Sign</td><td>18.218, 19.429, 17.483, 17.612, 17.833, 18.379, 17.444, 18.518, 32.167, 18.176</td><td style="text-align: right">18.206</td></tr>
-<tr><td>Atomic_RingSig_ell5 / Verify</td><td>15.256, 12.589, 12.538, 25.052, 12.704, 12.043, 12.749, 12.690, 13.172, 12.945</td><td style="text-align: right">13.080</td></tr>
-<tr><td>Atomic_ScopeLRS_ell10 / Context</td><td>0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001</td><td style="text-align: right">0.001</td></tr>
-<tr><td>Atomic_ScopeLRS_ell10 / KeyGen</td><td>0.261, 0.238, 0.241, 0.259, 0.244, 0.237, 0.240, 0.246, 0.272, 0.243</td><td style="text-align: right">0.247</td></tr>
-<tr><td>Atomic_ScopeLRS_ell10 / Link</td><td>0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000</td><td style="text-align: right">0.000</td></tr>
-<tr><td>Atomic_ScopeLRS_ell10 / Setup</td><td>0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000</td><td style="text-align: right">0.000</td></tr>
-<tr><td>Atomic_ScopeLRS_ell10 / Sign</td><td>33.456, 45.002, 32.619, 32.676, 32.953, 33.110, 44.051, 32.949, 33.391, 34.017</td><td style="text-align: right">34.575</td></tr>
-<tr><td>Atomic_ScopeLRS_ell10 / Verify</td><td>23.378, 25.852, 24.301, 22.218, 33.571, 21.660, 22.677, 24.856, 22.217, 22.803</td><td style="text-align: right">23.538</td></tr>
-<tr><td>Atomic_ScopeLRS_ell5 / Context</td><td>0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001</td><td style="text-align: right">0.001</td></tr>
-<tr><td>Atomic_ScopeLRS_ell5 / KeyGen</td><td>0.251, 0.239, 0.232, 0.734, 0.240, 0.237, 0.241, 0.238, 0.260, 0.226</td><td style="text-align: right">0.242</td></tr>
-<tr><td>Atomic_ScopeLRS_ell5 / Link</td><td>0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000</td><td style="text-align: right">0.000</td></tr>
-<tr><td>Atomic_ScopeLRS_ell5 / Setup</td><td>0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000</td><td style="text-align: right">0.000</td></tr>
-<tr><td>Atomic_ScopeLRS_ell5 / Sign</td><td>21.040, 20.381, 19.611, 20.527, 21.721, 18.319, 19.918, 29.278, 19.841, 18.881</td><td style="text-align: right">20.240</td></tr>
-<tr><td>Atomic_ScopeLRS_ell5 / Verify</td><td>26.298, 14.049, 14.465, 14.683, 14.020, 16.313, 14.242, 13.497, 13.188, 13.283</td><td style="text-align: right">14.319</td></tr>
+<tr><td>Atomic_FDABS_ell10 / EpochInfo</td><td>15.640 to 16.059</td><td style="text-align: right">15.874</td></tr>
+<tr><td>Atomic_FDABS_ell10 / Issue</td><td>2.778 to 2.835</td><td style="text-align: right">2.809</td></tr>
+<tr><td>Atomic_FDABS_ell10 / Setup</td><td>0.242 to 0.251</td><td style="text-align: right">0.247</td></tr>
+<tr><td>Atomic_FDABS_ell10 / Sign</td><td>304.890 to 310.107</td><td style="text-align: right">307.657</td></tr>
+<tr><td>Atomic_FDABS_ell10 / UpdateRevoke</td><td>15.920 to 15.994</td><td style="text-align: right">15.956</td></tr>
+<tr><td>Atomic_FDABS_ell10 / Verify</td><td>170.175 to 177.911</td><td style="text-align: right">174.431</td></tr>
+<tr><td>Atomic_FDABS_ell5 / EpochInfo</td><td>0.520 to 0.531</td><td style="text-align: right">0.526</td></tr>
+<tr><td>Atomic_FDABS_ell5 / Issue</td><td>2.783 to 2.792</td><td style="text-align: right">2.787</td></tr>
+<tr><td>Atomic_FDABS_ell5 / Setup</td><td>0.008 to 0.008</td><td style="text-align: right">0.008</td></tr>
+<tr><td>Atomic_FDABS_ell5 / Sign</td><td>157.232 to 159.802</td><td style="text-align: right">158.361</td></tr>
+<tr><td>Atomic_FDABS_ell5 / UpdateRevoke</td><td>0.512 to 0.543</td><td style="text-align: right">0.525</td></tr>
+<tr><td>Atomic_FDABS_ell5 / Verify</td><td>66.600 to 77.181</td><td style="text-align: right">71.882</td></tr>
+<tr><td>Atomic_GroupSig_ell10 / KeyGen</td><td>2174.745 to 2221.585</td><td style="text-align: right">2199.762</td></tr>
+<tr><td>Atomic_GroupSig_ell10 / Open</td><td>272.149 to 282.092</td><td style="text-align: right">277.608</td></tr>
+<tr><td>Atomic_GroupSig_ell10 / Setup</td><td>280.716 to 345.823</td><td style="text-align: right">311.499</td></tr>
+<tr><td>Atomic_GroupSig_ell10 / Sign</td><td>360.134 to 363.683</td><td style="text-align: right">362.224</td></tr>
+<tr><td>Atomic_GroupSig_ell10 / Verify</td><td>201.333 to 208.522</td><td style="text-align: right">205.363</td></tr>
+<tr><td>Atomic_GroupSig_ell5 / KeyGen</td><td>89.599 to 94.705</td><td style="text-align: right">92.316</td></tr>
+<tr><td>Atomic_GroupSig_ell5 / Open</td><td>202.607 to 208.773</td><td style="text-align: right">206.076</td></tr>
+<tr><td>Atomic_GroupSig_ell5 / Setup</td><td>322.405 to 381.648</td><td style="text-align: right">351.595</td></tr>
+<tr><td>Atomic_GroupSig_ell5 / Sign</td><td>204.627 to 206.453</td><td style="text-align: right">205.482</td></tr>
+<tr><td>Atomic_GroupSig_ell5 / Verify</td><td>122.446 to 130.823</td><td style="text-align: right">126.856</td></tr>
+<tr><td>Atomic_RingSig_ell10 / Context</td><td>19.619 to 22.248</td><td style="text-align: right">20.688</td></tr>
+<tr><td>Atomic_RingSig_ell10 / KeyGen</td><td>1.866 to 2.031</td><td style="text-align: right">1.952</td></tr>
+<tr><td>Atomic_RingSig_ell10 / Setup</td><td>0.249 μs to 0.256 μs</td><td style="text-align: right">0.253 μs</td></tr>
+<tr><td>Atomic_RingSig_ell10 / Sign</td><td>315.587 to 320.453</td><td style="text-align: right">318.260</td></tr>
+<tr><td>Atomic_RingSig_ell10 / Verify</td><td>178.296 to 186.814</td><td style="text-align: right">182.947</td></tr>
+<tr><td>Atomic_RingSig_ell5 / Context</td><td>0.637 to 0.662</td><td style="text-align: right">0.649</td></tr>
+<tr><td>Atomic_RingSig_ell5 / KeyGen</td><td>2.147 to 2.190</td><td style="text-align: right">2.164</td></tr>
+<tr><td>Atomic_RingSig_ell5 / Setup</td><td>0.251 μs to 0.258 μs</td><td style="text-align: right">0.255 μs</td></tr>
+<tr><td>Atomic_RingSig_ell5 / Sign</td><td>163.668 to 166.096</td><td style="text-align: right">164.860</td></tr>
+<tr><td>Atomic_RingSig_ell5 / Verify</td><td>79.140 to 89.814</td><td style="text-align: right">84.477</td></tr>
+<tr><td>Atomic_ScopeLRS_ell10 / Context</td><td>0.922 μs to 0.962 μs</td><td style="text-align: right">0.943 μs</td></tr>
+<tr><td>Atomic_ScopeLRS_ell10 / KeyGen</td><td>2.147 to 2.176</td><td style="text-align: right">2.159</td></tr>
+<tr><td>Atomic_ScopeLRS_ell10 / Link</td><td>0.190 μs to 0.204 μs</td><td style="text-align: right">0.198 μs</td></tr>
+<tr><td>Atomic_ScopeLRS_ell10 / Setup</td><td>0.260 μs to 0.261 μs</td><td style="text-align: right">0.260 μs</td></tr>
+<tr><td>Atomic_ScopeLRS_ell10 / Sign</td><td>321.624 to 324.568</td><td style="text-align: right">323.186</td></tr>
+<tr><td>Atomic_ScopeLRS_ell10 / Verify</td><td>181.066 to 183.327</td><td style="text-align: right">182.356</td></tr>
+<tr><td>Atomic_ScopeLRS_ell5 / Context</td><td>0.966 μs to 0.973 μs</td><td style="text-align: right">0.969 μs</td></tr>
+<tr><td>Atomic_ScopeLRS_ell5 / KeyGen</td><td>2.053 to 2.160</td><td style="text-align: right">2.109</td></tr>
+<tr><td>Atomic_ScopeLRS_ell5 / Link</td><td>0.197 μs to 0.209 μs</td><td style="text-align: right">0.203 μs</td></tr>
+<tr><td>Atomic_ScopeLRS_ell5 / Setup</td><td>0.259 μs to 0.260 μs</td><td style="text-align: right">0.260 μs</td></tr>
+<tr><td>Atomic_ScopeLRS_ell5 / Sign</td><td>188.346 to 194.801</td><td style="text-align: right">191.353</td></tr>
+<tr><td>Atomic_ScopeLRS_ell5 / Verify</td><td>107.984 to 109.769</td><td style="text-align: right">108.999</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="batch-scope-lrs-结果单核"><a class="header" href="#batch-scope-lrs-结果单核">Batch Scope-LRS 结果（单核）</a></h2>
+<p>本测试同样固定 <code>RAYON_NUM_THREADS=1</code>，参数为 <code>ell=5</code>、每批 <code>N=10</code> 条独立消息。运行命令为 <code>RAYON_NUM_THREADS=1 cargo bench --bench paper_benchmarks -- 'BatchedScopeLRS_N10_ell5_{sign,verify}' --sample-size 10</code>。为控制单核批量操作的运行时间，本次 Criterion 测试显式使用 <code>--sample-size 10</code>；下表时间均为<strong>一整批 10 条签名</strong>的总耗时，最后一列为按 10 条均摊的 point estimate。该批量接口不提供逐阶段原子分解，故不并入上方“原子阶段结果”表。</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>基准阶段</th><th style="text-align: right">样本数</th><th style="text-align: right">95% CI (ms / 批)</th><th style="text-align: right">Point estimate (ms / 批)</th><th style="text-align: right">Point estimate (ms / 条)</th></tr>
+</thead>
+<tbody>
+<tr><td>BatchedScopeLRS_N10_ell5 / Sign</td><td style="text-align: right">10</td><td style="text-align: right">1812.351 to 1856.017</td><td style="text-align: right">1833.883</td><td style="text-align: right">183.388</td></tr>
+<tr><td>BatchedScopeLRS_N10_ell5 / Verify</td><td style="text-align: right">10</td><td style="text-align: right">1063.112 to 1138.964</td><td style="text-align: right">1095.984</td><td style="text-align: right">109.598</td></tr>
 </tbody>
 </table>
 </div>
@@ -3152,18 +3165,20 @@ const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 <tr><th style="text-align: left">方案大类 (Scheme)</th><th style="text-align: left">参数 ($\ell$)</th><th style="text-align: center">初始化 <br><code>Setup</code></th><th style="text-align: center">密钥/凭证生成 <br><code>KeyGen / Issue</code></th><th style="text-align: center">状态/现场同步 <br><code>Context / EpochInfo</code></th><th style="text-align: center">签名/零知识证明 <br><code>Sign</code></th><th style="text-align: center">验证 <br><code>Verify</code></th><th style="text-align: left">扩展操作 <br><code>Open/Revoke/Link</code></th></tr>
 </thead>
 <tbody>
-<tr><td style="text-align: left"><strong>RingSig</strong> <br>(环签名)</td><td style="text-align: left"><code>ell=5</code></td><td style="text-align: center">~0.000</td><td style="text-align: center">0.276</td><td style="text-align: center">0.576</td><td style="text-align: center">18.206</td><td style="text-align: center">13.080</td><td style="text-align: left">-</td></tr>
-<tr><td style="text-align: left"></td><td style="text-align: left"><code>ell=10</code></td><td style="text-align: center">~0.000</td><td style="text-align: center">0.325</td><td style="text-align: center"><strong>19.341</strong></td><td style="text-align: center">57.879</td><td style="text-align: center">48.135</td><td style="text-align: left">-</td></tr>
-<tr><td style="text-align: left"><strong>Scope-LRS</strong> <br>(可链接环)</td><td style="text-align: left"><code>ell=5</code></td><td style="text-align: center">~0.000</td><td style="text-align: center">0.242</td><td style="text-align: center">0.001</td><td style="text-align: center">20.240</td><td style="text-align: center">14.319</td><td style="text-align: left"><code>Link</code>: ~0.000</td></tr>
-<tr><td style="text-align: left"></td><td style="text-align: left"><code>ell=10</code></td><td style="text-align: center">~0.000</td><td style="text-align: center">0.247</td><td style="text-align: center">0.001</td><td style="text-align: center">34.575</td><td style="text-align: center">23.538</td><td style="text-align: left"><code>Link</code>: ~0.000</td></tr>
-<tr><td style="text-align: left"><strong>GroupSig</strong> <br>(群签名)</td><td style="text-align: left"><code>ell=5</code></td><td style="text-align: center"><strong>244.163</strong></td><td style="text-align: center">30.605</td><td style="text-align: center">-</td><td style="text-align: center">36.337</td><td style="text-align: center">29.836</td><td style="text-align: left"><code>Open</code>: 88.055</td></tr>
-<tr><td style="text-align: left"></td><td style="text-align: left"><code>ell=10</code></td><td style="text-align: center"><strong>267.646</strong></td><td style="text-align: center"><strong>324.507</strong></td><td style="text-align: center">-</td><td style="text-align: center">62.993</td><td style="text-align: center">37.460</td><td style="text-align: left"><code>Open</code>: 91.676</td></tr>
-<tr><td style="text-align: left"><strong>FDABS</strong> <br>(动态属性基)</td><td style="text-align: left"><code>ell=5</code></td><td style="text-align: center">0.005</td><td style="text-align: center">0.294</td><td style="text-align: center">0.372</td><td style="text-align: center">17.941</td><td style="text-align: center">18.128</td><td style="text-align: left"><code>Revoke</code>: 0.381</td></tr>
-<tr><td style="text-align: left"></td><td style="text-align: left"><code>ell=10</code></td><td style="text-align: center">0.159</td><td style="text-align: center">0.329</td><td style="text-align: center"><strong>10.617</strong></td><td style="text-align: center">44.431</td><td style="text-align: center">34.709</td><td style="text-align: left"><code>Revoke</code>: <strong>10.289</strong></td></tr>
+<tr><td style="text-align: left"><strong>ReSolveD+</strong> <br>(基础签名)</td><td style="text-align: left">—</td><td style="text-align: center">—</td><td style="text-align: center">—</td><td style="text-align: center">—</td><td style="text-align: center">18.629</td><td style="text-align: center">9.599</td><td style="text-align: left">—</td></tr>
+<tr><td style="text-align: left"><strong>RingSig</strong> <br>(环签名)</td><td style="text-align: left"><code>ell=5</code></td><td style="text-align: center">0.255 μs</td><td style="text-align: center">2.164</td><td style="text-align: center">0.649</td><td style="text-align: center">164.860</td><td style="text-align: center">84.477</td><td style="text-align: left">—</td></tr>
+<tr><td style="text-align: left"></td><td style="text-align: left"><code>ell=10</code></td><td style="text-align: center">0.253 μs</td><td style="text-align: center">1.952</td><td style="text-align: center">20.688</td><td style="text-align: center">318.260</td><td style="text-align: center">182.947</td><td style="text-align: left">—</td></tr>
+<tr><td style="text-align: left"><strong>Scope-LRS</strong> <br>(可链接环)</td><td style="text-align: left"><code>ell=5</code></td><td style="text-align: center">0.260 μs</td><td style="text-align: center">2.109</td><td style="text-align: center">0.969 μs</td><td style="text-align: center">191.353</td><td style="text-align: center">108.999</td><td style="text-align: left"><code>Link</code>: 0.203 μs</td></tr>
+<tr><td style="text-align: left"></td><td style="text-align: left"><code>ell=10</code></td><td style="text-align: center">0.260 μs</td><td style="text-align: center">2.159</td><td style="text-align: center">0.943 μs</td><td style="text-align: center">323.186</td><td style="text-align: center">182.356</td><td style="text-align: left"><code>Link</code>: 0.198 μs</td></tr>
+<tr><td style="text-align: left"><strong>Batch Scope-LRS</strong> <br>(批量可链接环，单批 10 条)</td><td style="text-align: left"><code>ell=5, N=10</code></td><td style="text-align: center">—</td><td style="text-align: center">—</td><td style="text-align: center">—</td><td style="text-align: center">1833.883 <br>(183.388 / 条)</td><td style="text-align: center">1095.984 <br>(109.598 / 条)</td><td style="text-align: left">—</td></tr>
+<tr><td style="text-align: left"><strong>GroupSig</strong> <br>(群签名)</td><td style="text-align: left"><code>ell=5</code></td><td style="text-align: center"><strong>351.595</strong></td><td style="text-align: center">92.316</td><td style="text-align: center">—</td><td style="text-align: center">205.482</td><td style="text-align: center">126.856</td><td style="text-align: left"><code>Open</code>: 206.076</td></tr>
+<tr><td style="text-align: left"></td><td style="text-align: left"><code>ell=10</code></td><td style="text-align: center">311.499</td><td style="text-align: center"><strong>2199.762</strong></td><td style="text-align: center">—</td><td style="text-align: center">362.224</td><td style="text-align: center">205.363</td><td style="text-align: left"><code>Open</code>: 277.608</td></tr>
+<tr><td style="text-align: left"><strong>FDABS</strong> <br>(动态属性基)</td><td style="text-align: left"><code>ell=5</code></td><td style="text-align: center">0.008</td><td style="text-align: center">2.787</td><td style="text-align: center">0.526</td><td style="text-align: center">158.361</td><td style="text-align: center">71.882</td><td style="text-align: left"><code>Revoke</code>: 0.525</td></tr>
+<tr><td style="text-align: left"></td><td style="text-align: left"><code>ell=10</code></td><td style="text-align: center">0.247</td><td style="text-align: center">2.809</td><td style="text-align: center">15.874</td><td style="text-align: center">307.657</td><td style="text-align: center">174.431</td><td style="text-align: left"><code>Revoke</code>: 15.956</td></tr>
 </tbody>
 </table>
 </div>
-<p>当前跑出的结果似乎漏掉了 <code>ReSolveD+</code> 基础版和 <code>Batch Scope-LRS</code> 批量版。</p>
+<p>注1：各方案的 timed region 语义存在差异，例如 RingSig 的 Context 为构建全局树，而 Scope-LRS 的 Context 仅为轻量级链接矩阵派生，故耗时不在同一量级。</p>
 
                     </main>
 
