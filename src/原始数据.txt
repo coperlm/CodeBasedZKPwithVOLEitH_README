@@ -1,0 +1,733 @@
+[coper@coperpc CodeBasedZKPwithVOLEitH]$  cd '/home/coper/.vscode/tmp/tmp_vscode_1'; ELECTRON_RUN_AS_NODE=1 PATH="$PATH:/usr/share/code/resources/app/node_modules.asar.unpacked/@vscode/ripgrep-universal/bin/linux-x64" TMPDIR="/home/coper/.vscode/tmp/tmp_vscode_1" CLAUDE_TMPDIR="/home/coper/.vscode/tmp/tmp_vscode_1" "/usr/share/code/code" "/usr/share/code/resources/app/node_modules/@vscode/sandbox-runtime/dist/cli.js" --settings "/home/coper/.vscode/tmp/tmp_vscode_1/vscode-sandbox-settings-03202682-798f-4a8a-84e9-e83ffd59892f.json" -c 'cd '\''/home/coper/Projects/CodeBasedZK_Ideas/CodeBasedZKPwithVOLEitH'\'' && RAYON_NUM_THREADS=1 cargo bench --bench paper_benchmarks'
+   Compiling codebased-zk-volelith v0.1.0 (/home/coper/Projects/CodeBasedZK_Ideas/CodeBasedZKPwithVOLEitH)
+    Finished `bench` profile [optimized] target(s) in 46.74s
+     Running benches/paper_benchmarks.rs (target/release/deps/paper_benchmarks-446a28e9f0a478d1)
+Gnuplot not found, using plotters backend
+
+=== ReSolveD+ (n=453, c=3) ===
+[Setup] n = 453, c = 3, m = 1208 (B matrix: 1208 cols × 453 rows, 0.07 MB)
+[ReSolveD+ (n=453, c=3)] Protocol (l, t, d) = (453, 453, 3): witness 453 bits, 453 constraints, max degree 3
+Benchmarking ReSolveD+_n453_c3_sign/sign: Collecting 100 samples in estimated 5.
+ReSolveD+_n453_c3_sign/sign
+                        time:   [    17.425 ms     18.629 ms     19.967 ms]
+                        change: [+27.861% +61.090% +102.47%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 8 outliers among 100 measurements (8.00%)
+  7 (7.00%) high mild
+  1 (1.00%) high severe
+
+Benchmarking ReSolveD+_n453_c3_verify/verify: Collecting 100 samples in estimate
+ReSolveD+_n453_c3_verify/verify
+                        time:   [     9.482 ms      9.599 ms      9.727 ms]
+                        change: [-6.1958% +9.4419% +23.286%] (p = 0.28 > 0.05)
+                        No change in performance detected.
+Found 11 outliers among 100 measurements (11.00%)
+  4 (4.00%) low severe
+  4 (4.00%) high mild
+  3 (3.00%) high severe
+
+[ReSolveD+ (n=453, c=3)] Canonical wire: 3159 bytes (correction 453 bits, proof coeffs 3, FAEST VOLE payload 3002 bytes)
+
+=== RingSig (n=1280, ℓ=5, c=8) ===
+[Setup] n = 1280, ell = 5, leaf_secret_len = 2560, B0/B1: each 40960 cols × 1280 rows (6.2 MB each)
+[RingSig (n=1280, ℓ=5, c=8)] Protocol (l, t, d) = (15365, 7680, 9): witness 15365 bits, 7680 constraints, max degree 9
+[Setup] Constraint gen skipped: formula count, implicit hot path only
+Benchmarking RingSig_ell5_setup/setup_and_membership_context: Warming up for 3.0
+Benchmarking RingSig_ell5_setup/setup_and_membership_context: Collecting 100 sam
+RingSig_ell5_setup/setup_and_membership_context
+                        time:   [     2.339 ms      2.352 ms      2.369 ms]
+                        change: [+201.21% +288.01% +391.71%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 3 outliers among 100 measurements (3.00%)
+  1 (1.00%) low mild
+  2 (2.00%) high severe
+
+Benchmarking RingSig_ell5_sign/sign: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 16.2s, or reduce sample count to 30.
+Benchmarking RingSig_ell5_sign/sign: Collecting 100 samples in estimated 16.243 
+RingSig_ell5_sign/sign  time:   [   164.715 ms    167.011 ms    170.156 ms]
+                        change: [+641.59% +747.36% +827.41%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 13 outliers among 100 measurements (13.00%)
+  1 (1.00%) low severe
+  3 (3.00%) high mild
+  9 (9.00%) high severe
+
+Benchmarking RingSig_ell5_verify/verify: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 9.6s, or reduce sample count to 50.
+Benchmarking RingSig_ell5_verify/verify: Collecting 100 samples in estimated 9.5
+RingSig_ell5_verify/verify
+                        time:   [    95.509 ms     95.622 ms     95.738 ms]
+                        change: [+353.37% +428.18% +491.38%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+
+[RingSig (n=1280, ℓ=5, c=8)] Canonical wire: 35737 bytes (correction 15365 bits, proof coeffs 9, FAEST VOLE payload 33620 bytes)
+
+=== RingSig (n=1280, ℓ=10, c=8) ===
+[Setup] n = 1280, ell = 10, leaf_secret_len = 2560, B0/B1: each 40960 cols × 1280 rows (6.2 MB each)
+[RingSig (n=1280, ℓ=10, c=8)] Protocol (l, t, d) = (28170, 14080, 9): witness 28170 bits, 14080 constraints, max degree 9
+[Setup] Constraint gen skipped: formula count, implicit hot path only
+Benchmarking RingSig_ell10_setup/setup_and_membership_context: Warming up for 3.
+Benchmarking RingSig_ell10_setup/setup_and_membership_context: Collecting 100 sa
+RingSig_ell10_setup/setup_and_membership_context
+                        time:   [     2.496 ms      2.506 ms      2.521 ms]
+                        change: [+261.72% +306.39% +339.46%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 2 outliers among 100 measurements (2.00%)
+  1 (1.00%) high mild
+  1 (1.00%) high severe
+
+Benchmarking RingSig_ell10_sign/sign: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 30.1s, or reduce sample count to 10.
+RingSig_ell10_sign/sign time:   [   303.122 ms    308.273 ms    314.478 ms]
+                        change: [+749.91% +846.11% +936.26%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 16 outliers among 100 measurements (16.00%)
+  3 (3.00%) low severe
+  1 (1.00%) low mild
+  7 (7.00%) high mild
+  5 (5.00%) high severe
+
+Benchmarking RingSig_ell10_verify/verify: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 17.9s, or reduce sample count to 20.
+RingSig_ell10_verify/verify
+                        time:   [   165.876 ms    172.762 ms    179.334 ms]
+                        change: [+383.35% +579.91% +774.09%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 35 outliers among 100 measurements (35.00%)
+  16 (16.00%) low severe
+  7 (7.00%) high mild
+  12 (12.00%) high severe
+
+[RingSig (n=1280, ℓ=10, c=8)] Canonical wire: 61353 bytes (correction 28170 bits, proof coeffs 9, FAEST VOLE payload 57635 bytes)
+
+=== Scope-LRS (n=1280, ell=5, c=8) ===
+[Setup] n = 1280, ell = 5, B_link derived from context id, key image = 1280 bits
+[+] Streaming Matrix PRG Enabled: Peak memory usage remains O(1) during execution
+[Scope-LRS (n=1280, ell=5, c=8)] Protocol (l, t, d) = (15365, 8960, 9): witness 15365 bits, 8960 constraints, max degree 9
+ScopeLRS_ell5_setup/setup_context_and_key_image
+                        time:   [     2.180 ms      2.329 ms      2.482 ms]
+                        change: [+194.49% +330.75% +488.31%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+
+Benchmarking ScopeLRS_ell5_sign/sign: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 18.8s, or reduce sample count to 20.
+ScopeLRS_ell5_sign/sign time:   [   186.781 ms    188.326 ms    190.087 ms]
+                        change: [+691.07% +789.25% +858.23%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 13 outliers among 100 measurements (13.00%)
+  1 (1.00%) low severe
+  2 (2.00%) low mild
+  8 (8.00%) high mild
+  2 (2.00%) high severe
+
+Benchmarking ScopeLRS_ell5_verify/verify: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 11.0s, or reduce sample count to 40.
+ScopeLRS_ell5_verify/verify
+                        time:   [   114.291 ms    116.971 ms    119.916 ms]
+                        change: [+560.03% +672.44% +767.13%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 21 outliers among 100 measurements (21.00%)
+  5 (5.00%) low severe
+  4 (4.00%) high mild
+  12 (12.00%) high severe
+
+[Scope-LRS (n=1280, ell=5, c=8)] Canonical wire: 35905 bytes = 35.06 KiB (key image 1280 bits)
+
+=== Scope-LRS (n=1280, ell=10, c=8) ===
+[Setup] n = 1280, ell = 10, B_link derived from context id, key image = 1280 bits
+[+] Streaming Matrix PRG Enabled: Peak memory usage remains O(1) during execution
+[Scope-LRS (n=1280, ell=10, c=8)] Protocol (l, t, d) = (28170, 15360, 9): witness 28170 bits, 15360 constraints, max degree 9
+ScopeLRS_ell10_setup/setup_context_and_key_image
+                        time:   [     2.075 ms      2.326 ms      2.597 ms]
+                        change: [+277.06% +321.95% +368.20%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 12 outliers among 100 measurements (12.00%)
+  11 (11.00%) high mild
+  1 (1.00%) high severe
+
+Benchmarking ScopeLRS_ell10_sign/sign: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 32.2s, or reduce sample count to 10.
+ScopeLRS_ell10_sign/sign
+                        time:   [   318.711 ms    319.399 ms    320.103 ms]
+                        change: [+722.51% +803.54% +877.60%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 14 outliers among 100 measurements (14.00%)
+  1 (1.00%) low severe
+  2 (2.00%) high mild
+  11 (11.00%) high severe
+
+Benchmarking ScopeLRS_ell10_verify/verify: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 18.2s, or reduce sample count to 20.
+ScopeLRS_ell10_verify/verify
+                        time:   [   181.357 ms    182.400 ms    183.151 ms]
+                        change: [+543.47% +636.88% +726.16%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 4 outliers among 100 measurements (4.00%)
+  2 (2.00%) low severe
+  2 (2.00%) high severe
+
+[Scope-LRS (n=1280, ell=10, c=8)] Canonical wire: 61521 bytes = 60.08 KiB (key image 1280 bits)
+
+=== Batched Scope-LRS (N=10, n=1280, ell=5, c=8) ===
+[+] Streaming Matrix PRG Enabled: Peak memory usage remains O(1) during execution
+[+] Static amortization: one global commitment/proof covers 10 independent messages
+[Batched Scope-LRS (N=10, n=1280, ell=5, c=8)] Protocol (l, t, d) = (153650, 89600, 9): witness 153650 bits, 89600 constraints, max degree 9
+Benchmarking BatchedScopeLRS_N10_ell5_sign/sign_batch: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 177.6s, or reduce sample count to 10.
+BatchedScopeLRS_N10_ell5_sign/sign_batch
+                        time:   [  1816.513 ms   1840.805 ms   1869.648 ms]
+                        change: [+889.32% +913.32% +938.46%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 11 outliers among 100 measurements (11.00%)
+  1 (1.00%) low mild
+  6 (6.00%) high mild
+  4 (4.00%) high severe
+
+Benchmarking BatchedScopeLRS_N10_ell5_verify/verify_batch: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 120.4s, or reduce sample count to 10.
+BatchedScopeLRS_N10_ell5_verify/verify_batch
+                        time:   [  1088.033 ms   1109.299 ms   1133.208 ms]
+                        change: [+773.84% +807.03% +845.05%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 22 outliers among 100 measurements (22.00%)
+  1 (1.00%) low mild
+  4 (4.00%) high mild
+  17 (17.00%) high severe
+
+[Batched Scope-LRS (N=10, n=1280, ell=5, c=8)] Canonical batch wire: 314001 bytes = 306.64 KiB (key images 12800 bits)
+[Batched Scope-LRS (N=10, n=1280, ell=5, c=8)] Amortized size per sig: 30.66 KB
+
+=== GroupSig (n=1280, ℓ=5, ne=4096, ke=3328, c_hash=8, c_e=6) ===
+[Setup] n = 1280, ell = 5, leaf_secret_len = 2560, ne = 4096, ke = 3328, k_noise = 384
+[Setup] B0/B1: each 40960 cols × 1280 rows (6.2 MB), G1/G2: each 3328 cols × 4096 rows (1.6 MB)
+[GroupSig (n=1280, ℓ=5, ne=4096, ke=3328, c_hash=8, c_e=6)] Protocol (l, t, d) = (22779, 15872, 9): witness 22779 bits, 15872 constraints, max degree 9
+[Setup] Constraint gen skipped: formula count, implicit hot path only
+Benchmarking GroupSig_ell5_setup/gsetup_and_gkey: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 34.2s, or reduce sample count to 10.
+GroupSig_ell5_setup/gsetup_and_gkey
+                        time:   [   412.209 ms    443.880 ms    476.760 ms]
+                        change: [+36.552% +79.713% +143.04%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 2 outliers among 100 measurements (2.00%)
+  2 (2.00%) high mild
+
+Benchmarking GroupSig_ell5_sign/sign: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 20.4s, or reduce sample count to 20.
+GroupSig_ell5_sign/sign time:   [   205.771 ms    207.169 ms    208.696 ms]
+                        change: [+372.67% +417.56% +466.70%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 14 outliers among 100 measurements (14.00%)
+  3 (3.00%) low severe
+  1 (1.00%) low mild
+  2 (2.00%) high mild
+  8 (8.00%) high severe
+
+Benchmarking GroupSig_ell5_verify/verify: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 13.2s, or reduce sample count to 30.
+GroupSig_ell5_verify/verify
+                        time:   [   130.921 ms    133.051 ms    134.825 ms]
+                        change: [+269.49% +305.95% +344.42%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 13 outliers among 100 measurements (13.00%)
+  8 (8.00%) low severe
+  1 (1.00%) low mild
+  2 (2.00%) high mild
+  2 (2.00%) high severe
+
+[GroupSig (n=1280, ℓ=5, ne=4096, ke=3328, c_hash=8, c_e=6)] Canonical wire: 51609 bytes (c1 4096 bits, c2 4096 bits, correction 22779 bits, proof coeffs 9, FAEST VOLE payload 47525 bytes)
+
+=== GroupSig (n=1280, ℓ=10, ne=4096, ke=3328, c_hash=8, c_e=6) ===
+[Setup] n = 1280, ell = 10, leaf_secret_len = 2560, ne = 4096, ke = 3328, k_noise = 384
+[Setup] B0/B1: each 40960 cols × 1280 rows (6.2 MB), G1/G2: each 3328 cols × 4096 rows (1.6 MB)
+[GroupSig (n=1280, ℓ=10, ne=4096, ke=3328, c_hash=8, c_e=6)] Protocol (l, t, d) = (35574, 22272, 9): witness 35574 bits, 22272 constraints, max degree 9
+[Setup] Constraint gen skipped: formula count, implicit hot path only
+Benchmarking GroupSig_ell10_setup/gsetup_and_gkey: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 262.8s, or reduce sample count to 10.
+GroupSig_ell10_setup/gsetup_and_gkey
+                        time:   [  2501.977 ms   2538.051 ms   2576.154 ms]
+                        change: [+304.53% +353.27% +409.51%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 13 outliers among 100 measurements (13.00%)
+  3 (3.00%) low mild
+  8 (8.00%) high mild
+  2 (2.00%) high severe
+
+Benchmarking GroupSig_ell10_sign/sign: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 36.0s, or reduce sample count to 10.
+GroupSig_ell10_sign/sign
+                        time:   [   355.906 ms    361.467 ms    366.692 ms]
+                        change: [+254.27% +277.36% +305.57%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 15 outliers among 100 measurements (15.00%)
+  6 (6.00%) low severe
+  1 (1.00%) low mild
+  3 (3.00%) high mild
+  5 (5.00%) high severe
+
+Benchmarking GroupSig_ell10_verify/verify: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 20.2s, or reduce sample count to 20.
+GroupSig_ell10_verify/verify
+                        time:   [   194.849 ms    200.615 ms    205.786 ms]
+                        change: [+332.86% +392.43% +459.32%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 22 outliers among 100 measurements (22.00%)
+  15 (15.00%) low severe
+  4 (4.00%) low mild
+  1 (1.00%) high mild
+  2 (2.00%) high severe
+
+[GroupSig (n=1280, ℓ=10, ne=4096, ke=3328, c_hash=8, c_e=6)] Canonical wire: 77193 bytes (c1 4096 bits, c2 4096 bits, correction 35574 bits, proof coeffs 9, FAEST VOLE payload 71510 bytes)
+
+=== FDABS (n=1280, ℓ=5, L=128, K=512, rand=1536, c=8) ===
+[Setup] n = 1280, ell = 5, attr_len = 128, randomness_len = 1536, K = 512 multiplication gates
+[Setup] B0/B1: each 40960 cols × 1280 rows (6.2 MB)
+[Setup] B_leaf: 53248 cols × 1280 rows (8.1 MB)
+[FDABS (n=1280, ℓ=5, L=128, K=512, rand=1536, c=8)] Protocol (l, t, d) = (14981, 8194, 9): witness 14981 bits, 8194 constraints, max degree 9
+[Setup] Constraint gen skipped: formula count, implicit hot path only
+FDABS_ell5_setup/setup_and_attribute_context
+                        time:   [     0.168 ms      0.177 ms      0.185 ms]
+                        change: [-2.5316% +21.068% +45.958%] (p = 0.16 > 0.05)
+                        No change in performance detected.
+Found 3 outliers among 100 measurements (3.00%)
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+
+Benchmarking FDABS_ell5_sign/sign: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 19.0s, or reduce sample count to 20.
+FDABS_ell5_sign/sign    time:   [   178.537 ms    185.627 ms    193.205 ms]
+                        change: [+734.31% +837.22% +924.63%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 3 outliers among 100 measurements (3.00%)
+  3 (3.00%) high mild
+
+Benchmarking FDABS_ell5_verify/verify: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 9.1s, or reduce sample count to 50.
+FDABS_ell5_verify/verify
+                        time:   [    89.041 ms     89.936 ms     90.654 ms]
+                        change: [+313.86% +381.32% +442.11%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) low severe
+
+[FDABS (n=1280, ℓ=5, L=128, K=512, rand=1536, c=8)] Canonical wire: 34969 bytes (correction 14981 bits, proof coeffs 9, FAEST VOLE payload 32900 bytes)
+
+=== FDABS (n=1280, ℓ=10, L=128, K=512, rand=1536, c=8) ===
+[Setup] n = 1280, ell = 10, attr_len = 128, randomness_len = 1536, K = 512 multiplication gates
+[Setup] B0/B1: each 40960 cols × 1280 rows (6.2 MB)
+[Setup] B_leaf: 53248 cols × 1280 rows (8.1 MB)
+[FDABS (n=1280, ℓ=10, L=128, K=512, rand=1536, c=8)] Protocol (l, t, d) = (27786, 14594, 9): witness 27786 bits, 14594 constraints, max degree 9
+[Setup] Constraint gen skipped: formula count, implicit hot path only
+FDABS_ell10_setup/setup_and_attribute_context
+                        time:   [     0.357 ms      0.358 ms      0.360 ms]
+                        change: [-17.742% -2.3622% +17.031%] (p = 0.76 > 0.05)
+                        No change in performance detected.
+Found 6 outliers among 100 measurements (6.00%)
+  3 (3.00%) high mild
+  3 (3.00%) high severe
+
+Benchmarking FDABS_ell10_sign/sign: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 30.8s, or reduce sample count to 10.
+FDABS_ell10_sign/sign   time:   [   289.543 ms    291.367 ms    293.477 ms]
+                        change: [+506.08% +546.06% +588.60%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 6 outliers among 100 measurements (6.00%)
+  1 (1.00%) low mild
+  1 (1.00%) high mild
+  4 (4.00%) high severe
+
+Benchmarking FDABS_ell10_verify/verify: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 9.9s, or reduce sample count to 50.
+FDABS_ell10_verify/verify
+                        time:   [   147.970 ms    153.175 ms    157.796 ms]
+                        change: [+278.44% +339.27% +400.33%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 25 outliers among 100 measurements (25.00%)
+  13 (13.00%) low severe
+  6 (6.00%) high mild
+  6 (6.00%) high severe
+
+[FDABS (n=1280, ℓ=10, L=128, K=512, rand=1536, c=8)] Canonical wire: 60585 bytes (correction 27786 bits, proof coeffs 9, FAEST VOLE payload 56915 bytes)
+Atomic/RingSig_ell5/Setup
+                        time:   [     0.000 ms      0.000 ms      0.000 ms]
+                        change: [+51.349% +56.569% +61.522%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 9 outliers among 100 measurements (9.00%)
+  3 (3.00%) low severe
+  1 (1.00%) low mild
+  2 (2.00%) high mild
+  3 (3.00%) high severe
+Atomic/RingSig_ell5/KeyGen
+                        time:   [     2.147 ms      2.164 ms      2.190 ms]
+                        change: [+465.88% +601.44% +710.49%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 6 outliers among 100 measurements (6.00%)
+  4 (4.00%) high mild
+  2 (2.00%) high severe
+Benchmarking Atomic/RingSig_ell5/Context: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 7.0s, or reduce sample count to 70.
+Atomic/RingSig_ell5/Context
+                        time:   [     0.637 ms      0.649 ms      0.662 ms]
+                        change: [-47.911% -17.206% +23.750%] (p = 0.42 > 0.05)
+                        No change in performance detected.
+Found 11 outliers among 100 measurements (11.00%)
+  3 (3.00%) low severe
+  4 (4.00%) high mild
+  4 (4.00%) high severe
+Benchmarking Atomic/RingSig_ell5/Sign: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 17.0s, or reduce sample count to 20.
+Atomic/RingSig_ell5/Sign
+                        time:   [   163.668 ms    164.860 ms    166.096 ms]
+                        change: [+633.55% +744.31% +824.45%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 15 outliers among 100 measurements (15.00%)
+  4 (4.00%) low severe
+  5 (5.00%) high mild
+  6 (6.00%) high severe
+Benchmarking Atomic/RingSig_ell5/Verify: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 8.8s, or reduce sample count to 50.
+Atomic/RingSig_ell5/Verify
+                        time:   [    79.140 ms     84.477 ms     89.814 ms]
+                        change: [+395.80% +496.00% +587.31%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 5 outliers among 100 measurements (5.00%)
+  5 (5.00%) high mild
+
+Atomic/ScopeLRS_ell5/Setup
+                        time:   [     0.000 ms      0.000 ms      0.000 ms]
+                        change: [+55.232% +60.351% +64.461%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 5 outliers among 100 measurements (5.00%)
+  2 (2.00%) low severe
+  2 (2.00%) low mild
+  1 (1.00%) high mild
+Atomic/ScopeLRS_ell5/KeyGen
+                        time:   [     2.053 ms      2.109 ms      2.160 ms]
+                        change: [+437.21% +627.90% +799.29%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 10 outliers among 100 measurements (10.00%)
+  7 (7.00%) low severe
+  3 (3.00%) high severe
+Atomic/ScopeLRS_ell5/Context
+                        time:   [     0.001 ms      0.001 ms      0.001 ms]
+                        change: [+54.354% +59.206% +63.330%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 6 outliers among 100 measurements (6.00%)
+  4 (4.00%) high mild
+  2 (2.00%) high severe
+Benchmarking Atomic/ScopeLRS_ell5/Sign: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 18.9s, or reduce sample count to 20.
+Atomic/ScopeLRS_ell5/Sign
+                        time:   [   188.346 ms    191.353 ms    194.801 ms]
+                        change: [+729.40% +813.31% +881.50%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 15 outliers among 100 measurements (15.00%)
+  2 (2.00%) low severe
+  13 (13.00%) high severe
+Benchmarking Atomic/ScopeLRS_ell5/Verify: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 10.9s, or reduce sample count to 40.
+Atomic/ScopeLRS_ell5/Verify
+                        time:   [   107.984 ms    108.999 ms    109.769 ms]
+                        change: [+505.40% +607.61% +690.14%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 5 outliers among 100 measurements (5.00%)
+  1 (1.00%) low severe
+  1 (1.00%) high mild
+  3 (3.00%) high severe
+Atomic/ScopeLRS_ell5/Link
+                        time:   [     0.000 ms      0.000 ms      0.000 ms]
+                        change: [+30.398% +45.844% +61.893%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 18 outliers among 100 measurements (18.00%)
+  12 (12.00%) low severe
+  3 (3.00%) high mild
+  3 (3.00%) high severe
+
+Benchmarking Atomic/GroupSig_ell5/Setup: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 27.1s, or reduce sample count to 10.
+Atomic/GroupSig_ell5/Setup
+                        time:   [   322.405 ms    351.595 ms    381.648 ms]
+                        change: [+7.4838% +38.864% +87.528%] (p = 0.06 > 0.05)
+                        No change in performance detected.
+Found 2 outliers among 100 measurements (2.00%)
+  2 (2.00%) high mild
+Benchmarking Atomic/GroupSig_ell5/KeyGen: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 9.7s, or reduce sample count to 50.
+Atomic/GroupSig_ell5/KeyGen
+                        time:   [    89.599 ms     92.316 ms     94.705 ms]
+                        change: [+166.41% +194.30% +222.50%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 17 outliers among 100 measurements (17.00%)
+  10 (10.00%) low severe
+  2 (2.00%) high mild
+  5 (5.00%) high severe
+Benchmarking Atomic/GroupSig_ell5/Sign: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 20.7s, or reduce sample count to 20.
+Atomic/GroupSig_ell5/Sign
+                        time:   [   204.627 ms    205.482 ms    206.453 ms]
+                        change: [+400.19% +449.37% +496.20%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 10 outliers among 100 measurements (10.00%)
+  3 (3.00%) low severe
+  1 (1.00%) high mild
+  6 (6.00%) high severe
+Benchmarking Atomic/GroupSig_ell5/Verify: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 12.5s, or reduce sample count to 30.
+Atomic/GroupSig_ell5/Verify
+                        time:   [   122.446 ms    126.856 ms    130.823 ms]
+                        change: [+281.81% +319.98% +359.09%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 18 outliers among 100 measurements (18.00%)
+  13 (13.00%) low severe
+  5 (5.00%) high severe
+Benchmarking Atomic/GroupSig_ell5/Open: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 20.0s, or reduce sample count to 20.
+Atomic/GroupSig_ell5/Open
+                        time:   [   202.607 ms    206.076 ms    208.773 ms]
+                        change: [+122.93% +134.57% +147.48%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 6 outliers among 100 measurements (6.00%)
+  4 (4.00%) low severe
+  1 (1.00%) high mild
+  1 (1.00%) high severe
+
+Atomic/FDABS_ell5/Setup time:   [     0.008 ms      0.008 ms      0.008 ms]
+                        change: [+26.811% +49.274% +78.360%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 3 outliers among 100 measurements (3.00%)
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+Atomic/FDABS_ell5/Issue time:   [     2.783 ms      2.787 ms      2.792 ms]
+                        change: [+821.37% +847.24% +872.49%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Atomic/FDABS_ell5/EpochInfo
+                        time:   [     0.506 ms      0.520 ms      0.531 ms]
+                        change: [+10.163% +31.089% +51.453%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 12 outliers among 100 measurements (12.00%)
+  4 (4.00%) low severe
+  2 (2.00%) low mild
+  5 (5.00%) high mild
+  1 (1.00%) high severe
+Atomic/FDABS_ell5/UpdateRevoke
+                        time:   [     0.512 ms      0.525 ms      0.543 ms]
+                        change: [+25.199% +36.773% +50.307%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 9 outliers among 100 measurements (9.00%)
+  1 (1.00%) low severe
+  3 (3.00%) high mild
+  5 (5.00%) high severe
+Benchmarking Atomic/FDABS_ell5/Sign: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 15.7s, or reduce sample count to 30.
+Atomic/FDABS_ell5/Sign  time:   [   157.232 ms    158.361 ms    159.802 ms]
+                        change: [+623.04% +727.61% +808.43%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 9 outliers among 100 measurements (9.00%)
+  1 (1.00%) low severe
+  1 (1.00%) high mild
+  7 (7.00%) high severe
+Benchmarking Atomic/FDABS_ell5/Verify: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 8.7s, or reduce sample count to 50.
+Atomic/FDABS_ell5/Verify
+                        time:   [    66.600 ms     71.882 ms     77.181 ms]
+                        change: [+205.37% +272.47% +351.67%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high mild
+
+Atomic/RingSig_ell10/Setup
+                        time:   [     0.000 ms      0.000 ms      0.000 ms]
+                        change: [+18.208% +35.363% +54.299%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 11 outliers among 100 measurements (11.00%)
+  5 (5.00%) low severe
+  5 (5.00%) high mild
+  1 (1.00%) high severe
+Atomic/RingSig_ell10/KeyGen
+                        time:   [     1.866 ms      1.952 ms      2.031 ms]
+                        change: [+471.60% +500.92% +531.79%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 20 outliers among 100 measurements (20.00%)
+  20 (20.00%) low severe
+Benchmarking Atomic/RingSig_ell10/Context: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 214.0s, or reduce sample count to 10.
+Atomic/RingSig_ell10/Context
+                        time:   [    19.619 ms     20.688 ms     22.248 ms]
+                        change: [-12.364% +3.7004% +24.015%] (p = 0.97 > 0.05)
+                        No change in performance detected.
+Found 24 outliers among 100 measurements (24.00%)
+  18 (18.00%) low severe
+  1 (1.00%) low mild
+  2 (2.00%) high mild
+  3 (3.00%) high severe
+Benchmarking Atomic/RingSig_ell10/Sign: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 32.1s, or reduce sample count to 10.
+Atomic/RingSig_ell10/Sign
+                        time:   [   315.587 ms    318.260 ms    320.453 ms]
+                        change: [+406.72% +449.31% +500.80%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 14 outliers among 100 measurements (14.00%)
+  4 (4.00%) low severe
+  1 (1.00%) low mild
+  9 (9.00%) high severe
+Benchmarking Atomic/RingSig_ell10/Verify: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 19.0s, or reduce sample count to 20.
+Atomic/RingSig_ell10/Verify
+                        time:   [   178.296 ms    182.947 ms    186.814 ms]
+                        change: [+227.31% +274.06% +329.55%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 12 outliers among 100 measurements (12.00%)
+  8 (8.00%) low severe
+  1 (1.00%) low mild
+  1 (1.00%) high mild
+  2 (2.00%) high severe
+
+Atomic/ScopeLRS_ell10/Setup
+                        time:   [     0.000 ms      0.000 ms      0.000 ms]
+                        change: [-6.6946% -5.1265% -3.6033%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 4 outliers among 100 measurements (4.00%)
+  1 (1.00%) low mild
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+Atomic/ScopeLRS_ell10/KeyGen
+                        time:   [     2.147 ms      2.159 ms      2.176 ms]
+                        change: [+744.00% +769.68% +793.03%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 6 outliers among 100 measurements (6.00%)
+  4 (4.00%) high mild
+  2 (2.00%) high severe
+Atomic/ScopeLRS_ell10/Context
+                        time:   [     0.001 ms      0.001 ms      0.001 ms]
+                        change: [-1.7507% +13.563% +34.471%] (p = 0.04 < 0.05)
+                        Change within noise threshold.
+Found 15 outliers among 100 measurements (15.00%)
+  9 (9.00%) low severe
+  2 (2.00%) low mild
+  4 (4.00%) high severe
+Benchmarking Atomic/ScopeLRS_ell10/Sign: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 32.4s, or reduce sample count to 10.
+Atomic/ScopeLRS_ell10/Sign
+                        time:   [   321.624 ms    323.186 ms    324.568 ms]
+                        change: [+734.54% +812.38% +878.38%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 5 outliers among 100 measurements (5.00%)
+  2 (2.00%) low severe
+  3 (3.00%) high severe
+Benchmarking Atomic/ScopeLRS_ell10/Verify: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 18.3s, or reduce sample count to 20.
+Atomic/ScopeLRS_ell10/Verify
+                        time:   [   181.066 ms    182.356 ms    183.327 ms]
+                        change: [+583.07% +648.79% +702.05%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 7 outliers among 100 measurements (7.00%)
+  4 (4.00%) low severe
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+Atomic/ScopeLRS_ell10/Link
+                        time:   [     0.000 ms      0.000 ms      0.000 ms]
+                        change: [+51.745% +58.970% +65.522%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 16 outliers among 100 measurements (16.00%)
+  16 (16.00%) low severe
+
+Benchmarking Atomic/GroupSig_ell10/Setup: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 27.9s, or reduce sample count to 10.
+Atomic/GroupSig_ell10/Setup
+                        time:   [   280.716 ms    311.499 ms    345.823 ms]
+                        change: [-15.695% +12.339% +55.936%] (p = 0.59 > 0.05)
+                        No change in performance detected.
+Found 2 outliers among 100 measurements (2.00%)
+  1 (1.00%) high mild
+  1 (1.00%) high severe
+Benchmarking Atomic/GroupSig_ell10/KeyGen: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 216.1s, or reduce sample count to 10.
+Atomic/GroupSig_ell10/KeyGen
+                        time:   [  2174.745 ms   2199.762 ms   2221.585 ms]
+                        change: [+548.78% +571.87% +592.77%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 11 outliers among 100 measurements (11.00%)
+  8 (8.00%) low severe
+  3 (3.00%) low mild
+Benchmarking Atomic/GroupSig_ell10/Sign: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 36.4s, or reduce sample count to 10.
+Atomic/GroupSig_ell10/Sign
+                        time:   [   360.134 ms    362.224 ms    363.683 ms]
+                        change: [+440.31% +472.98% +507.81%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 5 outliers among 100 measurements (5.00%)
+  1 (1.00%) low severe
+  1 (1.00%) low mild
+  3 (3.00%) high severe
+Benchmarking Atomic/GroupSig_ell10/Verify: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 20.9s, or reduce sample count to 20.
+Atomic/GroupSig_ell10/Verify
+                        time:   [   201.333 ms    205.363 ms    208.522 ms]
+                        change: [+391.00% +438.80% +488.96%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 12 outliers among 100 measurements (12.00%)
+  6 (6.00%) low severe
+  2 (2.00%) low mild
+  1 (1.00%) high mild
+  3 (3.00%) high severe
+Benchmarking Atomic/GroupSig_ell10/Open: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 28.4s, or reduce sample count to 10.
+Atomic/GroupSig_ell10/Open
+                        time:   [   272.149 ms    277.608 ms    282.092 ms]
+                        change: [+167.98% +194.04% +216.97%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 13 outliers among 100 measurements (13.00%)
+  8 (8.00%) low severe
+  1 (1.00%) high mild
+  4 (4.00%) high severe
+
+Atomic/FDABS_ell10/Setup
+                        time:   [     0.235 ms      0.243 ms      0.249 ms]
+                        change: [+32.676% +49.061% +65.166%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 11 outliers among 100 measurements (11.00%)
+  5 (5.00%) low severe
+  4 (4.00%) high mild
+  2 (2.00%) high severe
+Atomic/FDABS_ell10/Issue
+                        time:   [     2.778 ms      2.809 ms      2.835 ms]
+                        change: [+612.17% +705.92% +773.95%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 4 outliers among 100 measurements (4.00%)
+  2 (2.00%) low severe
+  1 (1.00%) high mild
+  1 (1.00%) high severe
+Atomic/FDABS_ell10/EpochInfo
+                        time:   [    15.640 ms     15.874 ms     16.059 ms]
+                        change: [+21.042% +42.672% +63.531%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 4 outliers among 100 measurements (4.00%)
+  3 (3.00%) low severe
+  1 (1.00%) high severe
+Atomic/FDABS_ell10/UpdateRevoke
+                        time:   [    15.920 ms     15.956 ms     15.994 ms]
+                        change: [+11.159% +37.839% +60.123%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 2 outliers among 100 measurements (2.00%)
+  2 (2.00%) high mild
+Benchmarking Atomic/FDABS_ell10/Sign: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 31.1s, or reduce sample count to 10.
+Atomic/FDABS_ell10/Sign time:   [   304.890 ms    307.657 ms    310.107 ms]
+                        change: [+539.81% +586.05% +633.01%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 11 outliers among 100 measurements (11.00%)
+  3 (3.00%) low severe
+  1 (1.00%) low mild
+  2 (2.00%) high mild
+  5 (5.00%) high severe
+Benchmarking Atomic/FDABS_ell10/Verify: Warming up for 3.0000 s
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 17.9s, or reduce sample count to 20.
+Atomic/FDABS_ell10/Verify
+                        time:   [   170.175 ms    174.431 ms    177.911 ms]
+                        change: [+359.08% +398.07% +438.83%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 12 outliers among 100 measurements (12.00%)
+  6 (6.00%) low severe
+  1 (1.00%) low mild
+  2 (2.00%) high mild
+  3 (3.00%) high severe
