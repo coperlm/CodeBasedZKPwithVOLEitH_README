@@ -57,10 +57,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-01d2389d.js";
+            window.path_to_searchindex_js = "searchindex-c9994b1b.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-04b28919.js"></script>
+        <script src="toc-86594551.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -230,18 +230,22 @@ $$</p>
 <tr><td><a href="./8_参数优化与基准测试.html">8_参数优化与基准测试</a></td><td>soundness 计算、序列化和实验口径</td></tr>
 <tr><td><a href="./9_创新点对接.html">9_创新点对接</a></td><td>论文/实现差异与当前边界</td></tr>
 <tr><td><a href="./10_原始数据.html">10_原始数据</a></td><td>当前实验记录的参数与结果索引</td></tr>
+<tr><td><a href="./11_代码2.0.html">11_代码2.0</a></td><td>单核 Atomic 阶段历史性能快照</td></tr>
+<tr><td><a href="./12_新版变更.html">12_新版变更</a></td><td>单核/多核历史数据与原始 Criterion 日志整理</td></tr>
+<tr><td><a href="./13_完整生命周期与原子阶段基准演进.html">13_完整生命周期与原子阶段基准演进</a></td><td>从 Sign/Verify 到 Setup、Open、Update/Revoke 等 44–51 项阶段的版本演进</td></tr>
+<tr><td><a href="./14_基准可信度与性能优化演进.html">14_基准可信度与性能优化演进</a></td><td><code>03a8be9</code> 至 <code>93b42e1</code> 的报告可信度、缓存/并行机制和受控 A/B 对比</td></tr>
 </tbody>
 </table>
 </div>
 <p>Scope-LRS 与 batch Scope-LRS 为本仓库在论文方案基础上的工程扩展；其设计和数据在模块七、模块十中单独说明。</p>
-<p>代码还没完成的部分：</p>
-<ol>
-<li>setup 和 签名阶段分开；</li>
-<li>LRS 可链接性判定，群签名的 GOpen，FDABS的Update / Revoke（属性撤销/时代更新）</li>
-<li>理论上还有更多变体可以构建，例如多权威机构MAABS，可问责环签名等</li>
-</ol>
-<p>本实现底层采用图灵完备的 NAND 约束，上层需进行策略电路编译</p>
-<p>上述阶段你加入了一些更为细粒度的阶段，就像初始化和撤销阶段等，请你修改性能测试的部分（可能是 <code>benches/paper_benchmarks.rs</code>），我希望得到更全面的性能测试结果，进行十次测试（去掉一次最大值和最小值），并输出一个完整的表格为我展现最终的测试结果。最终的呈现格式我希望形似 代码架构说明/src/10_原始数据.md 里面的 端到端结果 一节</p>
+<h2 id="当前实现边界"><a class="header" href="#当前实现边界">当前实现边界</a></h2>
+<ul>
+<li>Setup 与 Sign/Verify 已拆分；当前 Atomic suite 还分别测量 KeyGen/Issue、Context/EpochInfo、Link、GOpen 和 UpdateRevoke 等阶段，演进边界见模块十三。</li>
+<li>Scope-LRS 可链接性判定、群签名 GOpen、FDABS Update/Revoke 已有可执行的内存型研究 lifecycle；它们不是完整的持久化或分布式服务。</li>
+<li>动态 GroupSig join/成员撤销、authenticated FDABS epoch publication、持久化 authority 状态和访问控制仍在仓库实现范围之外。</li>
+<li>MAABS、可问责环签名等更多变体仍属于后续研究方向。</li>
+</ul>
+<p>本实现底层采用 NAND 约束，上层需进行策略电路编译。机制级 Criterion 表使用 <code>median.point_estimate</code>；端到端重复实验才使用对称去极值均值，两种估计量不得混合，详见模块十四。</p>
 
                     </main>
 

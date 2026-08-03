@@ -1,0 +1,969 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>模块十四：从 03a8be9 到 93b42e1 的基准可信度与性能优化演进</title>
+
+
+        <!-- Custom HTML head -->
+        <!-- MathJax 2 配置（mdBook 默认版本） -->
+        <script type="text/x-mathjax-config">
+          MathJax.Hub.Config({
+            tex2jax: {
+              inlineMath: [['$','$'], ['\\(','\\)']],
+              displayMath: [['$$','$$'], ['\\[','\\]']],
+              processEscapes: true
+            }
+          });
+        </script>
+        
+        <!-- MathJax 3 配置（兼容未来升级） -->
+        <script>
+          window.MathJax = {
+            tex: {
+              inlineMath: [['$', '$'], ['\\(', '\\)']],
+              displayMath: [['$$', '$$'], ['\\[', '\\]']],
+              processEscapes: true
+            }
+          };
+        </script>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="favicon-8114d1fc.png">
+        <link rel="stylesheet" href="css/variables-8adf115d.css">
+        <link rel="stylesheet" href="css/general-e96d0476.css">
+        <link rel="stylesheet" href="css/chrome-d279d366.css">
+        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex-c9994b1b.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc-86594551.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title"></h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="模块十四从-03a8be9-到-93b42e1-的基准可信度与性能优化演进"><a class="header" href="#模块十四从-03a8be9-到-93b42e1-的基准可信度与性能优化演进">模块十四：从 <code>03a8be9</code> 到 <code>93b42e1</code> 的基准可信度与性能优化演进</a></h1>
+<blockquote>
+<p><strong>版本与证据边界。</strong> 本章的静态代码基线是 <code>03a8be9b53a08e575627d5096f103f9fd2b9c2ec</code>，中间节点是 <code>3fbea395a3f62991414d06abd7549bdef3d8ec3a</code>，审查终点是 <code>93b42e12684e9f919c873bad710f67db497603a5</code>。三者位于同一条一阶父提交链上。代码 diff、历史提交说明和同机 A/B 实测是三类不同证据；只有同机 A/B 数据用于给出性能倍率，不能用静态代码行数推导速度。</p>
+</blockquote>
+<blockquote>
+<p><strong>核心结论。</strong> <code>3fbea39</code> 主要解决“报告是否可信、失败是否会被静默吞掉、公式与实测是否混淆”；<code>93b42e1</code> 主要解决“完整 51 项 Atomic 指标、Merkle 树重复构造、GroupSig 批量工作、McEliece generator 转置和可复现的前后对照”。论文参数、relation、Fiat–Shamir transcript 字段顺序、FAEST profile、单份顶层 proof 和 canonical wire v1 均未被本轮性能优化替换。</p>
+</blockquote>
+<h2 id="一比较目标提交时间线与取证方法"><a class="header" href="#一比较目标提交时间线与取证方法">一、比较目标、提交时间线与取证方法</a></h2>
+<h3 id="11-三个版本节点"><a class="header" href="#11-三个版本节点">1.1 三个版本节点</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>节点</th><th>完整 commit</th><th style="text-align: right">提交时间（<code>+08:00</code>）</th><th>主要职责</th><th style="text-align: right">相对前一节点的规模</th></tr>
+</thead>
+<tbody>
+<tr><td>基线</td><td><code>03a8be9b53a08e575627d5096f103f9fd2b9c2ec</code></td><td style="text-align: right">2026-07-31 21:22:26</td><td>清理旧说明，扩展当时的 just 测试入口</td><td style="text-align: right">本章起点</td></tr>
+<tr><td>中间节点</td><td><code>3fbea395a3f62991414d06abd7549bdef3d8ec3a</code></td><td style="text-align: right">2026-08-02 18:59:44</td><td>报表强校验、provenance、single-proof/wire 回归保护</td><td style="text-align: right">16 files，<code>+629/-138</code></td></tr>
+<tr><td>审查终点</td><td><code>93b42e12684e9f919c873bad710f67db497603a5</code></td><td style="text-align: right">2026-08-02 22:20:00</td><td>51 项 Atomic、缓存、增量更新、并行和 A/B 冻结工作流</td><td style="text-align: right">11 files，<code>+2097/-283</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>直接比较 <code>03a8be9..93b42e1</code> 的总规模为：</p>
+<pre><code class="language-text">24 files changed, 2668 insertions(+), 363 deletions(-)
+</code></pre>
+<p>这 24 个文件可分为四层：</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>层次</th><th>代表文件</th><th>变化性质</th></tr>
+</thead>
+<tbody>
+<tr><td>可信度与声明边界</td><td><code>LIMITATIONS.md</code>、<code>README*.md</code>、<code>FUTURE_FEATURES.md</code>、<code>tests/extrapolation.rs</code></td><td>区分 <code>[Measured]</code>、<code>[Formula]</code>、<code>[Hardcoded External Baseline]</code>，固定 single-proof 与 soundness 解释</td></tr>
+<tr><td>基准基础设施</td><td><code>justfile</code>、<code>scripts/bench_table.py</code>、<code>benches/paper_benchmarks.rs</code>、<code>tests/test_benchmark_scripts.py</code></td><td>隔离数据目录、51 项完整性检查、环境指纹、冻结 baseline、逐阶段 speedup</td></tr>
+<tr><td>生产热路径</td><td><code>src/apps/lifecycle.rs</code>、<code>src/apps/group_signature_sig.rs</code>、<code>src/pqclean_mceliece.rs</code>、<code>src/primitives/afs_hash.rs</code>、<code>src/core/constraint_gen.rs</code></td><td>Merkle 缓存、增量更新、批量并行、矩阵转置、RE 表缓存</td></tr>
+<tr><td>兼容性回归</td><td><code>src/core/wire.rs</code>、<code>tests/cli_process.rs</code>、<code>tests/single_proof_regression.rs</code></td><td>防止默认路径悄然增加第二份 proof 或升级 wire/bundle 版本</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="12-证据等级"><a class="header" href="#12-证据等级">1.2 证据等级</a></h3>
+<p>本章使用以下标记，防止把不同口径混成同一种结论：</p>
+<ul>
+<li><code>[Git diff]</code>：由指定 commit 的源码差异直接确认；适合说明“改了什么”，不单独证明“快了多少”。</li>
+<li><code>[Recorded A/B]</code>：读取本机冻结 Criterion JSON 的 <code>median.point_estimate</code>；适合说明这一次受控实验观察到的倍率。</li>
+<li><code>[Historical snapshot]</code>：历史日志、提交说明或根目录性能报告中的记录；必须同时固定 commit、CPU、线程和估计量。</li>
+<li><code>[Inference]</code>：根据调用图或复杂度作出的解释；必须与实测结果分开写。</li>
+</ul>
+<h3 id="13-必须保持的协议不变量"><a class="header" href="#13-必须保持的协议不变量">1.3 必须保持的协议不变量</a></h3>
+<p><code>03a8be9..93b42e1</code> 没有修改以下协议核心文件：</p>
+<ul>
+<li><code>src/core/protocol_dd_rep.rs</code>；</li>
+<li><code>src/core/voleith.rs</code>；</li>
+<li><code>src/core/transcript.rs</code>；</li>
+<li>FAEST C/Rust profile 定义与 BAVC/GGM 状态机。</li>
+</ul>
+<p><code>src/core/wire.rs</code> 在 <code>3fbea39</code> 中只新增测试模块，没有修改 encoder/decoder 的生产逻辑。因此本轮的目标不是用不同参数或第二份 proof 换性能，而是在相同 relation 和线材边界下减少重复工程工作。</p>
+<pre class="mermaid">flowchart LR
+    A[03a8be9&lt;br/&gt;已有生命周期与 44 项 Atomic 基础] --&gt; B[3fbea39&lt;br/&gt;数据强校验&lt;br/&gt;provenance / wire guard]
+    B --&gt; C[93b42e1&lt;br/&gt;51 项 Atomic&lt;br/&gt;缓存 / 增量 / 并行]
+    C --&gt; D[冻结单核 A/B&lt;br/&gt;CPU 2 / Rayon 1]
+    C --&gt; E[冻结多核 A/B&lt;br/&gt;CPU 0-15 / Rayon 16]
+</pre>
+
+<h2 id="二总体差异矩阵"><a class="header" href="#二总体差异矩阵">二、总体差异矩阵</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>维度</th><th><code>03a8be9</code></th><th><code>3fbea39</code></th><th><code>93b42e1</code></th><th>技术影响</th></tr>
+</thead>
+<tbody>
+<tr><td>Criterion 数据目录</td><td>容易共享默认 <code>target/criterion</code></td><td>每轮独立 <code>CRITERION_HOME</code>，<code>.latest</code> 指向完整轮次</td><td>冻结 before/after 指针，不允许覆盖</td><td>防止不同轮次或不同 baseline 混读</td></tr>
+<tr><td>数据集完整性</td><td>缺项可能以 <code>—</code> 出现在表中</td><td>44 个 Atomic 必须完整；ReSolveD+/Batch 补充组全有或全无</td><td>ReSolveD+/Batch 纳入统一 Atomic，固定 51 项</td><td>缺任一项即拒绝生成完整表</td></tr>
+<tr><td>估计量</td><td>文档与控制台输出容易混用</td><td>强制读取 JSON <code>median.point_estimate</code></td><td>同时生成逐阶段 before/after/speedup</td><td>估计量可审计，不再猜控制台区间</td></tr>
+<tr><td>数据来源标签</td><td>公式、论文值和实测容易并列而无标签</td><td>全面加入 provenance 标签</td><td>A/B 列明确 <code>[Measured]</code> 与 <code>[Formula]</code></td><td>避免把 256-bit 公式值写成运行结果</td></tr>
+<tr><td>失败策略</td><td>端到端 case 超时后可能最终返回成功</td><td>timeout/parse failure 累计并最终非零退出</td><td>冻结发布还检查环境与 51 项完整性</td><td>从“尽量出表”转为 fail closed</td></tr>
+<tr><td>Ring 生命周期</td><td>Sign/Verify 重建 Merkle tree</td><td>不变</td><td><code>RingContext</code> 缓存完整 levels 并校验 public snapshot</td><td>在线阶段不再重复哈希整树</td></tr>
+<tr><td>FDABS epoch</td><td>每次 <code>epoch_info/sign/verify/revoke</code> 可触发整树重建</td><td>不变</td><td>惰性缓存、路径增量更新、<code>Arc::make_mut</code> 旧快照保护</td><td>steady-state 从整树重算降为路径更新</td></tr>
+<tr><td>GroupSig KeyGen/Open</td><td>成员串行；generator 逐 bit 转置；Open 重建两套 generator</td><td>不变</td><td>外层成员并行、8x8 转置、Open 使用构造时快照、双解密并行</td><td>主要改善 GKey/GOpen 与多核利用率</td></tr>
+<tr><td>RE 约束表</td><td>lifecycle 每次 <code>compile_re_constraints</code></td><td>不变</td><td><code>c&lt;=8</code> 进程级 canonical cache；大 <code>c</code> 仍 owned</td><td>避免重复编译，同时限制常驻内存</td></tr>
+<tr><td>API 构造方式</td><td><code>RingContext</code>/<code>FdabsEpochInfo</code> 可由外部 struct literal 伪造</td><td>不变</td><td>新增私有缓存字段；公开 epoch 用 <code>from_public_snapshot</code> 重建</td><td>更强一致性，但存在 Rust 源码兼容性变化</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="三3fbea39先修复实验能否被相信"><a class="header" href="#三3fbea39先修复实验能否被相信">三、<code>3fbea39</code>：先修复“实验能否被相信”</a></h2>
+<p><code>3fbea39</code> 没有修改生命周期生产热路径。它的中心问题是：即使密码学代码正确，如果脚本会混读 baseline、缺项仍出表、超时仍返回成功，最终性能结论仍不可复现。</p>
+<h3 id="31-criterion-数据集从尽量读取改为精确读取"><a class="header" href="#31-criterion-数据集从尽量读取改为精确读取">3.1 Criterion 数据集从“尽量读取”改为“精确读取”</a></h3>
+<p><code>scripts/bench_table.py</code> 在这一节点引入 <code>DatasetValidationError</code>，并建立以下规则：</p>
+<ol>
+<li><code>selected_tag</code> 只接受单个 baseline/tag 名，拒绝 <code>.</code>、<code>..</code> 和路径形式；</li>
+<li>请求某个 baseline 时，只读 <code>group/function/&lt;baseline&gt;/estimates.json</code>；</li>
+<li>即使同目录存在 <code>new/</code>，指定 baseline 缺失时也绝不回退；</li>
+<li>所有必需 Atomic <code>(group,function)</code> 必须存在；</li>
+<li>ReSolveD+ 与 Batch Scope-LRS 当时仍是补充组，因此要求“四项全有或全无”，禁止从另一轮拼接；</li>
+<li>JSON 必须包含数值型、有限、非负的 <code>median.point_estimate</code>，布尔值、字符串、NaN、Infinity 和负数均无效；</li>
+<li>纳秒值只在解析成功后统一除以 $10^6$ 转为毫秒。</li>
+</ol>
+<p>这里的“median”不是控制台 <code>time: [low, typical, high]</code> 中任意一项的文本抓取，而是 Criterion 结果文件中的：</p>
+<pre><code class="language-text">median.point_estimate
+</code></pre>
+<h3 id="32-每轮独立目录阻止跨轮残留"><a class="header" href="#32-每轮独立目录阻止跨轮残留">3.2 每轮独立目录，阻止跨轮残留</a></h3>
+<p><code>3fbea39</code> 的 <code>bench-single</code> / <code>bench-parallel</code> 开始为每次运行创建：</p>
+<pre><code class="language-text">target/bench_tables/criterion_runs/&lt;baseline&gt;.&lt;random&gt;/
+</code></pre>
+<p>并将 <code>CRITERION_HOME</code> 指向该目录。只有 benchmark 和表格解析都成功后，才更新：</p>
+<pre><code class="language-text">target/bench_tables/criterion_runs/&lt;baseline&gt;.latest
+</code></pre>
+<p>这解决了默认 <code>target/criterion</code> 的典型污染场景：旧 <code>new/</code>、新 baseline 和中断轮次同时存在时，解析器不再“找到什么就用什么”。</p>
+<h3 id="33-端到端脚本改为失败闭合"><a class="header" href="#33-端到端脚本改为失败闭合">3.3 端到端脚本改为失败闭合</a></h3>
+<p><code>scripts/paper_speed_table.sh</code> 的旧逻辑在单个 case 超时或解析失败时输出 <code>TIMEOUT/FAIL</code> 后 <code>return</code>，脚本仍可能以零状态结束。<code>3fbea39</code> 新增全局 <code>CASE_FAILURES</code>：</p>
+<ul>
+<li>timeout 的真实退出码写入表格；</li>
+<li>缺少 Sign/Verify 字段计为 parse failure；</li>
+<li>继续渲染其余行，以便诊断多个失败；</li>
+<li>末尾只要 <code>CASE_FAILURES&gt;0</code> 就退出 1。</li>
+</ul>
+<p>这是一种“保留诊断信息，但拒绝发布不完整成功状态”的策略。新建的 Python 回归测试使用假的 <code>timeout</code> 命令返回 124，验证 <code>just speed-table</code> 最终必须非零退出。</p>
+<h3 id="34-measuredformula-与外部基线分离"><a class="header" href="#34-measuredformula-与外部基线分离">3.4 <code>[Measured]</code>、<code>[Formula]</code> 与外部基线分离</a></h3>
+<p><code>tests/extrapolation.rs</code>、<code>README*</code> 和 <code>LIMITATIONS.md</code> 在 <code>3fbea39</code> 中统一了来源标签：</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>标签</th><th>含义</th><th>典型例子</th></tr>
+</thead>
+<tbody>
+<tr><td><code>[Measured]</code></td><td>当前可执行实现实际运行或编码得到</td><td>Criterion 时间、3159-byte canonical signature、3292-byte CLI bundle</td></tr>
+<tr><td><code>[Formula]</code></td><td>根据参数和论文公式计算</td><td>256-bit 列、FDABS 大参数尺寸、speedup/improvement</td></tr>
+<tr><td><code>[Hardcoded External Baseline]</code></td><td>从论文或引用文献转录</td><td>Table 7 的 3054 bytes、Stern 类对比值</td></tr>
+</tbody>
+</table>
+</div>
+<p>同时明确以下边界：</p>
+<ul>
+<li>当前是可执行的 128-bit PoC，不是 256-bit 完整实现；</li>
+<li>Table 4 的 published GroupSig <code>ell=5</code> 为 49.60 KiB，而正文一致的 <code>c_hash=8,c_e=6,k=384</code> 公式为 50.60 KiB；两者不能静默合并；</li>
+<li><code>q=2^8,tau=16</code> 的应用参数仍是一份 proof；优化 ReSolveD+ 的 <code>tau=10</code> 也是论文中的另一参数 profile，不是外层重复；</li>
+<li>degree 9 的完整 128-bit Delta 域 Theorem 1 bound 约为 124.678 bits，不能改称“严格 128-bit theorem bound”。</li>
+</ul>
+<h3 id="35-single-proof-与-wire-v1-回归保护"><a class="header" href="#35-single-proof-与-wire-v1-回归保护">3.5 single-proof 与 wire v1 回归保护</a></h3>
+<p><code>3fbea39</code> 新增三类保护，但没有改变 wire：</p>
+<ol>
+<li><code>tests/single_proof_regression.rs</code> 对六种签名结构做穷尽字段解构；若默认结构静默增加第二个 commitment/proof/VOLE transcript，测试会在编译期失败；</li>
+<li><code>src/core/wire.rs</code> 的测试固定 <code>MAGIC="CBZKVSIG"</code>、<code>VERSION=1</code>、reserved field 为 0，并固定 <code>CommonSignatureParts</code> 只有一组 <code>commitment/proof/vole</code>；</li>
+<li><code>tests/cli_process.rs</code> 固定 3159-byte ReSolveD+ signature 与 3292-byte public bundle，拒绝 bundle v2、signature v2、非零 reserved、非规范尾 bit、截断和 trailing bytes。</li>
+</ol>
+<p>所以，<code>3fbea39</code> 的作用是把“本轮优化不得偷换协议对象”变成可执行回归条件。</p>
+<h3 id="36-3fbea39-仍未解决的缺口"><a class="header" href="#36-3fbea39-仍未解决的缺口">3.6 <code>3fbea39</code> 仍未解决的缺口</a></h3>
+<p>该版本的主表仍只有文档 13 所述的 44 个 Atomic 指标。ReSolveD+ 与 Batch Scope-LRS 的 Sign/Verify 只能来自非 Atomic 粗粒度组；默认 <code>--bench Atomic</code> 时仍可能显示 <code>—</code>。因此它解决了“已有数据不能被混读”，但尚未形成统一的 51 项阶段矩阵。</p>
+<h3 id="37-其余工程与发布变更"><a class="header" href="#37-其余工程与发布变更">3.7 其余工程与发布变更</a></h3>
+<p>该提交还包含几项不改变密码学算法、但影响复现可达性的改动：</p>
+<ul>
+<li><code>.gitmodules</code> 将 <code>PQCleanForCodeBasedZKP</code> 从 GitHub SSH URL 改为 HTTPS，审稿环境不再必须预配个人 SSH key；</li>
+<li><code>.gitignore</code> 增加 <code>__pycache__/</code>、<code>*.py[cod]</code> 和 <code>tmp/</code>，避免脚本测试缓存进入 source fingerprint；</li>
+<li>新增 <code>FUTURE_FEATURES.md</code>，把 256-bit backend、严格 soundness 变体、大参数 FDABS、动态外部基线和完整 lifecycle service 明确放入未来范围；</li>
+<li><code>README.md</code>、<code>README_cn.md</code>、<code>REVIEWER_EXPERIMENTS.md</code> 与 <code>LIMITATIONS.md</code> 同步 single-proof、wire accounting、GroupSig Table 4 差异和应用范围，避免代码测试与发布声明互相矛盾。</li>
+</ul>
+<h2 id="四93b42e1把完整指标与可复现-ab-固化下来"><a class="header" href="#四93b42e1把完整指标与可复现-ab-固化下来">四、<code>93b42e1</code>：把完整指标与可复现 A/B 固化下来</a></h2>
+<h3 id="41-从-44-项补到-51-项"><a class="header" href="#41-从-44-项补到-51-项">4.1 从 44 项补到 51 项</a></h3>
+<p><code>benches/paper_benchmarks.rs</code> 新增：</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>方案</th><th>Criterion group</th><th>新增步骤</th><th>精确语义</th></tr>
+</thead>
+<tbody>
+<tr><td>ReSolveD+</td><td><code>Atomic/ReSolveDPlus</code></td><td><code>StreamingSetup/KeyGen/Sign/Verify</code></td><td><code>StreamingSetup</code> 创建 RE 表和 seed-backed <code>B</code> 描述，不物化论文完整矩阵</td></tr>
+<tr><td>Batch Scope-LRS</td><td><code>Atomic/ExtensionBatchScopeLRS_batch10_ell5_ring32</code></td><td><code>FixtureBuild/Sign/Verify</code></td><td>十个独立 ring statement；fixture 不是论文协议 Setup</td></tr>
+</tbody>
+</table>
+</div>
+<p>总数变为：</p>
+<p>$$
+4+2\times(5_{Ring}+6_{ScopeLRS}+5_{Group}+6_{FDABS})+3=51.
+$$</p>
+<p><code>PAPER_BENCH_SUITE=atomic</code> 时，旧的粗粒度 benchmark 函数在构造昂贵 fixture 前立即返回，只注册和运行规范 Atomic suite。这样 <code>--bench Atomic</code> 不再因为 Criterion 过滤发生在函数初始化之后而先付出无关 fixture 成本。</p>
+<h3 id="42-报表-schema-由44可选补充改为51-项不可分割集合"><a class="header" href="#42-报表-schema-由44可选补充改为51-项不可分割集合">4.2 报表 schema 由“44+可选补充”改为“51 项不可分割集合”</a></h3>
+<p><code>SCHEME_ROWS</code> 现在直接包含 ReSolveD+ 和 Batch Scope-LRS。<code>required_atomic_sources()</code> 对表格每个非空单元格展开 <code>(group,function)</code> 并去重，完整数据集恰好包含 51 项。</p>
+<p>解析器的新行为是：</p>
+<ul>
+<li>缺少 ReSolveD+ 任一步骤：整轮失败；</li>
+<li>缺少 Batch Scope-LRS 任一步骤：整轮失败；</li>
+<li>Batch Sign/Verify 同时显示 ms/batch 与 ms/item；其中 ms/batch 是 <code>[Measured]</code> 的 Criterion median，ms/item 是将该 median 除以 10 得到的 <code>[Formula: amortized]</code>，不是十个 item 的独立实测分布；</li>
+<li><code>FixtureBuild</code> 明确标为测试夹具成本；</li>
+<li>Scope-LRS 与 Batch Scope-LRS 标为仓库扩展，不并入论文四个应用声明。</li>
+</ul>
+<h3 id="43-justfile-从运行命令集合升级为冻结实验事务"><a class="header" href="#43-justfile-从运行命令集合升级为冻结实验事务">4.3 <code>justfile</code> 从“运行命令集合”升级为“冻结实验事务”</a></h3>
+<p>正式路径可概括为：</p>
+<pre><code class="language-text">_bench-build
+  -&gt; 从 Cargo JSON 精确选唯一 paper_benchmarks executable
+  -&gt; _bench-stabilize 检查 runnable tasks / package temperature
+  -&gt; 保存 source-status / source-worktree.patch / source-index.patch
+  -&gt; _bench-env 写 environment.txt，并记录 source patch 与 binary SHA-256
+  -&gt; taskset + 独立 CRITERION_HOME 运行 51 项
+  -&gt; _bench-env 写 environment_after.txt
+  -&gt; 解析器检查 pre/post 稳定性和完整性
+  -&gt; 原子发布 &lt;baseline&gt;.latest
+</code></pre>
+<p>关键检查包括：</p>
+<ul>
+<li>单核必须绑定一个逻辑 CPU，且本机 <code>cpuinfo_max_freq&gt;=4 GHz</code>，用于排除 E-core；</li>
+<li>多核 CPU set 必须严格等于所有 online CPU；</li>
+<li><code>RAYON_NUM_THREADS</code> 必须等于 affinity 中的逻辑 CPU 数；</li>
+<li><code>RUST_TEST_THREADS=1</code>，<code>LC_ALL=C</code>、<code>LANG=C</code>、<code>TZ=UTC</code>；</li>
+<li>governor、EPP 和 Turbo 策略必须符合预期；</li>
+<li>记录 commit/tree、dirty 状态、包含“未被 <code>.gitignore</code> 排除的未跟踪文件”的 worktree fingerprint、source patch SHA；</li>
+<li>记录 Rust/Cargo/kernel/CPU、Rust/C/C++ flags、allocator 环境、Cargo.lock SHA；</li>
+<li>记录 Criterion sample size、warm-up、measurement、filter、suite、baseline；</li>
+<li>正式采样前后 source fingerprint、binary hash 和受控环境必须保持稳定。</li>
+</ul>
+<p><code>bench-baseline</code> 与 <code>bench-optimized</code> 使用四个冻结标签：</p>
+<pre><code class="language-text">mechanism_before_single_pcore
+mechanism_before_all_cores
+mechanism_after_single_pcore
+mechanism_after_all_cores
+</code></pre>
+<p>冻结 <code>.latest</code> 指针不允许覆盖；中途中断后只补跑缺失模式。<code>bench-compare</code> 只有在两轮的可比环境字段完全一致时才输出逐步骤 speedup。</p>
+<h3 id="44-speedup-的公式边界"><a class="header" href="#44-speedup-的公式边界">4.4 speedup 的公式边界</a></h3>
+<p>对每个步骤，报表计算：</p>
+<p>$$
+\text{speedup}=\frac{T_{before}}{T_{after}},\qquad
+\text{improvement}=\frac{T_{before}-T_{after}}{T_{before}}\times100%.
+$$</p>
+<p>时间列是 <code>[Measured]</code>，上述两列是由实测值计算的 <code>[Formula]</code>。负 improvement 原样保留，不会被截成 0 或从表中删除。</p>
+<h2 id="五生产代码的机制级优化"><a class="header" href="#五生产代码的机制级优化">五、生产代码的机制级优化</a></h2>
+<h3 id="51-ringcontext从每次整树重建到构造时缓存"><a class="header" href="#51-ringcontext从每次整树重建到构造时缓存">5.1 RingContext：从每次整树重建到构造时缓存</a></h3>
+<p>在 <code>3fbea39:src/apps/lifecycle.rs</code> 中，<code>RingContext</code> 只有 <code>members/root</code>。调用路径为：</p>
+<pre><code class="language-text">ring_sign -&gt; ring_witness -&gt; build_tree(all members)
+ring_verify             -&gt; ring_context(cloned members) -&gt; build_tree(all members)
+</code></pre>
+<p>也就是说，Context 已经计算过一次 root，但每次 Sign 和 Verify 又从全部 leaves 重建整棵树。</p>
+<p><code>93b42e1</code> 为 <code>RingContext</code> 增加私有字段：</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>levels: Arc&lt;Vec&lt;Vec&lt;MainBitVec&gt;&gt;&gt;,
+cache_params: RingParameters,
+<span class="boring">}</span></code></pre>
+<p>新路径为：</p>
+<pre><code class="language-text">ring_context -&gt; build_tree once -&gt; Arc&lt;levels&gt;
+ring_sign -&gt; validate public snapshot -&gt; read path from cached levels
+ring_verify -&gt; validate public snapshot -&gt; verify relation
+</code></pre>
+<p>缓存不是未经验证的旁路。<code>validate_ring_context_cache</code> 仍检查：</p>
+<ol>
+<li><code>B0/B1/ell/n/c</code> 与构造时参数完全相同；</li>
+<li>level 数量和每层节点数符合完美二叉树形状；</li>
+<li>当前公开 <code>members</code> 与 cached leaves 逐项完全相同；</li>
+<li>当前公开 <code>root</code> 等于 cached root。</li>
+</ol>
+<p>因此，外部代码即使修改公开 <code>members/root</code>，也不能让 Sign/Verify 在旧缓存和新 statement 之间错配。</p>
+<h3 id="52-merkle-层并行"><a class="header" href="#52-merkle-层并行">5.2 Merkle 层并行</a></h3>
+<p><code>hash_tree_level</code> 对公开 child pairs 使用两条路径：</p>
+<ul>
+<li>单 worker 或 parent pair 数小于 32：顺序 <code>chunks_exact(2)</code>；</li>
+<li>多 worker 且至少 32 对：Rayon <code>par_chunks_exact(2)</code>。</li>
+</ul>
+<p>对 <code>ell=5</code>，底层只有 16 对，保持串行以避免调度开销；对 <code>ell=10</code>，底部 512、256、128、64、32 对可并行，上层自动回到串行。这一阈值解释了多核 RingSig <code>ell=10</code> Context 明显改善，而 <code>ell=5</code> 变化较小。</p>
+<h3 id="53-批量-ring-keygen先固定-rng-顺序再做外层并行"><a class="header" href="#53-批量-ring-keygen先固定-rng-顺序再做外层并行">5.3 批量 Ring KeyGen：先固定 RNG 顺序，再做外层并行</a></h3>
+<p><code>ring_keygen_batch_with_rng</code> 不让多个 Rayon task 共享或争用同一个 RNG，而是：</p>
+<ol>
+<li>在调用线程按原顺序预采样 <code>count</code> 个 <code>2n</code>-bit preimage；</li>
+<li><code>count&gt;=8</code> 且 worker&gt;1 时，对这些已固定输入并行求 member public key；</li>
+<li>外层并行 task 调用 <code>afs_hash_streaming_ct_serial</code>，避免每个成员内部再次产生 Rayon task；</li>
+<li>按输入顺序 collect，保持成员 index 不变。</li>
+</ol>
+<p>测试对 1/4 workers 和 <code>count=0,1,7,8,9</code> 比较逐个公私钥，并继续从两个 <code>StdRng</code> 读取 32 bytes 进行尾状态比较。对这些固定 case，后者锁定的不只是输出相同，也包括随机数消耗次数与顺序相同；它不是对任意第三方 RNG 实现的普遍证明。</p>
+<h3 id="54-fdabs惰性树增量路径与旧-epoch-快照"><a class="header" href="#54-fdabs惰性树增量路径与旧-epoch-快照">5.4 FDABS：惰性树、增量路径与旧 epoch 快照</a></h3>
+<p>旧实现中的以下操作都会调用 <code>fdabs_tree</code>：</p>
+<ul>
+<li><code>epoch_info()</code>；</li>
+<li><code>fdabs_path()</code>，因此影响 Sign；</li>
+<li><code>fdabs_verify()</code>；</li>
+<li><code>revoke()</code> 最后返回新 <code>epoch_info()</code>。</li>
+</ul>
+<p><code>93b42e1</code> 的 <code>FdabsAuthority</code> 增加：</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>levels: RwLock&lt;Option&lt;Arc&lt;Vec&lt;Vec&lt;MainBitVec&gt;&gt;&gt;&gt;&gt;,
+<span class="boring">}</span></code></pre>
+<p>状态转换如下：</p>
+<pre><code class="language-text">Setup -&gt; levels=None
+first Issue -&gt; 若 levels=None，仍不构树
+first EpochInfo -&gt; 构造整树一次并放入 Arc
+later EpochInfo -&gt; 复用 Arc
+Issue/Revoke after cache -&gt; Arc::make_mut + 只更新受影响路径
+</code></pre>
+<p><code>update_fdabs_tree_leaves</code> 先拒绝越界、错误位宽和重复 index，再对每一层将受影响 index 右移、排序、去重，只重算真正受影响的 parent。<strong>当 cache 已经物化</strong>时，撤销 $r$ 个叶子的更新工作最多为 $O(r\ell)$ 个 parent hashes；共享祖先会进一步去重。若 <code>levels=None</code> 就直接调用 <code>revoke</code>，更新阶段没有 tree 可增量修改，函数末尾的 <code>epoch_info()</code> 仍会执行一次 $O(2^\ell)$ cold build。</p>
+<p><code>Arc::make_mut</code> 给出了明确的快照语义：</p>
+<ul>
+<li>cache 已物化且没有旧 <code>FdabsEpochInfo</code> 持有 tree 时，原地增量更新；</li>
+<li>旧 epoch snapshot 仍被持有时，先复制完整 tree，再增量更新新版本；</li>
+<li>旧 snapshot 继续验证旧签名，新 snapshot 反映撤销后的 root/active/epoch。</li>
+</ul>
+<p><code>FdabsEpochInfo</code> 还保存私有 <code>cached_active/cached_epoch/cache_params</code>。<code>from_public_snapshot</code> 是公开传输边界：外部 verifier 提供 <code>epoch/root/leaves/active</code>，函数只构树一次并验证 leaves、长度与 root 的内部一致性，之后复用<strong>内部一致缓存</strong>。它不认证 snapshot 是否由合法 authority 发布；authenticated epoch publication 仍属于仓库明确披露的系统边界。</p>
+<h3 id="55-canonical-re-表的有界进程缓存"><a class="header" href="#55-canonical-re-表的有界进程缓存">5.5 canonical RE 表的有界进程缓存</a></h3>
+<p>旧 lifecycle Sign/Verify 每次调用 <code>compile_re_constraints(c)</code>。该表有 $2^c$ 行、每行 $2^c$ bits，系数位规模为 $4^c$。</p>
+<p><code>canonical_re_constraints(c)</code> 的新策略是：</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th style="text-align: right"><code>c</code></th><th>返回类型</th><th>生命周期</th><th>原因</th></tr>
+</thead>
+<tbody>
+<tr><td style="text-align: right"><code>1..=8</code></td><td><code>Cow::Borrowed</code></td><td><code>OnceLock</code> 进程级只读缓存</td><td>覆盖所有论文 profile；<code>c=8</code> 系数位仅 8 KiB</td></tr>
+<tr><td style="text-align: right"><code>&gt;8</code></td><td><code>Cow::Owned</code></td><td>调用结束后可释放</td><td>防止 <code>c=16</code> 的约 512 MiB 系数位永久钉在全局缓存</td></tr>
+</tbody>
+</table>
+</div>
+<p><code>validate_re_constraints</code> 对缓存范围先做 canonical slice 精确相等快路径；如果不相等，仍执行逐 row/monomial 诊断，不能用错误表绕过验证。</p>
+<h3 id="56-groupsiggsetupgkey-与-gopen-的组合优化"><a class="header" href="#56-groupsiggsetupgkey-与-gopen-的组合优化">5.6 GroupSig：GSetup、GKey 与 GOpen 的组合优化</a></h3>
+<p>GroupSig 的变化由多个独立机制组成：</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>阶段</th><th>旧路径</th><th>新路径</th></tr>
+</thead>
+<tbody>
+<tr><td><code>GSetup</code></td><td>两份 McEliece keypair 顺序生成</td><td>多 worker 时 <code>rayon::join</code> 并行生成两份独立 keypair</td></tr>
+<tr><td>成员 KeyGen</td><td>循环调用单成员 KeyGen</td><td>RNG 预采样后外层批量并行，内层 CT kernel 串行</td></tr>
+<tr><td>Merkle Context</td><td>每层所有 pair 串行</td><td>大层并行、小层串行</td></tr>
+<tr><td><code>G1/G2</code></td><td>两套 generator 顺序构造</td><td>多 worker 时两套 generator 并行构造</td></tr>
+<tr><td>manager/setup key 所有权</td><td>大型 key <code>Vec&lt;u8&gt;</code> 多次深拷贝</td><td><code>Arc&lt;OpeningPublicKey/SecretKey&gt;</code> 共享不可变 key</td></tr>
+<tr><td><code>GOpen</code> key 绑定</td><td>每次从两份 opening pk 重建 generator 后与 <code>G1/G2</code> 比较</td><td>两条独立检查：当前 <code>context.public_key</code> 与构造时 snapshot 做 exact matrix/metadata compare；manager opening pk raw bytes 与 context 保存的构造时 opening pk 比较</td></tr>
+<tr><td>Patterson decode</td><td>两个 ciphertext 顺序解密</td><td>多 worker 时两次独立 decode 用 <code>rayon::join</code></td></tr>
+</tbody>
+</table>
+</div>
+<p><code>GOpen</code> 仍先完整调用 <code>group_verify</code>，然后才做 manager 绑定和两次解密。因此 <code>Open</code> 指标不是“纯 Patterson decode”，它同时包含 Verify、public snapshot 比较和 identity 一致性检查。</p>
+<h3 id="57-mceliece-generator-的-8x8-block-transpose"><a class="header" href="#57-mceliece-generator-的-8x8-block-transpose">5.7 McEliece generator 的 8x8 block transpose</a></h3>
+<p>固定 <code>[4096,3328,64]</code> 码的 generator 为 $G=[T;I]$，其中 parity 行数为 $4096-3328=768$。旧实现对每个 column 的每个 parity row 调用 <code>BitVec::set</code>：</p>
+<p>$$
+3328\times768=2,555,904
+$$</p>
+<p>次 bounds-checked bit 写入。</p>
+<p>新实现按 8 个 public rows 和 1 个 column byte 组成 8x8 block：</p>
+<ol>
+<li>连续读取 PQClean 的 8 个 row bytes；</li>
+<li>将 little-endian column bits 转置成 <code>MainBitVec</code> 的 <code>Msb0</code> destination byte；</li>
+<li>一次写入 8 个 row bits；</li>
+<li>identity 部分在 column 分配时直接设置。</li>
+</ol>
+<p>回归测试逐 column、逐 parity row 对照原始 PQClean public-key byte，并检查 identity suffix 恰有一个 1，锁定端序和系统形矩阵语义。</p>
+<h3 id="58-scope-lrs-与-batch-scope-lrs-没有生产算法优化"><a class="header" href="#58-scope-lrs-与-batch-scope-lrs-没有生产算法优化">5.8 Scope-LRS 与 Batch Scope-LRS 没有生产算法优化</a></h3>
+<p><code>src/apps/linkable_ring_signature_sig.rs</code> 在 <code>3fbea39..93b42e1</code> 中只有注释从“future use”改为“repository extension”。因此 Scope-LRS 的显著涨跌不能归因于该模块算法改写；最多只能解释为共享底层、代码布局、调度或测量波动。这一点对后文的单核回归尤其重要。</p>
+<h2 id="六关键路径复杂度与-timed-region-的前后对比"><a class="header" href="#六关键路径复杂度与-timed-region-的前后对比">六、关键路径、复杂度与 timed region 的前后对比</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>场景</th><th><code>3fbea39</code> 生产路径</th><th><code>93b42e1</code> 生产路径</th><th>主要复杂度变化</th><th>外部语义</th></tr>
+</thead>
+<tbody>
+<tr><td>Ring <code>Context</code></td><td>串行构树</td><td>大层并行构树并缓存 levels</td><td>总工作仍 $O(2^\ell)$；多核 span 降低</td><td>root 不变</td></tr>
+<tr><td>Ring <code>Sign</code></td><td>重建整树 + 取 path + proof</td><td>校验 snapshot + cache 取 path + proof</td><td>去掉每次 $O(2^\ell)$ tree hash；仍有 public leaves 比较</td><td>witness/relation 不变</td></tr>
+<tr><td>Ring <code>Verify</code></td><td>重建整树 + proof verify</td><td>校验 snapshot + proof verify</td><td>去掉整树 hash</td><td>验证 statement 不变</td></tr>
+<tr><td>FDABS cold <code>EpochInfo</code></td><td>每次整树</td><td>第一次整树并缓存</td><td>首次仍 $O(2^\ell)$</td><td>root 不变</td></tr>
+<tr><td>FDABS warm <code>EpochInfo</code></td><td>每次整树</td><td>复用 levels，复制 public snapshot 字段</td><td>去掉 tree hash；仍复制 leaves/active</td><td>epoch object 内容不变</td></tr>
+<tr><td>FDABS <code>Revoke(r)</code></td><td>清零 leaves 后整树</td><td>cache 已物化时 COW（若需要）+ 受影响路径；cold cache 仍在末尾构整树</td><td>已物化且唯一时 $O(r\ell)$ hashes；未物化时 cold $O(2^\ell)$ build；持有旧 snapshot 时另有 $O(2^\ell)$ clone</td><td>旧 epoch 仍有效</td></tr>
+<tr><td>Group <code>GKey</code></td><td>成员、树、G1/G2 多数串行</td><td>batch members + tree levels + G1/G2 分层并行</td><td>总工作近似不变，span 降低；transpose 常数更小</td><td>成员顺序与 RNG 消耗不变</td></tr>
+<tr><td>Group <code>Open</code></td><td>Verify + 重建 G1/G2 + 两次串行 decode</td><td>Verify + context-vs-snapshot exact compare + manager-vs-context opening-pk raw compare + 两次可并行 decode</td><td>去掉 generator 重建</td><td>仍要求双 identity 一致</td></tr>
+<tr><td>lifecycle RE table</td><td>每次 $O(4^c)$ 编译</td><td>首次编译，随后 lookup</td><td>paper <code>c&lt;=8</code> steady-state 近 $O(1)$ 获取</td><td>canonical 内容不变</td></tr>
+</tbody>
+</table>
+</div>
+<p>这一表格只给出主导操作。实际 Atomic 指标还包含 <code>black_box</code>、参数 clone、public snapshot 校验、signature object 构造等常数项，不能直接用渐进复杂度预测小参数百分比。</p>
+<h2 id="七缓存的内存代价并发语义与-api-兼容性"><a class="header" href="#七缓存的内存代价并发语义与-api-兼容性">七、缓存的内存代价、并发语义与 API 兼容性</a></h2>
+<h3 id="71-ringfdabs-完整-levels-的常驻代价"><a class="header" href="#71-ringfdabs-完整-levels-的常驻代价">7.1 Ring/FDABS 完整 levels 的常驻代价</a></h3>
+<p>一棵含 $2^\ell$ 个、每个 $n=1280$ bits 叶子的满二叉树共有 $2^{\ell+1}-1$ 个节点。只计算 bit payload、不含 <code>Vec/BitVec/Arc</code> 和 allocator 元数据时：</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>参数</th><th style="text-align: right">节点数</th><th style="text-align: right">levels 原始 payload</th><th style="text-align: right">其中 leaf level</th><th>解释</th></tr>
+</thead>
+<tbody>
+<tr><td><code>ell=5</code></td><td style="text-align: right">63</td><td style="text-align: right">10,080 B = 9.84 KiB</td><td style="text-align: right">5 KiB</td><td>小树，缓存代价较低</td></tr>
+<tr><td><code>ell=10</code></td><td style="text-align: right">2,047</td><td style="text-align: right">327,520 B = 319.84 KiB</td><td style="text-align: right">160 KiB</td><td>public members/leaves 已另存一份，因此 leaf level 是重复 payload</td></tr>
+</tbody>
+</table>
+</div>
+<p>真实堆占用还包括每个 <code>MainBitVec</code> 的结构体和 allocation 元数据。换来的收益是 Sign/Verify 不再重复生成所有 internal nodes。</p>
+<h3 id="72-fdabs-copy-on-write-不是无条件-oell"><a class="header" href="#72-fdabs-copy-on-write-不是无条件-oell">7.2 FDABS copy-on-write 不是无条件 $O(\ell)$</a></h3>
+<p>“增量撤销”为 $O(r\ell)$ hashes 有两个前提：cache 已由 <code>epoch_info()</code> 物化，且 authority 对 tree 拥有唯一 <code>Arc</code>。如果 cache 尚未物化，<code>revoke()</code> 末尾会 cold-build 整树；若调用方继续持有旧 <code>FdabsEpochInfo</code>：</p>
+<pre><code class="language-text">Arc strong_count &gt; 1
+    -&gt; Arc::make_mut 深拷贝旧 tree
+    -&gt; 在新副本上更新 r 条路径
+</code></pre>
+<p>因此一次写入可能包含完整 tree clone。这个成本是保持旧 epoch snapshot 可继续验签所付出的明确时间/内存代价，而不是缓存缺陷。</p>
+<h3 id="73-groupcontext-的时间换内存"><a class="header" href="#73-groupcontext-的时间换内存">7.3 GroupContext 的时间换内存</a></h3>
+<p>每套 materialized McEliece generator 的原始 bit payload 为：</p>
+<p>$$
+3328\times4096/8=1,703,936\text{ B}=1.625\text{ MiB}.
+$$</p>
+<p><code>G1+G2</code> 为 3.25 MiB。<code>public_key_snapshot=Arc::new(public_key.clone())</code> 会再保留一份 generator snapshot，所以仅 matrix bit payload 约增加 3.25 MiB，尚未计算 6656 个 <code>MainBitVec</code> 的结构和 allocation 开销。</p>
+<p>另一方面，两份 opening public keys 共约 624 KiB，旧版在 parameters/manager 间深拷贝；新版用 <code>Arc</code> 共享。总体设计选择是：</p>
+<ul>
+<li>接受构造时多保留一份准确 public-key snapshot；</li>
+<li>避免每次 Open 重新转置和分配两套 generator；</li>
+<li>Open 时分别用“当前 public key 对构造时 snapshot”的 matrix/metadata 精确比较，以及“manager opening pk 对 context 构造时 opening pk”的 raw-byte 比较维持绑定。</li>
+</ul>
+<h3 id="74-rwlock-与-send--sync"><a class="header" href="#74-rwlock-与-send--sync">7.4 <code>RwLock</code> 与 <code>Send + Sync</code></a></h3>
+<p>FDABS 惰性构树需要在 <code>epoch_info(&amp;self)</code> 中初始化 cache。如果用 <code>RefCell</code>，authority 将失去 <code>Sync</code>；当前实现使用 <code>RwLock&lt;Option&lt;Arc&lt;_&gt;&gt;&gt;</code>，测试显式要求 <code>FdabsAuthority: Send + Sync</code>。</p>
+<p>业务读写路径不会静默忽略锁中毒：<code>epoch_info/issue/revoke</code> 会返回带 <code>FDABS authority tree cache lock poisoned</code> 的错误。手写 <code>Clone</code> 是明确例外，它用 <code>poisoned.into_inner()</code> 取得并复制当时的 cache snapshot。正常 warm path 仍有锁获取和 poison 检查开销；<code>epoch_info()</code> 会先在 authority cache validation 中取得 read lock，随后再以 write lock 读取或初始化 cache，因此极小参数下不能假定缓存完全无开销。</p>
+<h3 id="75-rust-源码级兼容性变化"><a class="header" href="#75-rust-源码级兼容性变化">7.5 Rust 源码级兼容性变化</a></h3>
+<p>虽然线材和密码学 statement 不变，但这不是完全零 API 影响的修改：</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>类型/API</th><th>变化</th><th>对外部 Rust 调用方的影响</th></tr>
+</thead>
+<tbody>
+<tr><td><code>RingContext</code></td><td>新增私有 <code>levels/cache_params</code></td><td>外部 crate 不能再用 struct literal 只填 <code>members/root</code>；必须调用 <code>ring_context</code></td></tr>
+<tr><td><code>FdabsEpochInfo</code></td><td>新增私有 cache snapshot 字段</td><td>外部收到公开 epoch 数据后必须调用 <code>FdabsEpochInfo::from_public_snapshot</code></td></tr>
+<tr><td><code>FdabsAuthority</code></td><td>手写 <code>Clone</code>，内部含 <code>RwLock&lt;...&gt;</code></td><td>仍可 Clone；cache Arc 被共享，后续写入按 COW 分离</td></tr>
+<tr><td><code>canonical_re_constraints</code></td><td>新增返回 <code>Cow&lt;'static,[MainBitVec]&gt;</code> 的公开 API</td><td>调用方用 <code>as_ref()</code> 同时兼容 borrowed/owned</td></tr>
+<tr><td><code>GroupParameters/Manager</code></td><td>私有 key 改为 <code>Arc</code></td><td>公共函数签名不变；Clone 成本和所有权语义改变</td></tr>
+</tbody>
+</table>
+</div>
+<p>这是为了防止“公开字段已被改动，但私有 cache 仍对应旧 statement”的安全一致性问题。需要源码兼容的下游应以 constructor 为边界，而不是直接实例化这些对象。</p>
+<h2 id="八ab-实验的真实来源与-timed-region-口径"><a class="header" href="#八ab-实验的真实来源与-timed-region-口径">八、A/B 实验的真实来源与 timed-region 口径</a></h2>
+<h3 id="81-不能把实测简单写成干净-3fbea39-对干净-93b42e1"><a class="header" href="#81-不能把实测简单写成干净-3fbea39-对干净-93b42e1">8.1 不能把实测简单写成“干净 <code>3fbea39</code> 对干净 <code>93b42e1</code>”</a></h3>
+<p>性能运行发生在最终提交之前。四轮 metadata 的 <code>git_commit</code> 都记录为 <code>3fbea395...</code>，同时 <code>git_worktree_dirty=true</code>。真正的两个可执行源码状态是：</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>状态</th><th>基础 commit</th><th><code>source-worktree.patch</code> SHA-256</th><th>patch 文件范围</th><th>benchmark binary SHA-256</th></tr>
+</thead>
+<tbody>
+<tr><td>before</td><td><code>3fbea395...</code></td><td><code>bcbac99b596fc9d5c7b9989477aea732edacbf846cfcc844d84e816fe6b36eb8</code></td><td>共同的 51 项 harness/reporting，共 5 files</td><td><code>f54607bd8aded6ffab5c2b1692706c561b738ee0ab842a530d62c26c2d287fbd</code></td></tr>
+<tr><td>after</td><td><code>3fbea395...</code></td><td><code>9d20bde7975cd5289975779a9e5d96c18521648f1f80c276f1c74d61c77ae756</code></td><td>51 项 harness + 生产优化，共 10 files</td><td><code>87b6c8a2239853bfd02872cb51e1a6e9d815b9487e49689e238e49af84df81b0</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>静态核查显示，after patch 与：</p>
+<pre><code class="language-bash">git diff 3fbea39..93b42e1 -- . \
+  ':(exclude)PERFORMANCE_OPTIMIZATION_REPORT_CN_2026-08-02.md'
+</code></pre>
+<p>逐 byte 相同。也就是说，after 可执行代码后来完整进入 <code>93b42e1</code>；根目录性能报告是测量完成后加入的文档文件。</p>
+<p>before patch 也已加入 ReSolveD+ 与 Batch Scope-LRS 的 Atomic harness，所以两端都能产生同一 51 项 schema。这比拿 <code>3fbea39</code> 原生 44 项硬拼 <code>93b42e1</code> 的 51 项更可比。</p>
+<p>这些 <code>source-worktree.patch</code>、Criterion JSON、metadata 和绝对运行路径位于被 <code>.gitignore</code> 排除的本机 <code>target/bench_tables/</code>，没有随 <code>93b42e1</code> 提交归档；commit 中持久保存的是汇总性能报告，而不是原始测量包。因此上述 SHA 可以核对当前工作区保留的 local evidence，但不能单靠远端 commit 重新取得原始文件。正式发布若要求第三方逐样本复核，应另行归档这四个冻结目录。</p>
+<h3 id="82-harness-仍有一个需要披露的差异"><a class="header" href="#82-harness-仍有一个需要披露的差异">8.2 harness 仍有一个需要披露的差异</a></h3>
+<p>before patch 的 ReSolveD+/Batch <code>Verify</code> 在 timed closure 中执行：</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let verified = verify(...).unwrap();
+assert!(verified, "...");
+black_box(verified)
+<span class="boring">}</span></code></pre>
+<p>after patch 的 timed closure 只保留 Verify 与 <code>black_box</code>。两者的 pre-check 细节略有不同：ReSolveD+ 新增计时前 pre-verify；Batch 在 before 已有计时前 pre-verify，after 只是删除 timed closure 内的冗余 assert；Ring/Scope-LRS/Group/FDABS 也新增了一次计时前有效签名检查。</p>
+<p>因此：</p>
+<ul>
+<li>ReSolveD+ Verify 与 Batch Verify 的 before/after 包含很小的 harness 差异；</li>
+<li>其他 Verify 的 timed closure 主体未因断言而改变；</li>
+<li>这两个指标不能被描述为纯生产代码微优化的严格隔离实验。</li>
+</ul>
+<h3 id="83-固定环境"><a class="header" href="#83-固定环境">8.3 固定环境</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>项目</th><th>单核</th><th>多核</th></tr>
+</thead>
+<tbody>
+<tr><td>CPU affinity</td><td>logical CPU 2（P-core）</td><td>logical CPU 0-15（本机全部 online CPU）</td></tr>
+<tr><td>Rayon workers</td><td>1</td><td>16</td></tr>
+<tr><td>Rust test threads</td><td>1</td><td>1</td></tr>
+<tr><td>CPU</td><td>13th Gen Intel Core i5-13500H</td><td>同左；P/E 混合逻辑 CPU 集合</td></tr>
+<tr><td>Rust/Cargo</td><td>1.97.1 / 1.97.1</td><td>同左</td></tr>
+<tr><td>build flags</td><td><code>-C target-cpu=native -C opt-level=3</code></td><td>同左</td></tr>
+<tr><td>governor / EPP / Turbo</td><td><code>powersave</code> / <code>performance</code> / enabled</td><td>同左</td></tr>
+<tr><td>Criterion</td><td>10 samples，3 s warm-up，5 s measurement</td><td>同左</td></tr>
+<tr><td>locale/timezone</td><td><code>LC_ALL=C LANG=C TZ=UTC</code></td><td>同左</td></tr>
+</tbody>
+</table>
+</div>
+<p>单核 before/after 使用同一个 before/after patch 对；多核也使用完全相同的两份 patch。单核和多核不能互相当作同一指标的重复样本，因为 CPU topology 与 worker 数不同。</p>
+<h3 id="84-同一指标在-beforeafter-的真实-timed-region"><a class="header" href="#84-同一指标在-beforeafter-的真实-timed-region">8.4 同一指标在 before/after 的真实 timed region</a></h3>
+<p>fixture 的外层位置大体相同，但生产调用内部的工作因 cache/并行改造而改变。下表同时列两端，不能把 after 的 warm-cache 路径追溯到 before：</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>指标</th><th>before timed region</th><th>after timed region</th><th>fixture/cache 解释</th></tr>
+</thead>
+<tbody>
+<tr><td>Ring <code>Context</code></td><td>从 leaves 串行构整树</td><td>大 tree levels 可并行构造并把 levels 存入返回 context</td><td>两端都是 cold tree build；只体现构树机制，不体现复用</td></tr>
+<tr><td>Ring <code>Sign</code></td><td><code>ring_witness</code> 重建整树、取 path，再 proof</td><td>校验 cached/public snapshot、取 path，再 proof</td><td>context 均在计时前存在，但只有 after context 保存 levels</td></tr>
+<tr><td>Ring <code>Verify</code></td><td>克隆 members、重建整树、核对 root，再 relation verify</td><td>校验 cached/public snapshot，再 relation verify</td><td>只有 after 是 warm-context Verify</td></tr>
+<tr><td>FDABS <code>EpochInfo</code></td><td>每次调用都完整 <code>fdabs_tree</code></td><td>fixture 已预先物化 cache；timed call 复用 levels 并导出 snapshot</td><td>after 才可命名 <code>WarmEpochInfo</code></td></tr>
+<tr><td>FDABS <code>UpdateRevoke</code></td><td>batch setup 虽调用 <code>epoch_info()</code>，旧类型不保存 tree；timed revoke 最后仍重建整树</td><td>setup 物化 cache 后丢弃返回 snapshot；timed revoke 原地更新 1 条路径并导出新 snapshot</td><td>after 不含“仍持有旧 snapshot”时的 COW clone</td></tr>
+<tr><td>FDABS <code>Sign</code></td><td><code>fdabs_path</code> 从 public leaves 重建整树，再构 witness/proof</td><td>从内部一致 cache 取 path，再构 witness/proof</td><td>RE 表也只有 after 使用进程 cache</td></tr>
+<tr><td>FDABS <code>Verify</code></td><td>先从 leaves 重建整树，再 relation verify</td><td>校验内部一致 cache，再 relation verify</td><td>after 是 steady-state，不是 cold import</td></tr>
+<tr><td>Group <code>Setup</code></td><td>两份真实 Goppa keypair 顺序生成</td><td>多 worker 时双 keypair 并行</td><td>每次都重新执行，并包含 rejection-sampling 方差</td></tr>
+<tr><td>Group <code>KeyGen</code></td><td>成员、tree、G1/G2 主要串行</td><td>batch members、tree levels、G1/G2 分层并行，generator 用 8x8 transpose</td><td>多机制合并指标，不能拆出单项因果百分比</td></tr>
+<tr><td>Group <code>Open</code></td><td>Verify + 每次重建两套 generator + 两次串行 decode</td><td>Verify + context-vs-snapshot exact compare + manager-vs-context opening-pk raw compare + 两次可并行 decode</td><td>两端都不是纯 decoder microbenchmark；after 的内部 Verify 还会复用 canonical RE table</td></tr>
+<tr><td>ReSolveD+ <code>StreamingSetup</code></td><td>每次显式 <code>compile_re_constraints</code> + seed descriptor</td><td>相同</td><td>不使用 lifecycle canonical cache</td></tr>
+</tbody>
+</table>
+</div>
+<p>Criterion 自身还有 warm-up，CPU cache、allocator 和 process-wide <code>OnceLock</code> 会进入 steady state。因此本轮大倍率不能外推为冷启动、跨进程一次性调用或无缓存服务的通用收益。</p>
+<p>另外，51 项 Atomic 的 <code>Sign/Verify</code> 都直接接收和返回内存中的 signature object，不包含 canonical <code>to_bytes/from_bytes</code>，也不包含文件或进程 I/O。<code>paper_speed_table.sh</code> 的端到端口径则是 Sign+encode 与 decode+Verify；两者不仅估计量不同，timed scope 也不同，不能直接相除。</p>
+<h3 id="85-criterion-10-samples-不等于端到端-trimmed-mean"><a class="header" href="#85-criterion-10-samples-不等于端到端-trimmed-mean">8.5 Criterion 10 samples 不等于端到端 trimmed mean</a></h3>
+<p>本项目同时存在两套统计口径：</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>工作流</th><th style="text-align: right">重复/样本</th><th>汇总量</th></tr>
+</thead>
+<tbody>
+<tr><td><code>paper_speed_table.sh</code> 端到端表</td><td style="text-align: right">默认 10 个独立 case runs</td><td>对称去掉 1 个最低和 1 个最高，取中间 8 个均值</td></tr>
+<tr><td>本章机制级 A/B Criterion</td><td style="text-align: right"><code>--sample-size 10</code></td><td>JSON <code>median.point_estimate</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>本章所有 before/after 数字属于第二种，不能称为“去掉最大最小后的均值”。文档 12 中来自控制台或 trimmed mean 的历史表也不能直接与本章倍率相除。</p>
+<h2 id="九实测结果与因果解释"><a class="header" href="#九实测结果与因果解释">九、实测结果与因果解释</a></h2>
+<p>完整 102 行（51 项单核 + 51 项多核）见根目录的<a href="../../PERFORMANCE_OPTIMIZATION_REPORT_CN_2026-08-02.html">机制级性能优化前后报告</a>。本节只摘录能说明机制或限制的关键行；时间单位均为 ms。</p>
+<h3 id="91-总体计数"><a class="header" href="#91-总体计数">9.1 总体计数</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>模式</th><th style="text-align: right">全部 51 项</th><th style="text-align: right">改善</th><th style="text-align: right">回归</th><th style="text-align: right">排除 before/after 均低于 0.01 ms 后</th><th style="text-align: right">改善</th><th style="text-align: right">回归</th></tr>
+</thead>
+<tbody>
+<tr><td>单核 CPU 2 / Rayon 1</td><td style="text-align: right">51</td><td style="text-align: right">34</td><td style="text-align: right">17</td><td style="text-align: right">40</td><td style="text-align: right">32</td><td style="text-align: right">8</td></tr>
+<tr><td>多核 CPU 0-15 / Rayon 16</td><td style="text-align: right">51</td><td style="text-align: right">34</td><td style="text-align: right">17</td><td style="text-align: right">40</td><td style="text-align: right">27</td><td style="text-align: right">13</td></tr>
+</tbody>
+</table>
+</div>
+<p>0.01 ms 过滤只用于避免把亚微秒/微秒噪声当作“优化数量”；完整报告仍保留全部 51 项，没有删除负值。</p>
+<h3 id="92-ringsig-的关键结果"><a class="header" href="#92-ringsig-的关键结果">9.2 RingSig 的关键结果</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>模式</th><th>参数/步骤</th><th style="text-align: right">Before</th><th style="text-align: right">After</th><th style="text-align: right">Speedup</th><th style="text-align: right">Improvement</th><th>主要解释</th></tr>
+</thead>
+<tbody>
+<tr><td>单核</td><td><code>ell=10 Sign</code></td><td style="text-align: right">158.488725</td><td style="text-align: right">144.491925</td><td style="text-align: right">1.097x</td><td style="text-align: right">+8.83%</td><td>cache path + RE table 复用</td></tr>
+<tr><td>单核</td><td><code>ell=10 Verify</code></td><td style="text-align: right">87.570822</td><td style="text-align: right">71.801009</td><td style="text-align: right">1.220x</td><td style="text-align: right">+18.01%</td><td>不再重建整树</td></tr>
+<tr><td>多核</td><td><code>ell=10 Context</code></td><td style="text-align: right">18.931005</td><td style="text-align: right">2.784948</td><td style="text-align: right">6.798x</td><td style="text-align: right">+85.29%</td><td>大 tree levels 并行</td></tr>
+<tr><td>多核</td><td><code>ell=10 Sign</code></td><td style="text-align: right">56.534061</td><td style="text-align: right">35.316653</td><td style="text-align: right">1.601x</td><td style="text-align: right">+37.53%</td><td>cached tree + 共享底层并行</td></tr>
+<tr><td>多核</td><td><code>ell=10 Verify</code></td><td style="text-align: right">47.309693</td><td style="text-align: right">25.071902</td><td style="text-align: right">1.887x</td><td style="text-align: right">+47.00%</td><td>cached tree，proof 路径保留</td></tr>
+</tbody>
+</table>
+</div>
+<p><code>ell=5 Context</code> 多核仅 +4.04%，与“少于 32 parent pairs 时保持串行”的阈值设计一致。这里是代码机制与参数敏感性的相互印证，而不是声称所有 ring size 都有 6.8x。</p>
+<h3 id="93-groupsig-的关键结果"><a class="header" href="#93-groupsig-的关键结果">9.3 GroupSig 的关键结果</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>模式</th><th>参数/步骤</th><th style="text-align: right">Before</th><th style="text-align: right">After</th><th style="text-align: right">Speedup</th><th style="text-align: right">Improvement</th></tr>
+</thead>
+<tbody>
+<tr><td>单核</td><td><code>ell=5 KeyGen</code></td><td style="text-align: right">53.666145</td><td style="text-align: right">40.521432</td><td style="text-align: right">1.324x</td><td style="text-align: right">+24.49%</td></tr>
+<tr><td>单核</td><td><code>ell=5 Open</code></td><td style="text-align: right">111.265698</td><td style="text-align: right">95.095937</td><td style="text-align: right">1.170x</td><td style="text-align: right">+14.53%</td></tr>
+<tr><td>单核</td><td><code>ell=10 Open</code></td><td style="text-align: right">145.809498</td><td style="text-align: right">132.026067</td><td style="text-align: right">1.104x</td><td style="text-align: right">+9.45%</td></tr>
+<tr><td>多核</td><td><code>ell=5 Setup</code></td><td style="text-align: right">325.194683</td><td style="text-align: right">245.151353</td><td style="text-align: right">1.327x</td><td style="text-align: right">+24.61%</td></tr>
+<tr><td>多核</td><td><code>ell=5 KeyGen</code></td><td style="text-align: right">37.472375</td><td style="text-align: right">14.256483</td><td style="text-align: right">2.628x</td><td style="text-align: right">+61.95%</td></tr>
+<tr><td>多核</td><td><code>ell=5 Open</code></td><td style="text-align: right">118.805414</td><td style="text-align: right">72.494907</td><td style="text-align: right">1.639x</td><td style="text-align: right">+38.98%</td></tr>
+<tr><td>多核</td><td><code>ell=10 Setup</code></td><td style="text-align: right">342.333107</td><td style="text-align: right">219.477800</td><td style="text-align: right">1.560x</td><td style="text-align: right">+35.89%</td></tr>
+<tr><td>多核</td><td><code>ell=10 KeyGen</code></td><td style="text-align: right">326.133354</td><td style="text-align: right">176.395538</td><td style="text-align: right">1.849x</td><td style="text-align: right">+45.91%</td></tr>
+<tr><td>多核</td><td><code>ell=10 Open</code></td><td style="text-align: right">121.080991</td><td style="text-align: right">77.015242</td><td style="text-align: right">1.572x</td><td style="text-align: right">+36.39%</td></tr>
+</tbody>
+</table>
+</div>
+<p>单核 <code>ell=5 Setup</code> 反而从 189.208598 ms 变为 197.844655 ms（-4.56%）。GSetup 内含两次真实 McEliece rejection-sampling，单轮 Criterion 的方差较大；不能用多核改善反向证明单核也必然改善。</p>
+<h3 id="94-fdabs-的关键结果"><a class="header" href="#94-fdabs-的关键结果">9.4 FDABS 的关键结果</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>模式</th><th>参数/步骤</th><th style="text-align: right">Before</th><th style="text-align: right">After</th><th style="text-align: right">Speedup</th><th style="text-align: right">Improvement</th><th>测量语义</th></tr>
+</thead>
+<tbody>
+<tr><td>单核</td><td><code>ell=5 EpochInfo</code></td><td style="text-align: right">0.362178</td><td style="text-align: right">0.005055</td><td style="text-align: right">71.648x</td><td style="text-align: right">+98.60%</td><td>warm cache</td></tr>
+<tr><td>单核</td><td><code>ell=5 UpdateRevoke</code></td><td style="text-align: right">0.331133</td><td style="text-align: right">0.064916</td><td style="text-align: right">5.101x</td><td style="text-align: right">+80.40%</td><td>warm、无旧 snapshot COW</td></tr>
+<tr><td>单核</td><td><code>ell=10 EpochInfo</code></td><td style="text-align: right">10.027637</td><td style="text-align: right">0.151456</td><td style="text-align: right">66.208x</td><td style="text-align: right">+98.49%</td><td>warm cache</td></tr>
+<tr><td>单核</td><td><code>ell=10 UpdateRevoke</code></td><td style="text-align: right">9.952691</td><td style="text-align: right">0.277365</td><td style="text-align: right">35.883x</td><td style="text-align: right">+97.21%</td><td>warm、无旧 snapshot COW</td></tr>
+<tr><td>多核</td><td><code>ell=10 EpochInfo</code></td><td style="text-align: right">15.754906</td><td style="text-align: right">0.265354</td><td style="text-align: right">59.373x</td><td style="text-align: right">+98.32%</td><td>warm cache</td></tr>
+<tr><td>多核</td><td><code>ell=10 Sign</code></td><td style="text-align: right">50.787442</td><td style="text-align: right">34.227239</td><td style="text-align: right">1.484x</td><td style="text-align: right">+32.61%</td><td>cached path + proof</td></tr>
+<tr><td>多核</td><td><code>ell=10 Verify</code></td><td style="text-align: right">39.778544</td><td style="text-align: right">24.266599</td><td style="text-align: right">1.639x</td><td style="text-align: right">+39.00%</td><td>cached snapshot 校验 + proof</td></tr>
+<tr><td>多核</td><td><code>ell=10 UpdateRevoke</code></td><td style="text-align: right">14.681181</td><td style="text-align: right">0.396384</td><td style="text-align: right">37.038x</td><td style="text-align: right">+97.30%</td><td>warm、无旧 snapshot COW</td></tr>
+</tbody>
+</table>
+</div>
+<p>这些跨参数、跨线程模式的大倍率强烈表明“旧 timed region 中整树重建是主导项”，但不代表 cold <code>EpochInfo</code> 也快 60–70 倍，也不代表持有大量旧 epoch snapshot 时撤销仍只有 0.3–0.4 ms。</p>
+<h3 id="95-必须如实保留的回归与不可归因项"><a class="header" href="#95-必须如实保留的回归与不可归因项">9.5 必须如实保留的回归与不可归因项</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>模式</th><th>指标</th><th style="text-align: right">变化</th><th>为什么不能包装成优化</th></tr>
+</thead>
+<tbody>
+<tr><td>单核</td><td>Scope-LRS <code>ell=10 Sign</code></td><td style="text-align: right">-11.31%</td><td>模块生产代码无算法改动，可能是布局/噪声/共享底层交互</td></tr>
+<tr><td>单核</td><td>Scope-LRS <code>ell=10 Verify</code></td><td style="text-align: right">-18.84%</td><td>同上，是本轮最大实质回归之一</td></tr>
+<tr><td>多核</td><td>ReSolveD+ Sign</td><td style="text-align: right">-4.47%</td><td>ReSolveD+ 生产路径未做对应机制优化</td></tr>
+<tr><td>单核</td><td>GroupSig <code>ell=10 Verify</code></td><td style="text-align: right">-3.10%</td><td>Group 优化主要针对 Setup/KeyGen/Open，不保证纯 Verify</td></tr>
+<tr><td>多核</td><td>GroupSig <code>ell=10 Verify</code></td><td style="text-align: right">-1.55%</td><td>负值保留，不能用 Open 的改善遮盖</td></tr>
+<tr><td>单核</td><td>Batch Scope-LRS Sign</td><td style="text-align: right">-0.44%</td><td>Batch 生产算法未改，接近测量波动</td></tr>
+<tr><td>多核</td><td>Batch Scope-LRS Verify</td><td style="text-align: right">-0.85%</td><td>同上，且 Verify harness 有轻微变化</td></tr>
+</tbody>
+</table>
+</div>
+<p>小于 0.01 ms 的 Setup/Link 等项即使百分比看起来较大，其绝对差通常只有微秒或更低，不适合做工程结论。</p>
+<h3 id="96-因果结论的强弱分级"><a class="header" href="#96-因果结论的强弱分级">9.6 因果结论的强弱分级</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>结论</th><th>可信度</th><th>理由</th></tr>
+</thead>
+<tbody>
+<tr><td>FDABS warm EpochInfo/UpdateRevoke 的主导改善来自 cache/incremental update</td><td>高</td><td>代码删除整树重建，倍率跨单核/多核和 <code>ell=5/10</code> 一致</td></tr>
+<tr><td>Ring <code>ell=10</code> 多核 Context 改善来自 level parallelism</td><td>高</td><td>Context timed region 不使用已有 cache；阈值与参数结果吻合</td></tr>
+<tr><td>Group KeyGen/Open 改善来自 batch/transpose/snapshot/decode 与内部 Verify 的 RE cache 组合</td><td>中高</td><td>路径直接改变且多核结果一致，但单个指标合并多个机制</td></tr>
+<tr><td>ReSolveD+、Batch、Scope-LRS 的小幅变化来自本轮生产优化</td><td>低</td><td>相关生产模块未改或 harness 有差异</td></tr>
+<tr><td>所有冷启动和部署场景都能复现相同倍率</td><td>不成立</td><td>A/B 是 Criterion warm steady-state，且只有一台机器的一组冻结轮次</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="十正确性安全性与兼容性验收"><a class="header" href="#十正确性安全性与兼容性验收">十、正确性、安全性与兼容性验收</a></h2>
+<h3 id="101-3fbea39-的回归保护"><a class="header" href="#101-3fbea39-的回归保护">10.1 <code>3fbea39</code> 的回归保护</a></h3>
+<ul>
+<li>单份顶层 proof 的编译期结构检查；</li>
+<li>wire/bundle v1、magic、reserved 和固定长度检查；</li>
+<li>CLI 跨进程签名验证、错误 message、非规范 bit tail、截断和 trailing data 拒绝；</li>
+<li>paper tables 的参数交叉检查和 provenance 输出；</li>
+<li>6 个 benchmark-script 单元测试，覆盖 baseline 回退、缺项、非数值 median 和 timeout 状态。</li>
+</ul>
+<h3 id="102-93b42e1-的机制正确性测试"><a class="header" href="#102-93b42e1-的机制正确性测试">10.2 <code>93b42e1</code> 的机制正确性测试</a></h3>
+<ul>
+<li>Ring cache 拒绝被修改的 member/root 和错误参数；</li>
+<li>batch Ring KeyGen 在 1/4 workers 下保持逐 key 输出与 RNG 尾状态一致；</li>
+<li>FDABS Setup/first Issue 保持 tree 未物化，首次 EpochInfo 才构树；</li>
+<li>FDABS incremental tree 与完整 rebuild 逐层相等；</li>
+<li>旧 epoch snapshot 在新 Issue/Revoke 后仍可验证旧签名；</li>
+<li>public root/leaves/active/epoch/params 任一篡改均被拒绝；</li>
+<li><code>FdabsEpochInfo::from_public_snapshot</code> 校验 transport snapshot；</li>
+<li>Group manager public key 与 construction-time matrix snapshot 的绑定测试；</li>
+<li>8x8 McEliece transpose 与 PQClean systematic layout 逐 bit 等价；</li>
+<li>常规 CT AFS API 与显式 serial variant 均和 sparse reference 等价；该测试没有单独固定线程池以保证每次都覆盖常规 API 的并行分支；</li>
+<li>RE cache pointer 稳定、canonical 内容可验证、变异表被拒绝，<code>c=9</code> 返回 owned table；</li>
+<li>benchmark-script 测试扩展到 12 个，新增 51 项、environment drift、speedup 表和 run fingerprint 检查。</li>
+</ul>
+<p>根目录<a href="../../PERFORMANCE_OPTIMIZATION_REPORT_CN_2026-08-02.html">完整报告</a>记录的当次验收为：</p>
+<pre><code class="language-text">cargo test --locked --release: 117 passed, 0 failed, 10 ignored
+just test-no-hw:              117 passed, 0 failed, 10 ignored
+just script-tests:             12 passed
+just paper-tables:             passed
+just bench-check:              passed
+git diff --check:              passed
+</code></pre>
+<p>这是 <code>[Historical snapshot]</code>，描述 2026-08-02 的提交前验收；未来 HEAD 变化后应重新运行，不能永久继承为新版本结论。</p>
+<h2 id="十一可复现核查命令"><a class="header" href="#十一可复现核查命令">十一、可复现核查命令</a></h2>
+<h3 id="111-静态-commit-与-diff"><a class="header" href="#111-静态-commit-与-diff">11.1 静态 commit 与 diff</a></h3>
+<pre><code class="language-bash">git show -s --format=fuller 03a8be9b53a08e575627d5096f103f9fd2b9c2ec
+git show -s --format=fuller 3fbea395a3f62991414d06abd7549bdef3d8ec3a
+git show -s --format=fuller 93b42e12684e9f919c873bad710f67db497603a5
+
+git diff --shortstat 03a8be9b53a08e575627d5096f103f9fd2b9c2ec 3fbea395a3f62991414d06abd7549bdef3d8ec3a
+git diff --shortstat 3fbea395a3f62991414d06abd7549bdef3d8ec3a 93b42e12684e9f919c873bad710f67db497603a5
+git diff --stat 03a8be9b53a08e575627d5096f103f9fd2b9c2ec 93b42e12684e9f919c873bad710f67db497603a5
+
+git diff 3fbea39..93b42e1 -- \
+  src/apps/lifecycle.rs \
+  src/apps/group_signature_sig.rs \
+  src/core/constraint_gen.rs \
+  src/pqclean_mceliece.rs \
+  src/primitives/afs_hash.rs
+</code></pre>
+<h3 id="112-历史源码边界"><a class="header" href="#112-历史源码边界">11.2 历史源码边界</a></h3>
+<pre><code class="language-bash">git show 3fbea39:src/apps/lifecycle.rs | rg -n 'RingContext|build_tree|epoch_info|fdabs_tree'
+git show 3fbea39:src/apps/group_signature_sig.rs | rg -n 'group_keygen_with_rng|group_open|generator_columns'
+git show 3fbea39:scripts/bench_table.py | rg -n 'FULL_EXTRA|required_atomic_sources|load_dataset'
+
+rg -n 'validate_ring_context_cache|ring_keygen_batch_with_rng|update_fdabs_tree_leaves' src/apps/lifecycle.rs
+rg -n 'canonical_re_constraints|MAX_CACHED_C' src/core/constraint_gen.rs
+rg -n 'same_group_public_key_exact|rayon::join|generator_columns' src/apps/group_signature_sig.rs
+</code></pre>
+<h3 id="113-当前测试"><a class="header" href="#113-当前测试">11.3 当前测试</a></h3>
+<pre><code class="language-bash">cargo test --locked --release
+just test-no-hw
+just script-tests
+just paper-tables
+just bench-check
+</code></pre>
+<h3 id="114-用全新输出目录重新做一轮机制-ab"><a class="header" href="#114-用全新输出目录重新做一轮机制-ab">11.4 用全新输出目录重新做一轮机制 A/B</a></h3>
+<p>默认 <code>target/bench_tables</code> 已有冻结指针，直接重复旧命令会按设计拒绝覆盖。下面使用全新的 local-only 输出目录和标签；命令会进行长时间采样，并要求本机 CPU topology、governor/EPP/Turbo 和温度传感器满足 justfile 的固定假设：</p>
+<pre><code class="language-bash">RUN_DIR=target/bench_tables_ab_20260803
+
+just OUT_DIR="$RUN_DIR" \
+  BASELINE_BEFORE_SINGLE=ab_before_single_20260803 \
+  BASELINE_BEFORE_MULTI=ab_before_multi_20260803 \
+  BASELINE_AFTER_SINGLE=ab_after_single_20260803 \
+  BASELINE_AFTER_MULTI=ab_after_multi_20260803 \
+  bench-baseline
+
+# 切换到待比较实现；必须保留完全相同的 Atomic harness 与参数
+just OUT_DIR="$RUN_DIR" \
+  BASELINE_BEFORE_SINGLE=ab_before_single_20260803 \
+  BASELINE_BEFORE_MULTI=ab_before_multi_20260803 \
+  BASELINE_AFTER_SINGLE=ab_after_single_20260803 \
+  BASELINE_AFTER_MULTI=ab_after_multi_20260803 \
+  bench-optimized
+
+just OUT_DIR="$RUN_DIR" \
+  BASELINE_BEFORE_SINGLE=ab_before_single_20260803 \
+  BASELINE_BEFORE_MULTI=ab_before_multi_20260803 \
+  BASELINE_AFTER_SINGLE=ab_after_single_20260803 \
+  BASELINE_AFTER_MULTI=ab_after_multi_20260803 \
+  bench-compare
+</code></pre>
+<p>若新目录中的冻结标签也已存在，recipe 仍会拒绝覆盖。不要删除旧证据后复用名称；需要第三方复核时，还应把整个 <code>$RUN_DIR/criterion_runs</code> 连同汇总表一起归档到 <code>.gitignore</code> 之外的发布工件。</p>
+<h2 id="十二演进总结"><a class="header" href="#十二演进总结">十二、演进总结</a></h2>
+<p>从 <code>03a8be9</code> 到 <code>93b42e1</code> 的变化不是单纯“把代码并行化”：</p>
+<ol>
+<li><code>3fbea39</code> 先把数据来源、single-proof/wire 边界、baseline 隔离和失败状态变成可执行约束；</li>
+<li><code>93b42e1</code> 再把 ReSolveD+ 与 Batch Scope-LRS 纳入同一 51 项 Atomic schema，并建立冻结 before/after 的实验事务；</li>
+<li>RingSig 把 Merkle levels 从每次 Sign/Verify 的临时重建改为构造时缓存，并只在大层并行；</li>
+<li>FDABS 把 warm epoch 查询和撤销从整树重算改为 cache 与路径增量更新，同时用 <code>Arc::make_mut</code> 保留旧 epoch；</li>
+<li>GroupSig 将成员 KeyGen、双 keypair、双 generator 和双 decode 放到适当的并行层级，用 8x8 转置与构造时 snapshot 去掉重复工作；</li>
+<li>这些收益以常驻 tree、Group public-key snapshot、锁操作和可能的 COW clone 为代价；</li>
+<li>正式实测支持 FDABS、Ring <code>ell=10</code> 多核和 Group KeyGen/Open 的机制性改善，也同时记录 Scope-LRS、ReSolveD+ 和部分 Verify 的回归；</li>
+<li>所有倍率都只适用于本章固定的 commit/patch、机器、affinity、worker、Criterion 估计量和 warm-cache timed region，不能脱离这些条件引用。</li>
+</ol>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="13_完整生命周期与原子阶段基准演进.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="13_完整生命周期与原子阶段基准演进.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr-ef4e11c1.min.js"></script>
+        <script src="mark-09e88c2c.min.js"></script>
+        <script src="searcher-09f2665d.js"></script>
+
+        <script src="clipboard-1626706a.min.js"></script>
+        <script src="highlight-abc7f01d.js"></script>
+        <script src="book-609e4cb8.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="mermaid-eefea253.min.js"></script>
+        <script src="mermaid-init-ccf746f1.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

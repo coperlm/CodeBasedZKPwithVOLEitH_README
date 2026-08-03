@@ -1,0 +1,574 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>模块十二：新版变更与历史性能数据</title>
+
+
+        <!-- Custom HTML head -->
+        <!-- MathJax 2 配置（mdBook 默认版本） -->
+        <script type="text/x-mathjax-config">
+          MathJax.Hub.Config({
+            tex2jax: {
+              inlineMath: [['$','$'], ['\\(','\\)']],
+              displayMath: [['$$','$$'], ['\\[','\\]']],
+              processEscapes: true
+            }
+          });
+        </script>
+        
+        <!-- MathJax 3 配置（兼容未来升级） -->
+        <script>
+          window.MathJax = {
+            tex: {
+              inlineMath: [['$', '$'], ['\\(', '\\)']],
+              displayMath: [['$$', '$$'], ['\\[', '\\]']],
+              processEscapes: true
+            }
+          };
+        </script>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="favicon-8114d1fc.png">
+        <link rel="stylesheet" href="css/variables-8adf115d.css">
+        <link rel="stylesheet" href="css/general-e96d0476.css">
+        <link rel="stylesheet" href="css/chrome-d279d366.css">
+        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex-c9994b1b.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc-86594551.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title"></h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <blockquote>
+<p>历史数据整理稿。 以下表格混合引用时必须核对 commit、CPU affinity、线程数和估计量；不同运行/估计量不应直接用于因果结论。</p>
+</blockquote>
+<ol>
+<li>测试区分单核和多核，单核用于和其他方向进行比对，多核旨在测试性能极限</li>
+<li>补全 sign和verify以外的步骤，从零知识关系升级为完整签名</li>
+<li>进一步的性能优化</li>
+</ol>
+<p>根据您提供的 Criterion 性能测试日志（取 <code>[low, median, high]</code> 中的中位数 median 值），我为您整理成了与图中格式一致的 Markdown 表格。</p>
+<p>注：所有时间的单位均为 <strong>ms (毫秒)</strong>。日志中未包含 <code>ReSolveD+</code> 和 <code>Batched Scope-LRS</code> 的具体运行耗时（仅包含 Setup 和线材大小信息），因此在表格中以 <code>—</code> 表示。</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th style="text-align: left">方案大类<br>(Scheme)</th><th style="text-align: left">参数 ($\ell$)</th><th style="text-align: left">初始化<br>Setup</th><th style="text-align: left">密钥/凭证生成<br>KeyGen / Issue</th><th style="text-align: left">状态/现场同步<br>Context / EpochInfo</th><th style="text-align: left">签名/零知识证明<br>Sign</th><th style="text-align: left">验证<br>Verify</th><th style="text-align: left">扩展操作<br>Open/Revoke/Link</th></tr>
+</thead>
+<tbody>
+<tr><td style="text-align: left"><strong>ReSolveD+</strong><br>(基础签名)</td><td style="text-align: left">—</td><td style="text-align: left">—</td><td style="text-align: left">—</td><td style="text-align: left">—</td><td style="text-align: left">—</td><td style="text-align: left">—</td><td style="text-align: left">—</td></tr>
+<tr><td style="text-align: left"><strong>RingSig</strong><br>(环签名)</td><td style="text-align: left">ell=5</td><td style="text-align: left">0.000</td><td style="text-align: left">1.106</td><td style="text-align: left">0.437</td><td style="text-align: left">80.392</td><td style="text-align: left">42.019</td><td style="text-align: left">—</td></tr>
+<tr><td style="text-align: left"></td><td style="text-align: left">ell=10</td><td style="text-align: left">0.000</td><td style="text-align: left">1.106</td><td style="text-align: left">14.196</td><td style="text-align: left">160.433</td><td style="text-align: left">86.825</td><td style="text-align: left">—</td></tr>
+<tr><td style="text-align: left"><strong>Scope-LRS</strong><br>(可链接环)</td><td style="text-align: left">ell=5</td><td style="text-align: left">0.000</td><td style="text-align: left">1.101</td><td style="text-align: left">0.001</td><td style="text-align: left">90.770</td><td style="text-align: left">48.502</td><td style="text-align: left">Link: 0.000</td></tr>
+<tr><td style="text-align: left"></td><td style="text-align: left">ell=10</td><td style="text-align: left">0.000</td><td style="text-align: left">1.097</td><td style="text-align: left">0.001</td><td style="text-align: left">154.886</td><td style="text-align: left">77.875</td><td style="text-align: left">Link: 0.000</td></tr>
+<tr><td style="text-align: left"><strong>Batch Scope-LRS</strong><br>(批量可链接环)</td><td style="text-align: left">ell=5, <br>N=10</td><td style="text-align: left">—</td><td style="text-align: left">—</td><td style="text-align: left">—</td><td style="text-align: left">—</td><td style="text-align: left">—</td><td style="text-align: left">—</td></tr>
+<tr><td style="text-align: left"><strong>GroupSig</strong><br>(群签名)</td><td style="text-align: left">ell=5</td><td style="text-align: left">179.976</td><td style="text-align: left">54.503</td><td style="text-align: left">—</td><td style="text-align: left">106.178</td><td style="text-align: left">66.420</td><td style="text-align: left">Open: 118.860</td></tr>
+<tr><td style="text-align: left"></td><td style="text-align: left">ell=10</td><td style="text-align: left">179.654</td><td style="text-align: left">1202.222</td><td style="text-align: left">—</td><td style="text-align: left">186.737</td><td style="text-align: left">98.794</td><td style="text-align: left">Open: 147.116</td></tr>
+<tr><td style="text-align: left"><strong>FDABS</strong><br>(动态属性基)</td><td style="text-align: left">ell=5</td><td style="text-align: left">0.004</td><td style="text-align: left">1.470</td><td style="text-align: left">0.357</td><td style="text-align: left">77.206</td><td style="text-align: left">39.872</td><td style="text-align: left">Revoke: 0.338</td></tr>
+<tr><td style="text-align: left"></td><td style="text-align: left">ell=10</td><td style="text-align: left">0.148</td><td style="text-align: left">1.430</td><td style="text-align: left">9.919</td><td style="text-align: left">153.538</td><td style="text-align: left">80.460</td><td style="text-align: left">Revoke: 9.951</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="数据提取说明"><a class="header" href="#数据提取说明">数据提取说明：</a></h3>
+<ol>
+<li><strong>数据选取</strong>：各项指标均严格提取了原始数据 <code>time: [ low, median, high ]</code> 中的中间值（即<strong>中位数 Median</strong>）。</li>
+<li><strong>极小数值</strong>：原始数据中 <code>Scope-LRS</code>、<code>RingSig</code> 的 Setup 或 Link 环节给出的结果直接为 <code>0.000 ms</code>（低于毫秒级精度阈值），在此原样保留。</li>
+<li><strong>扩展操作</strong>：GroupSig 提取了 <code>Open</code> 耗时，FDABS 提取了 <code>UpdateRevoke</code> 耗时，Scope-LRS 提取了 <code>Link</code> 耗时，均合并填入最后一列。</li>
+</ol>
+<h2 id="原始数据"><a class="header" href="#原始数据">原始数据</a></h2>
+<pre><code class="language-txt">[coper@coperpc CodeBasedZKPwithVOLEitH]$ RAYON_NUM_THREADS=1 RUST_TEST_THREADS=1 taskset -c 2 target/release/deps/paper_benchmarks-446a28e9f0a478d1 --bench Atomic --sample-size 10 --save-baseline final_single_pcore
+Gnuplot not found, using plotters backend
+
+=== ReSolveD+ (n=453, c=3) ===
+[Setup] n = 453, c = 3, m = 1208 (B matrix: 1208 cols × 453 rows, 0.07 MB)
+[ReSolveD+ (n=453, c=3)] Protocol (l, t, d) = (453, 453, 3): witness 453 bits, 453 constraints, max degree 3
+[ReSolveD+ (n=453, c=3)] Canonical wire: 3159 bytes (correction 453 bits, proof coeffs 3, FAEST VOLE payload 3002 bytes)
+
+=== RingSig (n=1280, ℓ=5, c=8) ===
+[Setup] n = 1280, ell = 5, leaf_secret_len = 2560, B0/B1: each 40960 cols × 1280 rows (6.2 MB each)
+[RingSig (n=1280, ℓ=5, c=8)] Protocol (l, t, d) = (15365, 7680, 9): witness 15365 bits, 7680 constraints, max degree 9
+[Setup] Constraint gen skipped: formula count, implicit hot path only
+[RingSig (n=1280, ℓ=5, c=8)] Canonical wire: 35737 bytes (correction 15365 bits, proof coeffs 9, FAEST VOLE payload 33620 bytes)
+
+=== RingSig (n=1280, ℓ=10, c=8) ===
+[Setup] n = 1280, ell = 10, leaf_secret_len = 2560, B0/B1: each 40960 cols × 1280 rows (6.2 MB each)
+[RingSig (n=1280, ℓ=10, c=8)] Protocol (l, t, d) = (28170, 14080, 9): witness 28170 bits, 14080 constraints, max degree 9
+[Setup] Constraint gen skipped: formula count, implicit hot path only
+[RingSig (n=1280, ℓ=10, c=8)] Canonical wire: 61353 bytes (correction 28170 bits, proof coeffs 9, FAEST VOLE payload 57635 bytes)
+
+=== Scope-LRS (n=1280, ell=5, c=8) ===
+[Setup] n = 1280, ell = 5, B_link derived from context id, key image = 1280 bits
+[+] Streaming Matrix PRG Enabled: Peak memory usage remains O(1) during execution
+[Scope-LRS (n=1280, ell=5, c=8)] Protocol (l, t, d) = (15365, 8960, 9): witness 15365 bits, 8960 constraints, max degree 9
+[Scope-LRS (n=1280, ell=5, c=8)] Canonical wire: 35905 bytes = 35.06 KiB (key image 1280 bits)
+
+=== Scope-LRS (n=1280, ell=10, c=8) ===
+[Setup] n = 1280, ell = 10, B_link derived from context id, key image = 1280 bits
+[+] Streaming Matrix PRG Enabled: Peak memory usage remains O(1) during execution
+[Scope-LRS (n=1280, ell=10, c=8)] Protocol (l, t, d) = (28170, 15360, 9): witness 28170 bits, 15360 constraints, max degree 9
+[Scope-LRS (n=1280, ell=10, c=8)] Canonical wire: 61521 bytes = 60.08 KiB (key image 1280 bits)
+
+=== Batched Scope-LRS (N=10, n=1280, ell=5, c=8) ===
+[+] Streaming Matrix PRG Enabled: Peak memory usage remains O(1) during execution
+[+] Static amortization: one global commitment/proof covers 10 independent messages
+[Batched Scope-LRS (N=10, n=1280, ell=5, c=8)] Protocol (l, t, d) = (153650, 89600, 9): witness 153650 bits, 89600 constraints, max degree 9
+[Batched Scope-LRS (N=10, n=1280, ell=5, c=8)] Canonical batch wire: 314001 bytes = 306.64 KiB (key images 12800 bits)
+[Batched Scope-LRS (N=10, n=1280, ell=5, c=8)] Amortized size per sig: 30.66 KB
+
+=== GroupSig (n=1280, ℓ=5, ne=4096, ke=3328, c_hash=8, c_e=6) ===
+[Setup] n = 1280, ell = 5, leaf_secret_len = 2560, ne = 4096, ke = 3328, k_noise = 384
+[Setup] B0/B1: each 40960 cols × 1280 rows (6.2 MB), G1/G2: each 3328 cols × 4096 rows (1.6 MB)
+[GroupSig (n=1280, ℓ=5, ne=4096, ke=3328, c_hash=8, c_e=6)] Protocol (l, t, d) = (22779, 15872, 9): witness 22779 bits, 15872 constraints, max degree 9
+[Setup] Constraint gen skipped: formula count, implicit hot path only
+[GroupSig (n=1280, ℓ=5, ne=4096, ke=3328, c_hash=8, c_e=6)] Canonical wire: 51609 bytes (c1 4096 bits, c2 4096 bits, correction 22779 bits, proof coeffs 9, FAEST VOLE payload 47525 bytes)
+
+=== GroupSig (n=1280, ℓ=10, ne=4096, ke=3328, c_hash=8, c_e=6) ===
+[Setup] n = 1280, ell = 10, leaf_secret_len = 2560, ne = 4096, ke = 3328, k_noise = 384
+[Setup] B0/B1: each 40960 cols × 1280 rows (6.2 MB), G1/G2: each 3328 cols × 4096 rows (1.6 MB)
+[GroupSig (n=1280, ℓ=10, ne=4096, ke=3328, c_hash=8, c_e=6)] Protocol (l, t, d) = (35574, 22272, 9): witness 35574 bits, 22272 constraints, max degree 9
+[Setup] Constraint gen skipped: formula count, implicit hot path only
+[GroupSig (n=1280, ℓ=10, ne=4096, ke=3328, c_hash=8, c_e=6)] Canonical wire: 77193 bytes (c1 4096 bits, c2 4096 bits, correction 35574 bits, proof coeffs 9, FAEST VOLE payload 71510 bytes)
+
+=== FDABS (n=1280, ℓ=5, L=128, K=512, rand=1536, c=8) ===
+[Setup] n = 1280, ell = 5, attr_len = 128, randomness_len = 1536, K = 512 multiplication gates
+[Setup] B0/B1: each 40960 cols × 1280 rows (6.2 MB)
+[Setup] B_leaf: 53248 cols × 1280 rows (8.1 MB)
+[FDABS (n=1280, ℓ=5, L=128, K=512, rand=1536, c=8)] Protocol (l, t, d) = (14981, 8194, 9): witness 14981 bits, 8194 constraints, max degree 9
+[Setup] Constraint gen skipped: formula count, implicit hot path only
+[FDABS (n=1280, ℓ=5, L=128, K=512, rand=1536, c=8)] Canonical wire: 34969 bytes (correction 14981 bits, proof coeffs 9, FAEST VOLE payload 32900 bytes)
+
+=== FDABS (n=1280, ℓ=10, L=128, K=512, rand=1536, c=8) ===
+[Setup] n = 1280, ell = 10, attr_len = 128, randomness_len = 1536, K = 512 multiplication gates
+[Setup] B0/B1: each 40960 cols × 1280 rows (6.2 MB)
+[Setup] B_leaf: 53248 cols × 1280 rows (8.1 MB)
+[FDABS (n=1280, ℓ=10, L=128, K=512, rand=1536, c=8)] Protocol (l, t, d) = (27786, 14594, 9): witness 27786 bits, 14594 constraints, max degree 9
+[Setup] Constraint gen skipped: formula count, implicit hot path only
+[FDABS (n=1280, ℓ=10, L=128, K=512, rand=1536, c=8)] Canonical wire: 60585 bytes (correction 27786 bits, proof coeffs 9, FAEST VOLE payload 56915 bytes)
+Atomic/RingSig_ell5/Setup
+                        time:   [     0.000 ms      0.000 ms      0.000 ms]
+                        change: [-3.6597% -2.6174% -1.8670%] (p = 0.00 &lt; 0.05)
+                        Performance has improved.
+Atomic/RingSig_ell5/KeyGen
+                        time:   [     1.100 ms      1.106 ms      1.120 ms]
+                        change: [-7.0044% -3.3956% -0.6699%] (p = 0.05 &gt; 0.05)
+                        No change in performance detected.
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high severe
+Atomic/RingSig_ell5/Context
+                        time:   [     0.433 ms      0.437 ms      0.442 ms]
+                        change: [-2.2077% -0.1465% +1.6509%] (p = 0.89 &gt; 0.05)
+                        No change in performance detected.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Atomic/RingSig_ell5/Sign
+                        time:   [    79.950 ms     80.392 ms     81.276 ms]
+                        change: [-3.8509% -0.4961% +3.2927%] (p = 0.81 &gt; 0.05)
+                        No change in performance detected.
+Found 2 outliers among 10 measurements (20.00%)
+  1 (10.00%) high mild
+  1 (10.00%) high severe
+Atomic/RingSig_ell5/Verify
+                        time:   [    41.219 ms     42.019 ms     43.692 ms]
+                        change: [-4.6546% -1.7630% +1.1542%] (p = 0.31 &gt; 0.05)
+                        No change in performance detected.
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high severe
+
+Atomic/ScopeLRS_ell5/Setup
+                        time:   [     0.000 ms      0.000 ms      0.000 ms]
+                        change: [-29.468% -17.327% -7.2533%] (p = 0.02 &lt; 0.05)
+                        Performance has improved.
+Found 4 outliers among 10 measurements (40.00%)
+  2 (20.00%) low mild
+  2 (20.00%) high severe
+Atomic/ScopeLRS_ell5/KeyGen
+                        time:   [     1.100 ms      1.101 ms      1.101 ms]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+Atomic/ScopeLRS_ell5/Context
+                        time:   [     0.001 ms      0.001 ms      0.001 ms]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+Benchmarking Atomic/ScopeLRS_ell5/Sign: Warming up for 3.0000 s
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 5.0s or enable flat sampling.
+Atomic/ScopeLRS_ell5/Sign
+                        time:   [    90.418 ms     90.770 ms     91.794 ms]
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high severe
+Atomic/ScopeLRS_ell5/Verify
+                        time:   [    46.954 ms     48.502 ms     51.454 ms]
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high severe
+Atomic/ScopeLRS_ell5/Link
+                        time:   [     0.000 ms      0.000 ms      0.000 ms]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+
+Atomic/GroupSig_ell5/Setup
+                        time:   [   157.227 ms    179.976 ms    203.940 ms]
+Atomic/GroupSig_ell5/KeyGen
+                        time:   [    53.600 ms     54.503 ms     55.695 ms]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+Benchmarking Atomic/GroupSig_ell5/Sign: Warming up for 3.0000 s
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 5.9s or enable flat sampling.
+Atomic/GroupSig_ell5/Sign
+                        time:   [   105.549 ms    106.178 ms    107.422 ms]
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high severe
+Atomic/GroupSig_ell5/Verify
+                        time:   [    65.993 ms     66.420 ms     67.439 ms]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking Atomic/GroupSig_ell5/Open: Warming up for 3.0000 s
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 6.6s or enable flat sampling.
+Atomic/GroupSig_ell5/Open
+                        time:   [   117.696 ms    118.860 ms    119.707 ms]
+
+Atomic/FDABS_ell5/Setup time:   [     0.004 ms      0.004 ms      0.004 ms]
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high severe
+Atomic/FDABS_ell5/Issue time:   [     1.436 ms      1.470 ms      1.532 ms]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+Atomic/FDABS_ell5/EpochInfo
+                        time:   [     0.357 ms      0.357 ms      0.359 ms]
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high severe
+Atomic/FDABS_ell5/UpdateRevoke
+                        time:   [     0.337 ms      0.338 ms      0.338 ms]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Atomic/FDABS_ell5/Sign  time:   [    76.601 ms     77.206 ms     77.965 ms]
+Atomic/FDABS_ell5/Verify
+                        time:   [    39.386 ms     39.872 ms     40.971 ms]
+Found 2 outliers among 10 measurements (20.00%)
+  1 (10.00%) high mild
+  1 (10.00%) high severe
+
+Atomic/RingSig_ell10/Setup
+                        time:   [     0.000 ms      0.000 ms      0.000 ms]
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high severe
+Atomic/RingSig_ell10/KeyGen
+                        time:   [     1.101 ms      1.106 ms      1.112 ms]
+Found 2 outliers among 10 measurements (20.00%)
+  1 (10.00%) high mild
+  1 (10.00%) high severe
+Benchmarking Atomic/RingSig_ell10/Context: Warming up for 3.0000 s
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 11.5s.
+Atomic/RingSig_ell10/Context
+                        time:   [    14.128 ms     14.196 ms     14.286 ms]
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high severe
+Benchmarking Atomic/RingSig_ell10/Sign: Warming up for 3.0000 s
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 8.9s or enable flat sampling.
+Atomic/RingSig_ell10/Sign
+                        time:   [   158.598 ms    160.433 ms    162.632 ms]
+Found 2 outliers among 10 measurements (20.00%)
+  1 (10.00%) high mild
+  1 (10.00%) high severe
+Atomic/RingSig_ell10/Verify
+                        time:   [    86.296 ms     86.825 ms     87.659 ms]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+
+Atomic/ScopeLRS_ell10/Setup
+                        time:   [     0.000 ms      0.000 ms      0.000 ms]
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high severe
+Atomic/ScopeLRS_ell10/KeyGen
+                        time:   [     1.093 ms      1.097 ms      1.109 ms]
+Found 2 outliers among 10 measurements (20.00%)
+  1 (10.00%) high mild
+  1 (10.00%) high severe
+Atomic/ScopeLRS_ell10/Context
+                        time:   [     0.001 ms      0.001 ms      0.001 ms]
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high severe
+Benchmarking Atomic/ScopeLRS_ell10/Sign: Warming up for 3.0000 s
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 8.6s or enable flat sampling.
+Atomic/ScopeLRS_ell10/Sign
+                        time:   [   154.786 ms    154.886 ms    154.958 ms]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Atomic/ScopeLRS_ell10/Verify
+                        time:   [    77.646 ms     77.875 ms     78.225 ms]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+Atomic/ScopeLRS_ell10/Link
+                        time:   [     0.000 ms      0.000 ms      0.000 ms]
+Found 2 outliers among 10 measurements (20.00%)
+  1 (10.00%) high mild
+  1 (10.00%) high severe
+
+Benchmarking Atomic/GroupSig_ell10/Setup: Warming up for 3.0000 s
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 9.4s or enable flat sampling.
+Atomic/GroupSig_ell10/Setup
+                        time:   [   161.258 ms    179.654 ms    200.711 ms]
+Benchmarking Atomic/GroupSig_ell10/KeyGen: Warming up for 3.0000 s
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 12.2s.
+Atomic/GroupSig_ell10/KeyGen
+                        time:   [  1162.376 ms   1202.222 ms   1252.469 ms]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+Atomic/GroupSig_ell10/Sign
+                        time:   [   184.257 ms    186.737 ms    190.362 ms]
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high severe
+Benchmarking Atomic/GroupSig_ell10/Verify: Warming up for 3.0000 s
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 5.9s or enable flat sampling.
+Atomic/GroupSig_ell10/Verify
+                        time:   [    96.698 ms     98.794 ms    104.330 ms]
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high severe
+Benchmarking Atomic/GroupSig_ell10/Open: Warming up for 3.0000 s
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 8.1s or enable flat sampling.
+Atomic/GroupSig_ell10/Open
+                        time:   [   146.504 ms    147.116 ms    148.152 ms]
+Found 2 outliers among 10 measurements (20.00%)
+  1 (10.00%) low mild
+  1 (10.00%) high severe
+
+Atomic/FDABS_ell10/Setup
+                        time:   [     0.146 ms      0.148 ms      0.150 ms]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Atomic/FDABS_ell10/Issue
+                        time:   [     1.422 ms      1.430 ms      1.445 ms]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+Atomic/FDABS_ell10/EpochInfo
+                        time:   [     9.901 ms      9.919 ms      9.934 ms]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Atomic/FDABS_ell10/UpdateRevoke
+                        time:   [     9.893 ms      9.951 ms     10.061 ms]
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high severe
+Benchmarking Atomic/FDABS_ell10/Sign: Warming up for 3.0000 s
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 8.7s or enable flat sampling.
+Atomic/FDABS_ell10/Sign time:   [   150.779 ms    153.538 ms    157.817 ms]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Atomic/FDABS_ell10/Verify
+                        time:   [    79.750 ms     80.460 ms     81.524 ms]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+</code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="11_代码2.0.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="13_完整生命周期与原子阶段基准演进.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="11_代码2.0.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="13_完整生命周期与原子阶段基准演进.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr-ef4e11c1.min.js"></script>
+        <script src="mark-09e88c2c.min.js"></script>
+        <script src="searcher-09f2665d.js"></script>
+
+        <script src="clipboard-1626706a.min.js"></script>
+        <script src="highlight-abc7f01d.js"></script>
+        <script src="book-609e4cb8.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="mermaid-eefea253.min.js"></script>
+        <script src="mermaid-init-ccf746f1.js"></script>
+
+
+
+    </div>
+    </body>
+</html>

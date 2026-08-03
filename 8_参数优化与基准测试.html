@@ -57,10 +57,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-01d2389d.js";
+            window.path_to_searchindex_js = "searchindex-c9994b1b.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-04b28919.js"></script>
+        <script src="toc-86594551.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -197,6 +197,9 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="模块八参数配置工程优化与基准测试安全分析与性能报告"><a class="header" href="#模块八参数配置工程优化与基准测试安全分析与性能报告">模块八：参数配置、工程优化与基准测试——安全分析与性能报告</a></h1>
+<blockquote>
+<p>论文对齐边界： 当前默认路径保持 Table 2 的 <code>q=2^8</code>、<code>tau=16</code>、关系 degree 与单份完整证明。任何扩域、增大 <code>tau</code> 或并行重复都必须作为独立增强变体，不得替换论文复现路径。</p>
+</blockquote>
 <h2 id="一概述"><a class="header" href="#一概述">一、概述</a></h2>
 <p>本模块说明安全参数、签名表示和性能实现：</p>
 <ol>
@@ -241,6 +244,7 @@ $$</p>
 degree=9, combination=128, delta=120 → bit_security ≈ 116.829
 </code></pre>
 <p>该数值用于说明当前参数下关系证明的可靠性量级，并可与论文中的参数分析对照。</p>
+<p>论文定义 <code>S_Delta=F_q^tau</code>，Table 2 的 <code>q=2^8, tau=16</code> 给出 128-bit 完整 Delta 域；degree-9 Theorem 1 bound 为 124.678 bits。当前 FAEST opening vector 还固定 8 个 grinding 位，保守的 120-active-bit 统计解读为 116.829 bits，把 grinding 工作单独计入时为 124.829-bit 乐观工作因子。这是公开披露的余量，不通过改变论文默认协议来隐藏。</p>
 <p>单独记录 grinding：$w_\text{grind} = 8$ 比特意味着平均约 $2^8$ 次 opening challenge 尝试。代码把它作为工作因子单独报告：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -253,18 +257,18 @@ degree=9, combination=128, delta=120 → bit_security ≈ 116.829
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>方案</th><th>$n$</th><th>$c$</th><th>$d$</th><th>挑战域</th><th>$\Delta$ 预估比特</th><th style="text-align: right">关系证明可靠性估计</th><th style="text-align: right">Grinding 工作因子</th></tr>
+<tr><th>方案</th><th>$n$</th><th>$c$</th><th>$d$</th><th style="text-align: right">论文完整 Delta <code>[Formula]</code></th><th style="text-align: right">可执行保守统计 bound <code>[Formula]</code></th><th style="text-align: right">+8 grinding 乐观工作因子 <code>[Formula]</code></th></tr>
 </thead>
 <tbody>
-<tr><td>ReSolveD+（论文表 6 Var2）</td><td>453</td><td>3</td><td>3</td><td>128</td><td>120</td><td style="text-align: right">~118.4 bit</td><td style="text-align: right">8 bit</td></tr>
-<tr><td>环签名 / 群签名 / FDABS</td><td>1280</td><td>8</td><td>9</td><td>128</td><td>120</td><td style="text-align: right">~116.8 bit</td><td style="text-align: right">8 bit</td></tr>
+<tr><td>ReSolveD+（论文表 6 Var2）</td><td>453</td><td>3</td><td>3</td><td style="text-align: right">126.000 bit</td><td style="text-align: right">118.413 bit</td><td style="text-align: right">126.413 bit</td></tr>
+<tr><td>环签名 / 群签名 / FDABS</td><td>1280</td><td>8</td><td>9</td><td style="text-align: right">124.678 bit</td><td style="text-align: right">116.829 bit</td><td style="text-align: right">124.829 bit</td></tr>
 </tbody>
 </table>
 </div>
 <p>环签名等方案度数 $d = c+1 = 9$（因方向比特多一度），但安全分析仍适用相同的 bound 公式。</p>
 <h2 id="三resolved-紧凑序列化artifact_bundlers"><a class="header" href="#三resolved-紧凑序列化artifact_bundlers">三、ReSolveD+ 紧凑序列化：<code>artifact_bundle.rs</code></a></h2>
 <h3 id="31-签名体积的理论基础"><a class="header" href="#31-签名体积的理论基础">3.1 签名体积的理论基础</a></h3>
-<p>论文表 7 的优化 ReSolveD+ 条目为 3054 B；本仓库论文参数下 <code>Signature::to_bytes()</code> 的规范签名字节长度为 3159 B。传统基于 Stern 协议的 ZKP 签名：每次重复需要约 $k$ 比特的承诺和打开数据，重复 $\lambda$ 次（$\lambda = 128$），总签名体积通常在兆字节（MB）级别。</p>
+<p>论文表 7 的优化 ReSolveD+ 条目为 3054 B <code>[Hardcoded External Baseline]</code>，它与可执行 wire 的 payload 边界不同。本仓库论文参数下的单证明 canonical <code>Signature::to_bytes()</code> 为 3159 B <code>[Measured wire length]</code>。</p>
 <p>VOLEitH 方法：通过 $\tau$ 棵 GGM 树并行承诺 + 选择性打开，签名体积压缩到 KB 级别。核心压缩机制：</p>
 <div class="table-wrapper">
 <table>
@@ -282,7 +286,7 @@ degree=9, combination=128, delta=120 → bit_security ≈ 116.829
 <tr><td>VOLE subtotal</td><td></td><td>~3 KB</td></tr>
 <tr><td>Correction</td><td>$k$ 比特</td><td>~56 B</td></tr>
 <tr><td>Proof Coeffs</td><td>$d$ 个 $\mathbb{F}_{2^{128}}$ 元素</td><td>$d \times 16$ B</td></tr>
-<tr><td>ReSolveD+ 规范签名总计</td><td></td><td>3159 B</td></tr>
+<tr><td>ReSolveD+ canonical 签名总计</td><td>单份完整证明 + framing</td><td>3159 B</td></tr>
 </tbody>
 </table>
 </div>
@@ -301,7 +305,7 @@ pub const ARTIFACT_SIGNATURE_BYTES: usize = 3159;
 </span><span class="boring">fn main() {
 </span>bytes.extend_from_slice(&amp;public_key.b_cols.seed());  // 仅 16 字节
 <span class="boring">}</span></code></pre>
-<p>Verifier 解码该封装时用 <code>StreamingMatrixCols::new(seed, rows, cols)</code> 重新生成矩阵。该封装还包含公开输出和规范签名，因此其总大小为 3292 B；3159 B 仅指其中的规范签名。</p>
+<p>Verifier 解码该封装时用 <code>StreamingMatrixCols::new(seed, rows, cols)</code> 重新生成矩阵。该封装还包含公开输出和规范签名，总大小为 3292 B <code>[Measured wire length]</code>；3159 B 仅指其中的 canonical signature。</p>
 <h4 id="策略二紧凑位编码"><a class="header" href="#策略二紧凑位编码">策略二：紧凑位编码</a></h4>
 <p>所有比特向量使用精确比特数编码（<code>canonical_bit_bytes</code>），移除尾部未使用比特：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -322,7 +326,7 @@ pub const ARTIFACT_SIGNATURE_BYTES: usize = 3159;
 </span>pub(crate) const FAEST_VOLE_HASH_OUTPUT_BYTES: usize = 18; // 128 + 16 比特
 <span class="boring">}</span></code></pre>
 <h4 id="策略四固定且极少的盲化系数"><a class="header" href="#策略四固定且极少的盲化系数">策略四：固定且极少的盲化系数</a></h4>
-<p>不同关系的 proof 系数数量由关系最高次数决定；下表为系数载荷。</p>
+<p>不同关系的 proof 系数数量由关系最高次数决定；下表为默认单份 proof 的系数载荷。</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -350,11 +354,11 @@ const VERSION: u16 = 1;
 <li>参数硬编码检查：解码时验证 <code>(k, c, rows, cols, y_bits)</code> 必须匹配常量，防止跨参数集误用</li>
 </ul>
 <h3 id="34-当前序列化签名体积与论文分析值"><a class="header" href="#34-当前序列化签名体积与论文分析值">3.4 当前序列化签名体积与论文分析值</a></h3>
-<p>论文表 3–5 给出的是参数化通信量分析；本项目的签名采用版本化编码，实际体积如下（完整性能表见模块十）：</p>
+<p>论文表 3–5 给出的是 <code>[Formula]</code> 通信量；下表是指定开发运行的实测快照，引用时必须同时给出 commit 和 metadata：</p>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>方案</th><th>参数</th><th style="text-align: right">签名体积</th></tr>
+<tr><th>方案</th><th>参数</th><th style="text-align: right">签名体积 <code>[Measured snapshot]</code></th></tr>
 </thead>
 <tbody>
 <tr><td>ReSolveD+</td><td>$n=453,c=3$</td><td style="text-align: right">3.08 KiB</td></tr>
