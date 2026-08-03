@@ -351,17 +351,24 @@ pub fn absorb_bits(&mut self, label: &[u8], bits: &MainBitSlice) {
 }
 ```
 
-`absorb_matrix(label, matrix)` 吸收流式矩阵（只吸收种子，不吸收整个矩阵）：
+`absorb_matrix(label, matrix)` 吸收流式矩阵的完整紧凑描述，而不吸收整个物化矩阵：
 
 ```rust
 pub fn absorb_matrix(&mut self, label: &[u8], matrix: &StreamingMatrixCols) {
     self.absorb_usize(label, matrix.rows());
     self.absorb_usize(label, matrix.cols());
     self.absorb_labelled_bytes(label, &matrix.seed());
+    let iv = matrix.iv();
+    if iv != [0u8; 16] {
+        let mut iv_label = Vec::with_capacity(label.len() + 3);
+        iv_label.extend_from_slice(label);
+        iv_label.extend_from_slice(b".iv");
+        self.absorb_labelled_bytes(&iv_label, &iv);
+    }
 }
 ```
 
-这利用了矩阵的伪随机性质，矩阵由种子 $\sigma$ 确定，吸收 $\sigma$ 就等价于吸收了整个矩阵。
+矩阵由 rows/cols、AES key（`seed`）与 IV 唯一确定。零 IV 是旧论文对齐路径；为保持其 transcript 逐字节兼容，零 IV 不增加新 frame。非零 IV 则必须以 `label.iv` 吸收，否则同 seed/维度下的两个不同矩阵会共享 statement digest。
 
 ### 4.4 Squeeze 方法
 
