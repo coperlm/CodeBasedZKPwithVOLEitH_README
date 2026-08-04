@@ -58,7 +58,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-c9994b1b.js";
+            window.path_to_searchindex_js = "searchindex-57bf697a.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-86594551.js"></script>
@@ -290,7 +290,7 @@ $$</p>
 B \in \mathbb{F}_2^{n \times m}, \quad n = 1280,\ m = (1280/8)\cdot 2^8 = 40960
 $$</p>
 <p>若直接物化，该单个矩阵约为 $1280 \times 40960\text{ bits}=6.25\text{ MiB}$（不计容器开销）。上层关系会在求值时反复访问这类矩阵；完整保存多张矩阵会增大内存占用并降低缓存局部性。应用层的种子派生矩阵与 FAEST 的 VOLE/BAVC 树是不同对象：前者服务于 AFS 哈希和线性关系，后者服务于 VOLE 承诺与打开。</p>
-<p>本实现采用列式伪随机流式生成，不存储整个矩阵，而是存储一个 128-bit 种子，在需要某一列时即时计算。</p>
+<p>本实现采用列式伪随机流式生成，不存储整个矩阵，而是存储一个 128-bit AES key、一个 128-bit IV 和维度。论文对齐矩阵的 IV 为零；Scope-LRS <code>ChosenScope256</code> 允许非零 IV。某一列仍只在被请求时即时计算。</p>
 <h3 id="32-核心数据结构与公式-代码映射"><a class="header" href="#32-核心数据结构与公式-代码映射">3.2 核心数据结构与公式-代码映射</a></h3>
 <div class="table-wrapper">
 <table>
@@ -298,8 +298,9 @@ $$</p>
 <tr><th>数学符号</th><th>代码对应</th><th>说明</th></tr>
 </thead>
 <tbody>
-<tr><td>$B \in \mathbb{F}_2^{n \times m}$</td><td><code>StreamingMatrixCols</code></td><td>不存储矩阵本身，仅持有种子和维度信息</td></tr>
-<tr><td>种子 $\sigma$</td><td><code>seed: [u8; 16]</code></td><td>128-bit PRG 种子，用于确定性扩展</td></tr>
+<tr><td>$B \in \mathbb{F}_2^{n \times m}$</td><td><code>StreamingMatrixCols</code></td><td>不存储矩阵本身，仅持有 AES key/IV 和维度信息</td></tr>
+<tr><td>种子/AES key $\sigma$</td><td><code>seed: [u8; 16]</code></td><td>128-bit AES key，用于确定性扩展</td></tr>
+<tr><td>初始计数器 $\nu$</td><td><code>iv: [u8; 16]</code></td><td>论文对齐路径为零；256-bit 派生路径使用后 128 bit</td></tr>
 <tr><td>行数 $n$</td><td><code>rows: usize</code></td><td>矩阵行数</td></tr>
 <tr><td>列数 $m$</td><td><code>cols: usize</code></td><td>矩阵列数</td></tr>
 <tr><td>$B_{:,j}$（第 $j$ 列）</td><td><code>column(j) -&gt; BitVec</code></td><td>按需生成第 $j$ 列</td></tr>
@@ -311,11 +312,11 @@ $$</p>
 <pre class="mermaid">graph TD
     subgraph SMC [StreamingMatrixCols&lt;br&gt;核心逻辑]
         direction TB
-        A[seed: 16 Bytes] --&gt;|初始化 MatrixPrg| B(AES-128 密钥扩展)
+        A[key: 16 Bytes&lt;br&gt;IV: 16 Bytes] --&gt;|初始化 MatrixPrg| B(AES-128 密钥扩展)
         B --&gt; C[(round_keys 11轮子密钥)]
         C --&gt;|全局复用密钥| E{AES-CTR 生成器}
         Req[外部按需请求 column j] -.-&gt;|传入 col_idx = j| E
-        E --&gt; |"counter = j&lt;br&gt;nonce = 0"| F[fill_column_bytes]
+        E --&gt; |"upper word += column j&lt;br&gt;low word += block index"| F[fill_column_bytes]
         F --&gt;|生成 n/8 字节&lt;br&gt;并清除尾部无效比特| G[/BitVec 列向量/]
     end
     style SMC fill:none,stroke:#666,stroke-width:2px,stroke-dasharray:5,5
@@ -325,15 +326,15 @@ $$</p>
 
 <h3 id="34-内存管理策略详解"><a class="header" href="#34-内存管理策略详解">3.4 内存管理策略详解</a></h3>
 <h4 id="策略一按需生成不存储完整矩阵"><a class="header" href="#策略一按需生成不存储完整矩阵">策略一：按需生成，不存储完整矩阵</a></h4>
-<p>矩阵默认不完整存储在内存中。<code>StreamingMatrixCols</code> 保存 16 字节种子、维度、尾部掩码和 PRG 状态；每次调用 <code>column(j)</code> 生成一列的 $n$ 个比特，完成计算后释放临时列数据。因此主要工作空间从物化矩阵的 $\mathcal{O}(nm)$ 降为一列缓冲区和 PRG 状态，具体字节数随所选实现路径而变。</p>
+<p>矩阵默认不完整存储在内存中。<code>StreamingMatrixCols</code> 保存 16 字节 key、16 字节 IV、维度、尾部掩码和 PRG 状态；每次调用 <code>column(j)</code> 生成一列的 $n$ 个比特，完成计算后释放临时列数据。因此主要工作空间从物化矩阵的 $\mathcal{O}(nm)$ 降为一列缓冲区和 PRG 状态，具体字节数随所选实现路径而变。这只是矩阵物化的空间边界，不是整个签名过程的 peak-RSS $\mathcal{O}(1)$ 声称。</p>
 <h4 id="策略二延迟生成"><a class="header" href="#策略二延迟生成">策略二：延迟生成</a></h4>
 <p><code>fill_column_bytes</code> 使用按需填充模式。只有 <code>column(j)</code> 或 <code>fill_column_bytes</code> 被显式调用时，数据才被生成。<code>materialize()</code> 提供完整矩阵的参考接口，主要用于测试和等价性验证；在线签名与验证的主要路径通过列缓冲区逐列处理矩阵。</p>
 <h4 id="策略三aes-ctr-作为向量-prg"><a class="header" href="#策略三aes-ctr-作为向量-prg">策略三：AES-CTR 作为向量 PRG</a></h4>
-<p>每一列 $B_{:,j}$ 通过 AES-128 在 CTR 模式下生成：</p>
+<p>每一列 $B_{:,j}$ 通过 AES-128 在 FAEST PRG 的 CTR 布局下生成。记 $\nu[j,k]$ 为在公开 IV $\nu$ 的高 32-bit little-endian word 上加列 tweak $j$，并在低 32-bit word 上加块序号 $k$ 得到的计数器，则：</p>
 <p>$$
-B_{:,j} = \text{AES}_\sigma(\text{ctr}=j || \text{nonce}=0) ; | ; \text{AES}_\sigma(\text{ctr}=j || \text{nonce}=1) ; | ; \cdots
+B_{:,j} = \text{AES}_\sigma(\nu[j,0]) ; | ; \text{AES}_\sigma(\nu[j,1]) ; | ; \cdots
 $$</p>
-<p>其中 $\sigma$ 是 16 字节种子。每个 AES 块产生 128 位伪随机输出，因此生成 $n$ 位列向量需要 $\lceil n/128 \rceil$ 次 AES 加密调用。</p>
+<p>其中 $\sigma$ 是 16 字节 AES key。旧构造器固定 $\nu=0$，新的 256-bit 材料构造器将前/后 16 字节分别用作 $\sigma/\nu$。每个 AES 块产生 128 位伪随机输出，因此生成 $n$ 位列向量需要 $\lceil n/128 \rceil$ 次 AES 加密调用。</p>
 <p>关键优化细节：</p>
 <ul>
 <li>密钥扩展一次：<code>expand_key</code> 在构造 <code>MatrixPrg</code> 时把种子扩展为 11 轮子密钥，后续 <code>fill_column_bytes</code> 的每次 AES 加密都复用这些轮密钥，避免重复扩展。</li>
@@ -454,7 +455,7 @@ fn test_streaming_matrix_is_deterministic() {
 <tr><td>$\mathbb{F}_{2^{128}}$ 乘法</td><td>CLMUL/PMULL 硬件指令</td><td>~0.5 ms / 万次</td></tr>
 <tr><td>矩阵列生成（$n=1280$）</td><td>AES-CTR, 约 10 个 AES 块</td><td>&lt; 1 μs / 列</td></tr>
 <tr><td>$y = Bx$ 稀疏乘法（$w=320$）</td><td>字节级 XOR 累加</td><td>&lt; 50 ms / 次</td></tr>
-<tr><td>矩阵全物化</td><td>从不发生</td><td>内存占用从 12.5 MB → 32 字节</td></tr>
+<tr><td>矩阵全物化</td><td>在主要在线路径不发生</td><td>从 $\mathcal{O}(nm)$ 物化降为 $\mathcal{O}(n)$ 列缓冲 + $\mathcal{O}(1)$ 描述符/PRG 状态；不声称整个过程 peak RSS 为常数</td></tr>
 </tbody>
 </table>
 </div>
@@ -1785,16 +1786,23 @@ pub struct Transcript {
     update_digest_with_exact_bits(&amp;mut self.hasher, bits);
 }
 <span class="boring">}</span></code></pre>
-<p><code>absorb_matrix(label, matrix)</code> 吸收流式矩阵（只吸收种子，不吸收整个矩阵）：</p>
+<p><code>absorb_matrix(label, matrix)</code> 吸收流式矩阵的完整紧凑描述，而不吸收整个物化矩阵：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub fn absorb_matrix(&amp;mut self, label: &amp;[u8], matrix: &amp;StreamingMatrixCols) {
     self.absorb_usize(label, matrix.rows());
     self.absorb_usize(label, matrix.cols());
     self.absorb_labelled_bytes(label, &amp;matrix.seed());
+    let iv = matrix.iv();
+    if iv != [0u8; 16] {
+        let mut iv_label = Vec::with_capacity(label.len() + 3);
+        iv_label.extend_from_slice(label);
+        iv_label.extend_from_slice(b".iv");
+        self.absorb_labelled_bytes(&amp;iv_label, &amp;iv);
+    }
 }
 <span class="boring">}</span></code></pre>
-<p>这利用了矩阵的伪随机性质，矩阵由种子 $\sigma$ 确定，吸收 $\sigma$ 就等价于吸收了整个矩阵。</p>
+<p>矩阵由 rows/cols、AES key（<code>seed</code>）与 IV 唯一确定。零 IV 是旧论文对齐路径；为保持其 transcript 逐字节兼容，零 IV 不增加新 frame。非零 IV 则必须以 <code>label.iv</code> 吸收，否则同 seed/维度下的两个不同矩阵会共享 statement digest。</p>
 <h3 id="44-squeeze-方法"><a class="header" href="#44-squeeze-方法">4.4 Squeeze 方法</a></h3>
 <p><code>finalize_seed()</code> — 完成 Keccak-256 哈希，输出 256-bit 种子：</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -2670,13 +2678,27 @@ Output: FdabsSignature
 </table>
 </div>
 <h2 id="四scope-lrs-工程扩展"><a class="header" href="#四scope-lrs-工程扩展">四、Scope-LRS 工程扩展</a></h2>
-<p><code>LinkableRingPublicKey</code> 在环签名公钥的基础上增加 <code>context_id</code>、链接矩阵 <code>b_link_cols</code> 与 key image。链接矩阵种子由 <code>context_id</code>、矩阵维度和叶秘密长度经 Keccak-256 确定性派生；因此验证者可检查矩阵与 scope 的对应关系。</p>
+<p><code>LinkableRingPublicKey</code> 在环签名公钥的基础上增加 <code>context_id</code>、链接矩阵 <code>b_link_cols</code>、矩阵派生 profile 与 key image。链接矩阵材料由 <code>context_id</code>、矩阵维度、叶秘密长度和 profile 经 Keccak-256 确定性派生；因此验证者可检查矩阵、profile 与 scope 的对应关系。</p>
+<p>当前保留两种显式 profile，而不是把不同假设混成一条性能数据：</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Profile</th><th>公开矩阵材料</th><th>适用模型</th><th>声明边界</th></tr>
+</thead>
+<tbody>
+<tr><td><code>TrustedScope128</code></td><td>Keccak digest 前 128 bit，AES IV 固定为零</td><td>scope 由可信方在有界命名空间中规范发放</td><td>接受约 $q(q-1)/2^{129}$ 的有限规模 seed 碰撞概率；不声称抵抗攻击者搜索任意 scope pair</td></tr>
+<tr><td><code>ChosenScope256</code></td><td>完整 256-bit digest，拆为公开 AES-128 key 与 128-bit IV</td><td>攻击者可选择 scope</td><td>消除先截断为 128-bit seed 所带来的直接 $2^{64}$ 生日瓶颈，但仍不自动给出跨 scope 不可链接性归约</td></tr>
+</tbody>
+</table>
+</div>
+<p>两种 profile 只改变公开矩阵派生；代数关系、witness、约束数、key-image 长度与签名 wire 大小不变。profile id、矩阵 key 和 IV 都绑定到 Fiat–Shamir transcript，两个 profile 的签名不能交叉验证。无 profile 参数的构造入口默认选择 <code>ChosenScope256</code>。</p>
+<p>这两个名称都属于 Scope-LRS v2 transcript。<code>TrustedScope128</code> 保留的是旧 128-bit 矩阵派生假设，不是对仓库早期实验性 v1 Scope-LRS 签名或矩阵字节的兼容承诺。v2 显式分离 profile 并拒绝交叉验签；ReSolveD+、RingSig、GroupSig 和 FDABS 使用的论文对齐零 IV 矩阵仍逐字节不变。</p>
 <p>对叶秘密 $x=(x_0|x_1)$，代码计算</p>
 <p>$$
 I=B_{\mathrm{link}}\cdot\operatorname{RE}(x),
 $$</p>
-<p>并将 $I$、<code>context_id</code> 和环公钥吸收到 statement digest。签名显式携带 <code>key_image</code>；验证时先检查其等于公钥中的 $I$，再验证包含 Merkle 关系和链接关系的零知识证明。由同一叶秘密和相同 <code>context_id</code> 得到的 key image 相同，因此可作为该 scope 内的链接标识。</p>
-<p>批量接口 <code>sign_lrs_batch</code> 将各实例 witness 顺序拼接，使用一次 <code>VoleitHProver::commit</code>，并按实例偏移量分别计算关系值。批量签名携带一组 key images；<code>verify_lrs_batch</code> 检查它们与每个实例的公开 key image 对应。该接口属于仓库的工程扩展，模块十单独列出其性能记录。</p>
+<p>并将 $I$、<code>context_id</code>、profile 和环公钥吸收到 statement digest。正式 scoped API 的签名显式携带 <code>key_image</code>；验证者只需要 signer-independent <code>LinkableRingContext</code>，再从签名取得 $I$ 并验证包含 Merkle 关系和链接关系的零知识证明。由同一叶秘密、相同 <code>context_id</code> 和相同 profile 得到的 key image 相同，因此可作为该 scope 内的链接标识。</p>
+<p>批量接口 <code>sign_lrs_batch</code> 将各实例 witness 顺序拼接，使用一次 <code>VoleitHProver::commit</code>，并按实例偏移量分别计算关系值。批量签名携带一组 key images；<code>verify_lrs_batch</code> 检查它们与每个实例的公开 key image 对应。该接口属于仓库的工程扩展，仍使用预计算 key image 的旧 Batch API，而不是 signer-independent scoped Batch lifecycle。<code>just speed-table</code> 分别测量两个 profile，并在表头披露这一计时边界。</p>
 <h2 id="五总结对比"><a class="header" href="#五总结对比">五、总结对比</a></h2>
 <div class="table-wrapper">
 <table>
@@ -3160,7 +3182,7 @@ const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 </table>
 </div>
 <h2 id="batch-scope-lrs-结果单核"><a class="header" href="#batch-scope-lrs-结果单核">Batch Scope-LRS 结果（单核）</a></h2>
-<p>本测试同样固定 <code>RAYON_NUM_THREADS=1</code>，参数为 <code>ell=5</code>、每批 <code>N=10</code> 条独立消息。运行命令为 <code>RAYON_NUM_THREADS=1 cargo bench --bench paper_benchmarks -- 'BatchedScopeLRS_N10_ell5_{sign,verify}' --sample-size 10</code>。为控制单核批量操作的运行时间，本次 Criterion 测试显式使用 <code>--sample-size 10</code>；下表时间均为<strong>一整批 10 条签名</strong>的总耗时，最后一列为按 10 条均摊的 point estimate。该批量接口不提供逐阶段原子分解，故不并入上方“原子阶段结果”表。</p>
+<p>本测试同样固定 <code>RAYON_NUM_THREADS=1</code>，参数为 <code>ell=5</code>、每批 <code>N=10</code> 条独立消息。历史快照当时由裸 Criterion 命令生成；该旧入口不再支持，也不能复刻当前双 profile 的计时边界。当前唯一公开复现实验使用 <code>just speed-table</code>（Batch Trusted/Chosen 都会输出）或 <code>just bench-single</code>（冻结的 Atomic Batch schema）。为控制单核批量操作的运行时间，历史测试使用 10 个 Criterion samples；下表时间均为<strong>一整批 10 条签名</strong>的总耗时，最后一列为按 10 条均摊的 point estimate。该批量接口不提供逐阶段原子分解，故不并入上方“原子阶段结果”表。</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -3196,7 +3218,7 @@ const TREE_M: usize = (1280 / 8) * 256 = 40_960;  // 矩阵宽度
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="模块十二新版变更与历史性能数据"><a href="#模块十二新版变更与历史性能数据" class="header">模块十二：新版变更与历史性能数据</a></h1>
 <blockquote>
-<p>历史数据整理稿。 以下表格混合引用时必须核对 commit、CPU affinity、线程数和估计量；不同运行/估计量不应直接用于因果结论。</p>
+<p>历史数据整理稿。 以下表格混合引用时必须核对 commit、CPU affinity、线程数和估计量；不同运行/估计量不应直接用于因果结论。下方原始输出中的 “Peak memory usage remains O(1)” 只表示流式生成 <code>B_link</code> 列时不物化整张矩阵的辅助空间，不是对整个 Sign/Verify 进程 RSS 的测量或渐近结论；Batch 仍持有随实例数增长的 witness、约束状态和 proof 数据。</p>
 </blockquote>
 <ol>
 <li>测试区分单核和多核，单核用于和其他方向进行比对，多核旨在测试性能极限</li>
@@ -3866,13 +3888,13 @@ git show a3fd462:benches/paper_benchmarks.rs | rg 'bench_function'
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="模块十四从-03a8be9-到-93b42e1-的基准可信度与性能优化演进"><a class="header" href="#模块十四从-03a8be9-到-93b42e1-的基准可信度与性能优化演进">模块十四：从 <code>03a8be9</code> 到 <code>93b42e1</code> 的基准可信度与性能优化演进</a></h1>
 <blockquote>
-<p><strong>版本与证据边界。</strong> 本章的静态代码基线是 <code>03a8be9b53a08e575627d5096f103f9fd2b9c2ec</code>，中间节点是 <code>3fbea395a3f62991414d06abd7549bdef3d8ec3a</code>，审查终点是 <code>93b42e12684e9f919c873bad710f67db497603a5</code>。三者位于同一条一阶父提交链上。代码 diff、历史提交说明和同机 A/B 实测是三类不同证据；只有同机 A/B 数据用于给出性能倍率，不能用静态代码行数推导速度。</p>
+<p><strong>版本与证据边界。</strong> 本章的静态代码基线是 <code>03a8be9b53a08e575627d5096f103f9fd2b9c2ec</code>，中间节点是 <code>3fbea395a3f62991414d06abd7549bdef3d8ec3a</code>，已提交审查终点是 <code>93b42e12684e9f919c873bad710f67db497603a5</code>。三者位于同一条一阶父提交链上。第十三节继续审查以 <code>93b42e1</code> 为 HEAD 的 2026-08-03 未提交 SIMD/native-C 工作树；对应最终性能可执行文件的 <code>source-worktree.patch</code> SHA-256 为 <code>c971dec55454fd1698716975d6a37735b1231a7c3ab6d8a63cb805eb47f07d40</code>。第十四节再审查外层仓库以 <code>e041b0f</code> 为 HEAD 的 Scope-LRS 双 profile 工作树，性能数据是明确允许 dirty worktree 的开发轮，不是可直接引用的 clean-commit 发布数据。本章的文档补写发生在测量之后，不属于被测二进制。代码 diff、历史提交说明、论文 PDF 和同机 A/B 实测是四类不同证据；只有同机 A/B 数据用于给出性能倍率，不能用静态代码行数推导速度。</p>
 </blockquote>
 <blockquote>
-<p><strong>核心结论。</strong> <code>3fbea39</code> 主要解决“报告是否可信、失败是否会被静默吞掉、公式与实测是否混淆”；<code>93b42e1</code> 主要解决“完整 51 项 Atomic 指标、Merkle 树重复构造、GroupSig 批量工作、McEliece generator 转置和可复现的前后对照”。论文参数、relation、Fiat–Shamir transcript 字段顺序、FAEST profile、单份顶层 proof 和 canonical wire v1 均未被本轮性能优化替换。</p>
+<p><strong>核心结论。</strong> <code>3fbea39</code> 主要解决“报告是否可信、失败是否会被静默吞掉、公式与实测是否混淆”；<code>93b42e1</code> 主要解决“完整 51 项 Atomic 指标、Merkle 树重复构造、GroupSig 批量工作、McEliece generator 转置和可复现的前后对照”；2026-08-03 工作树进一步用两路 <code>VPCLMULQDQ</code>、显式 native-C opt-in 和固定版本 XKCP 后端优化有限域与 bundled C 热点。对论文 PDF 的逐页复核没有发现该工作树新增 relation、参数、Fiat–Shamir transcript、proof 数量或 wire 格式偏差；已有 PoC/论文边界仍须继续披露，不能因性能改善而删除。</p>
 </blockquote>
 <h2 id="一比较目标提交时间线与取证方法"><a class="header" href="#一比较目标提交时间线与取证方法">一、比较目标、提交时间线与取证方法</a></h2>
-<h3 id="11-三个版本节点"><a class="header" href="#11-三个版本节点">1.1 三个版本节点</a></h3>
+<h3 id="11-三个提交节点与一个后续工作树"><a class="header" href="#11-三个提交节点与一个后续工作树">1.1 三个提交节点与一个后续工作树</a></h3>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -3882,6 +3904,7 @@ git show a3fd462:benches/paper_benchmarks.rs | rg 'bench_function'
 <tr><td>基线</td><td><code>03a8be9b53a08e575627d5096f103f9fd2b9c2ec</code></td><td style="text-align: right">2026-07-31 21:22:26</td><td>清理旧说明，扩展当时的 just 测试入口</td><td style="text-align: right">本章起点</td></tr>
 <tr><td>中间节点</td><td><code>3fbea395a3f62991414d06abd7549bdef3d8ec3a</code></td><td style="text-align: right">2026-08-02 18:59:44</td><td>报表强校验、provenance、single-proof/wire 回归保护</td><td style="text-align: right">16 files，<code>+629/-138</code></td></tr>
 <tr><td>审查终点</td><td><code>93b42e12684e9f919c873bad710f67db497603a5</code></td><td style="text-align: right">2026-08-02 22:20:00</td><td>51 项 Atomic、缓存、增量更新、并行和 A/B 冻结工作流</td><td style="text-align: right">11 files，<code>+2097/-283</code></td></tr>
+<tr><td>后续性能工作树</td><td>HEAD 仍为 <code>93b42e12684e9f919c873bad710f67db497603a5</code>；patch <code>c971dec...</code></td><td style="text-align: right">2026-08-03</td><td>F128x2、paired butterfly、native C、XKCP AVX2 和后端取证</td><td style="text-align: right">被测源码 9 files，<code>+463/-105</code></td></tr>
 </tbody>
 </table>
 </div>
@@ -3902,6 +3925,7 @@ git show a3fd462:benches/paper_benchmarks.rs | rg 'bench_function'
 </tbody>
 </table>
 </div>
+<p>上表最后一行的 <code>+463/-105</code> 只统计最终性能二进制对应的九个 tracked 源码/benchmark 文件，不包含测量后新增的性能报告和本章补写。它不是一个新 commit，不能写成 <code>93b42e1</code> 的提交内容。</p>
 <h3 id="12-证据等级"><a class="header" href="#12-证据等级">1.2 证据等级</a></h3>
 <p>本章使用以下标记，防止把不同口径混成同一种结论：</p>
 <ul>
@@ -3924,6 +3948,9 @@ git show a3fd462:benches/paper_benchmarks.rs | rg 'bench_function'
     B --&gt; C[93b42e1&lt;br/&gt;51 项 Atomic&lt;br/&gt;缓存 / 增量 / 并行]
     C --&gt; D[冻结单核 A/B&lt;br/&gt;CPU 2 / Rayon 1]
     C --&gt; E[冻结多核 A/B&lt;br/&gt;CPU 0-15 / Rayon 16]
+    C --&gt; F[2026-08-03 工作树&lt;br/&gt;F128x2 / native C / XKCP]
+    F --&gt; G[最终单核 51 项&lt;br/&gt;CPU 2 / Rayon 1]
+    F --&gt; H[最终多核 51 项&lt;br/&gt;CPU 0-15 / Rayon 16]
 </pre>
 
 <h2 id="二总体差异矩阵"><a class="header" href="#二总体差异矩阵">二、总体差异矩阵</a></h2>
@@ -3996,7 +4023,7 @@ git show a3fd462:benches/paper_benchmarks.rs | rg 'bench_function'
 <p>同时明确以下边界：</p>
 <ul>
 <li>当前是可执行的 128-bit PoC，不是 256-bit 完整实现；</li>
-<li>Table 4 的 published GroupSig <code>ell=5</code> 为 49.60 KiB，而正文一致的 <code>c_hash=8,c_e=6,k=384</code> 公式为 50.60 KiB；两者不能静默合并；</li>
+<li>Table 4 的表头单位写作 <code>KB</code>，published GroupSig <code>ell=5</code> 数值为 49.60；仓库按 1024 bytes/KiB 计算的正文一致 <code>c_hash=8,c_e=6,k=384</code> 公式为 50.60 KiB；单位口径与数值差异均不能静默合并；</li>
 <li><code>q=2^8,tau=16</code> 的应用参数仍是一份 proof；优化 ReSolveD+ 的 <code>tau=10</code> 也是论文中的另一参数 profile，不是外层重复；</li>
 <li>degree 9 的完整 128-bit Delta 域 Theorem 1 bound 约为 124.678 bits，不能改称“严格 128-bit theorem bound”。</li>
 </ul>
@@ -4579,8 +4606,306 @@ just OUT_DIR="$RUN_DIR" \
 <li>GroupSig 将成员 KeyGen、双 keypair、双 generator 和双 decode 放到适当的并行层级，用 8x8 转置与构造时 snapshot 去掉重复工作；</li>
 <li>这些收益以常驻 tree、Group public-key snapshot、锁操作和可能的 COW clone 为代价；</li>
 <li>正式实测支持 FDABS、Ring <code>ell=10</code> 多核和 Group KeyGen/Open 的机制性改善，也同时记录 Scope-LRS、ReSolveD+ 和部分 Verify 的回归；</li>
-<li>所有倍率都只适用于本章固定的 commit/patch、机器、affinity、worker、Criterion 估计量和 warm-cache timed region，不能脱离这些条件引用。</li>
+<li>所有倍率都只适用于本章固定的 commit/patch、机器、affinity、worker、Criterion 估计量和 warm-cache timed region，不能脱离这些条件引用；</li>
+<li>2026-08-03 的后续工作树没有改变上述协议边界，而是在相同 51 项 schema 上继续优化有限域乘法和 bundled C；它的证据与结论见下节。</li>
 </ol>
+<h2 id="十三2026-08-03双路-gf2128native-c-与论文一致性复核"><a class="header" href="#十三2026-08-03双路-gf2128native-c-与论文一致性复核">十三、2026-08-03：双路 GF(2^128)、native C 与论文一致性复核</a></h2>
+<h3 id="131-difftxt-的实际状态与替代证据"><a class="header" href="#131-difftxt-的实际状态与替代证据">13.1 <code>diff.txt</code> 的实际状态与替代证据</a></h3>
+<p>本次核查开始时，工作树中<strong>不存在</strong> <code>diff.txt</code>；<code>find</code> 与 <code>rg --files</code> 均未找到该文件。因此不能对一个不存在、也没有 hash 的文本文件声称完成逐字审查。可审计的等价证据是最终 benchmark 自动保存的两份源码 patch：</p>
+<pre><code class="language-text">target/bench_further_final/criterion_runs/
+  further_optimized_single.SwHchbq2/source-worktree.patch
+  further_optimized_all.gBnWBHpk/source-worktree.patch
+</code></pre>
+<p>两者逐 byte 相同，SHA-256 均为：</p>
+<pre><code class="language-text">c971dec55454fd1698716975d6a37735b1231a7c3ab6d8a63cb805eb47f07d40
+</code></pre>
+<p>补写本章之前，<code>git diff --binary HEAD | sha256sum</code> 也得到同一 hash。这说明单核、多核使用了完全相同的九文件源码状态，且审查对象就是当时的当前 diff，而不是事后手工拼接的摘要。根目录的<a href="../../PERFORMANCE_OPTIMIZATION_REPORT_CN_2026-08-03.html">进一步性能优化报告</a>和本节是在测量完成后加入的文档，不改变 benchmark 二进制；加入文档后，整个工作树的 hash 自然不再等于上述源码 patch hash。</p>
+<p>若后续重新生成 <code>diff.txt</code>，必须同时记录生成命令、HEAD 和 SHA-256；否则应优先引用 benchmark 保存的 <code>source-worktree.patch</code>，因为后者与 binary SHA、CPU 环境和 Criterion baseline 位于同一个运行目录。</p>
+<h3 id="132-九文件-diff-的职责边界"><a class="header" href="#132-九文件-diff-的职责边界">13.2 九文件 diff 的职责边界</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>文件层</th><th>文件</th><th>实际变化</th><th>是否触及论文对象</th></tr>
+</thead>
+<tbody>
+<tr><td>GF(2^128) 内核</td><td><code>src/finite_field.rs</code></td><td>两个独立乘法装入 YMM 的两个 128-bit lane；保留标量 fallback</td><td>不改变域元素、乘法或模约简结果</td></tr>
+<tr><td>隐式求值</td><td><code>src/core/implicit_eval.rs</code></td><td>direct/swapped butterfly 使用两路乘法；保留原泛型公开 API</td><td>不改变约束多项式、求值点、变量顺序或总和</td></tr>
+<tr><td>应用调用点</td><td><code>src/apps/ring_signature_sig.rs</code>、<code>src/apps/fdabs_sig.rs</code></td><td>F128 路径改调 <code>_f128</code> 专用入口</td><td>不改变 statement、witness、challenge 或 transcript</td></tr>
+<tr><td>bundled C 构建</td><td><code>build.rs</code>、<code>justfile</code></td><td>显式 native-C opt-in；Linux/ELF 上选择固定 XKCP AVX2 源</td><td>只改变目标代码生成与 Keccak 后端实现</td></tr>
+<tr><td>后端取证</td><td><code>src/faest_ffi.rs</code>、<code>benches/paper_benchmarks.rs</code></td><td>记录实际 Keccak/native-C 后端</td><td>只增加日志，不进入 hash/transcript</td></tr>
+<tr><td>微基准</td><td><code>benches/matrix_prg.rs</code></td><td>新增 paired butterfly synthetic benchmark</td><td>不是论文协议步骤，也不进入生产路径</td></tr>
+</tbody>
+</table>
+</div>
+<p>以下协议核心文件没有出现在该 patch 中：</p>
+<pre><code class="language-text">src/core/protocol_dd_rep.rs
+src/core/voleith.rs
+src/core/transcript.rs
+src/core/wire.rs
+src/core/security.rs
+</code></pre>
+<p>FAEST parameter structs、BAVC/GGM 状态机、signature encoder/decoder 和各应用常量也没有被该 diff 修改。</p>
+<h3 id="133-两路-f128-乘法为何不改变代数关系"><a class="header" href="#133-两路-f128-乘法为何不改变代数关系">13.3 两路 F128 乘法为何不改变代数关系</a></h3>
+<p><code>f128_mul_pair([a0,a1],[b0,b1])</code> 的定义是返回：</p>
+<p>$$
+(a_0b_0,;a_1b_1),
+$$</p>
+<p>而不是做两个 lane 之间的点积或交叉乘法。实现对每个 128-bit lane 分别执行四项 schoolbook carry-less product：</p>
+<p>$$
+A_0B_0,\quad A_1B_1,\quad A_0B_1,\quad A_1B_0,
+$$</p>
+<p>再逐 lane 复刻 Swanky 的 reduction Algorithm 4，模多项式仍为：</p>
+<p>$$
+x^{128}+x^7+x^2+x+1.
+$$</p>
+<p>序列化边界使用 canonical little-endian <code>to_bytes/from_uniform_bytes</code>，没有依赖库私有的 <code>F128b(u128)</code> 布局。硬件路径与原标量 <code>F128b</code> 乘法做了 10,000 组随机差分；portable/no-hw 配置直接编译为两个原标量乘法。</p>
+<p>butterfly 首层使用的变形仅为分配律：</p>
+<p>$$
+a_0(p+x)+a_1x=a_0p+(a_0+a_1)x.
+$$</p>
+<p>后续层仍计算原来的 <code>value0 * (point + x) + value1 * x</code>，只是把两条相互独立的 direct/swapped 乘法放到两个 lane。paired evaluator 还同时与四次独立 generic evaluator 比较。因此该优化的正确性依据是“与原实现逐值相等”，不能表述为论文定义了某条 AVX2 表示。</p>
+<h3 id="134-对论文-pdf-的逐页锚点复核"><a class="header" href="#134-对论文-pdf-的逐页锚点复核">13.4 对论文 PDF 的逐页锚点复核</a></h3>
+<p>本次使用 <code>docs/Code-Based ZKP.pdf</code> 的原始页面，而不是只引用仓库二手说明。关键锚点如下：</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>论文锚点</th><th>PDF 原文边界</th><th>当前 diff 审查</th><th>结论</th></tr>
+</thead>
+<tbody>
+<tr><td>Theorem 1，PDF p.17</td><td>degree-$d$ relation；soundness error 上界为 $1/p^{r\tau}+d</td><td>S_\Delta</td><td>^{-1}$</td></tr>
+<tr><td>Table 2，PDF p.22</td><td>128-bit 列固定 $n=1280,c=8,p=2,q=2^8,\tau=16,n_e=4096,k_e=3328,t_e=64$</td><td><code>TREE_N=1280</code>、<code>C=8</code>、<code>FAEST_128F_TAU=16</code> 与 McEliece 4096/3328/64 未改</td><td>没有新增不符</td></tr>
+<tr><td>Tables 3–5，PDF pp.23–27</td><td>Ring/Group/FDABS 的<strong>签名大小公式表</strong></td><td>diff 没改序列化、wire 或 size formula；新增数据是本机运行时间</td><td>不能把 runtime 表称为论文原表，但不存在参数偷换</td></tr>
+<tr><td>Table 4，PDF p.25</td><td>Group size $2^5$ 的 published 数值为 49.60，表头单位写作 <code>KB</code></td><td>仓库按 1024 bytes/KiB 得到的正文一致公式为 50.60 KiB，相关披露仍保留</td><td>这是既有论文/公式及单位口径差异，不是本 diff 引入</td></tr>
+<tr><td>Table 6，PDF p.28</td><td>ReSolveD+-128-Var2-3 为 $n=453,c=3,m=1208,w=151,\tau=10$</td><td>benchmark 的 <code>RP_N/RP_C/RP_M</code> 未改；Var2 profile 仍为 $\tau=10$</td><td>没有新增不符</td></tr>
+<tr><td>Table 7，PDF p.29</td><td>$\tau=10,T_{open}=102,c=3$ 的 optimized size 为 3054 bytes</td><td>resolved Var2 profile 的 <code>t_open=102</code> 未改；diff 不改 signature size</td><td>没有新增不符</td></tr>
+<tr><td>Fiat–Shamir，PDF pp.17、28</td><td>交互协议经 Fiat–Shamir 转为单份非交互 proof</td><td>transcript、opening challenge、proof struct、wire v1 均未改</td><td>没有新增不符</td></tr>
+</tbody>
+</table>
+</div>
+<p>这里还必须保留四项<strong>既有实现边界</strong>：</p>
+<ol>
+<li>可执行应用使用 <code>F128b</code> 和固定 FAEST 128-bit profiles；256-bit 列是 <code>[Formula]</code>，不是 runnable 256-bit benchmark。</li>
+<li>论文 Table 2 的 <code>q=2^8,tau=16</code> 描述完整 128-bit $S_\Delta$ 域；当前 FAEST opening 还固定 8 个 grinding bits，Theorem 1 的具体统计/工作因子边界继续以 <code>LIMITATIONS.md</code> 为准。新的 F128x2 内核没有扩大 $S_\Delta$ 或增加第二份 proof。</li>
+<li>Scope-LRS 与 Batch Scope-LRS 是仓库扩展，不是论文 Tables 3–5 的四个应用；其时间不能用于声称复现论文应用表。</li>
+<li>论文 Tables 3–7 给出参数和签名大小，不给出本仓库 CPU 的运行时间。本节的 ms 数值只能标记为 <code>[Recorded A/B]</code>，不能标记为论文测量值。</li>
+</ol>
+<p>因此，针对“当前 diff 是否有和论文不符的地方”的精确回答是：<strong>没有发现由这九文件性能 diff 新引入的论文不一致；但它也没有消除上述既有 PoC/论文边界。</strong></p>
+<h3 id="135-构建后端可移植性与-transcript-等价"><a class="header" href="#135-构建后端可移植性与-transcript-等价">13.5 构建后端、可移植性与 transcript 等价</a></h3>
+<p><code>build.rs</code> 的选择只发生在编译期：</p>
+<ul>
+<li>x86_64 Linux、hardware feature 和 AVX2 同时满足时，KeccakP-1600 使用 pinned FAEST 子模块自带的 XKCP AVX2 <code>.s</code>；</li>
+<li>其他 OS/架构、portable 和 no-hw 路径继续使用 <code>opt64</code> C；</li>
+<li><code>-march=native -mtune=native</code> 只有 <code>justfile</code> 显式设置 <code>CBZK_ENABLE_NATIVE_C=1</code> 且 <code>HOST==TARGET</code> 时才加入 bundled C；普通 <code>cargo build</code> 和交叉编译不自动继承；</li>
+<li>benchmark 日志打印 <code>FAEST_KECCAK_BACKEND</code> 与 <code>NATIVE_C_BACKEND</code>，避免结果只写“启用了优化”却无法证明实际链接了什么。</li>
+</ul>
+<p>XKCP AVX2 与 opt64 实现的是同一个 Keccak permutation ABI，未改变 SHAKE input/output、domain separator 或 absorb/squeeze 顺序。transcript freeze、FAEST opening round-trip 和 streaming-matrix PRG 等价测试共同保护这一点。不过 native-C 数据只代表当前 CPU；不得把这组数值外推为任意 AVX2 主机的可移植结果。</p>
+<h3 id="136-最终-justfile-ab-结果"><a class="header" href="#136-最终-justfile-ab-结果">13.6 最终 <code>justfile</code> A/B 结果</a></h3>
+<p>最终 51 项仍严格通过 <code>just bench-single</code> 与 <code>just bench-parallel</code> 串行采集。clean 基线和优化后目录分别为：</p>
+<pre><code class="language-text">single before: target/bench_tables/criterion_runs/final_single_pcore.we0hZ5W9
+single after:  target/bench_further_final/criterion_runs/further_optimized_single.SwHchbq2
+multi before:  target/bench_tables/criterion_runs/final_all_cores.JBz31t6f
+multi after:   target/bench_further_final/criterion_runs/further_optimized_all.gBnWBHpk
+</code></pre>
+<p>环境继续固定 CPU 2/Rayon 1 与 CPU 0-15/Rayon 16，Criterion 为 10 samples、3 s warm-up、5 s measurement，表中取 JSON <code>median.point_estimate</code>。</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>指标集合</th><th style="text-align: right">单核</th><th style="text-align: right">16 线程全核</th></tr>
+</thead>
+<tbody>
+<tr><td>20 个 Sign/Verify 几何平均时延</td><td style="text-align: right">-14.83%（19/20 改善）</td><td style="text-align: right">-3.68%（17/20 改善）</td></tr>
+<tr><td>论文四类应用的 14 个 Sign/Verify</td><td style="text-align: right">-15.39%</td><td style="text-align: right">-3.53%</td></tr>
+<tr><td>RingSig <code>ell=10 Sign</code></td><td style="text-align: right">149.321 -&gt; 110.182 ms（-26.21%）</td><td style="text-align: right">34.719 -&gt; 32.613 ms（-6.07%）</td></tr>
+<tr><td>RingSig <code>ell=10 Verify</code></td><td style="text-align: right">72.513 -&gt; 63.647 ms（-12.23%）</td><td style="text-align: right">24.365 -&gt; 24.434 ms（+0.29%）</td></tr>
+<tr><td>FDABS <code>ell=10 Sign</code></td><td style="text-align: right">143.177 -&gt; 109.487 ms（-23.53%）</td><td style="text-align: right">34.648 -&gt; 31.624 ms（-8.73%）</td></tr>
+<tr><td>FDABS <code>ell=10 Verify</code></td><td style="text-align: right">74.361 -&gt; 60.264 ms（-18.96%）</td><td style="text-align: right">24.376 -&gt; 23.586 ms（-3.24%）</td></tr>
+</tbody>
+</table>
+</div>
+<p>paired butterfly 的 scalar/VPCLMUL 微基准为约 747.83 us -&gt; 496.62 us，时延下降 32.70%，约 1.51x。该微基准由 <code>just bench-matrix-prg</code> 运行；fixture 在计时区外，输入和输出均经过 <code>black_box</code>。</p>
+<p>χ′ 查表/XOR 核的多累加器尝试没有保留：四累加器约 10.23 ms，相对原约 5.162 ms 慢约 88%；完全展开双累加器约 7.14 ms，仍然回退。最终 χ′ 生产代码与 clean HEAD 相同，防止只记录成功方案而隐藏失败实验。</p>
+<p>必须同时披露的实质回退包括：</p>
+<ul>
+<li>多核 ReSolveD+ Sign/Verify：-1.91%/-13.60%；该方案不走新增 paired butterfly，Keccak 采样占比低于 1%，不足以单独解释 Verify 差异；</li>
+<li>单核 GroupSig <code>ell=10 Verify/Open</code>：-2.89%/-0.70%；</li>
+<li>多核 GroupSig <code>ell=10 Open</code>：-7.75%；</li>
+<li>多核 RingSig <code>ell=10 Verify</code>：-0.29%，接近本轮噪声范围。</li>
+</ul>
+<p>完整 51 项单核/多核表位于 local-only 的 <code>target/bench_further_final/compare_single.md</code> 与 <code>compare_parallel.md</code>；可提交的关键汇总见根目录 2026-08-03 性能报告。</p>
+<h3 id="137-是否需要手写汇编"><a class="header" href="#137-是否需要手写汇编">13.7 是否需要手写汇编</a></h3>
+<p>采样热点大致为：butterfly 35–42%，χ′ 27–35%，AES fill 6–9%，Keccak &lt;1%，<code>bf384_mul_128_inplace</code> 2–3%。据此不建议从零编写大段汇编：</p>
+<ol>
+<li>最大可向量化热点已经通过 intrinsics 得到 1.51x 微基准提升，并转化为显著单核端到端收益；</li>
+<li>χ′ 同时受查表、内存和依赖链约束，已测的多累加器重排更慢，汇编不能自动消除数据依赖；</li>
+<li>Keccak 和 <code>bf384_mul_128_inplace</code> 的 Amdahl 上限太低；Keccak 直接复用 pinned XKCP 已足够；</li>
+<li>AES fill 若继续优化，应先试 VAES256 双块 intrinsics，并融合 AES、mask、XOR，减少临时列写回；</li>
+<li>Group Setup/Open 若仍是目标，应优先移植仓库已有近似参数 McEliece AVX2 后端，而不是从零重写 Patterson/Benes 汇编。</li>
+</ol>
+<p>只有在 intrinsics 版本经 <code>just</code> A/B 后仍是高占比热点，且对象码证明 LLVM 存在明显错误调度时，才值得把汇编限制为很小的 AES-CTR 或 F128x2 ABI kernel，并同时保留 portable fallback、随机差分、对象码审查和 transcript/wire 回归测试。</p>
+<h3 id="138-本轮验收"><a class="header" href="#138-本轮验收">13.8 本轮验收</a></h3>
+<pre><code class="language-text">just test:        118 passed, 0 failed, 10 ignored
+just test-no-hw:  118 passed, 0 failed, 10 ignored
+just script-tests: 12 passed
+just paper-tables: passed
+just bench-check: passed
+just fmt-check:   passed
+mdbook build:     passed
+git diff --check: passed
+</code></pre>
+<p>新增 F128x2 还有 10,000 组随机差分；paired direct/swapped 同时与独立求和和泛型兼容入口比较。现有 mutation soundness、transcript freeze、wire/process boundary 与 single-proof regression 全部通过。这些测试不能证明所有未来编译器/CPU 都正确，但足以说明本轮观测到的提速没有通过已知协议边界的变化获得。</p>
+<h2 id="十四2026-08-03scope-lrs-双矩阵-profile-与-justfile-性能入口收口"><a class="header" href="#十四2026-08-03scope-lrs-双矩阵-profile-与-justfile-性能入口收口">十四、2026-08-03：Scope-LRS 双矩阵 profile 与 <code>justfile</code> 性能入口收口</a></h2>
+<h3 id="141-为什么保留两种-profile"><a class="header" href="#141-为什么保留两种-profile">14.1 为什么保留两种 profile</a></h3>
+<p>此次没有把“128 bit 足够”和“攻击者可选 scope”强行合并成一个模糊方案，而是保留两个显式的 <code>ScopeMatrixProfile</code>：</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Profile</th><th>scope 模型</th><th>公开矩阵派生材料</th><th>可以声称的边界</th></tr>
+</thead>
+<tbody>
+<tr><td><code>TrustedScope128</code></td><td>scope 由可信方规范发放，命名空间有界，不允许攻击者自适应搜索任意 pair</td><td>domain-separated Keccak digest 的前 128 bit 作 AES-128 key，IV 为零</td><td>接受 $q$ 个已发放 scope 约 $q(q-1)/2^{129}$ 的 seed 碰撞概率；不声称抵抗攻击者的任意 pair 生日搜索</td></tr>
+<tr><td><code>ChosenScope256</code></td><td>caller/attacker 可选 scope</td><td>完整 256-bit digest 拆成公开 AES-128 key 与 128-bit IV</td><td>消除“先截断到 128-bit seed”造成的直接 $2^{64}$ 生日瓶颈；不等价于已证明 chosen-scope unlinkability</td></tr>
+</tbody>
+</table>
+</div>
+<p>两者都是 Scope-LRS v2 transcript profile。<code>TrustedScope128</code> 保留的是 128-bit 假设，不是 <code>LegacyV1</code>：Scope-LRS v2 修改了 B-link/Fiat–Shamir domain separator 并吸收 profile id，所以仓库早期实验性 v1 矩阵、key image 和签名不保证逐字节兼容。这不影响论文对齐应用：ReSolveD+、RingSig、GroupSig 和 FDABS 仍调用零 IV 的 <code>StreamingMatrixCols::new</code>，它们的矩阵 PRG 字节和 transcript 保持不变。</p>
+<h3 id="142-代数关系不变变的只是公开矩阵派生"><a class="header" href="#142-代数关系不变变的只是公开矩阵派生">14.2 代数关系不变，变的只是公开矩阵派生</a></h3>
+<p>两个 profile 都证明同一条关系：</p>
+<p>$$
+I=B_{\mathrm{link}}\operatorname{RE}(x).
+$$</p>
+<p>双 profile 共用相同的 witness layout、regular encoding、Merkle 约束、link 约束和 degree-$9$ proof。实际规模为：</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>配置</th><th style="text-align: right">witness bits</th><th style="text-align: right">constraints</th><th style="text-align: right">degree</th><th style="text-align: right">canonical wire</th></tr>
+</thead>
+<tbody>
+<tr><td>Scope-LRS, $\ell=5$</td><td style="text-align: right">15,365</td><td style="text-align: right">8,960</td><td style="text-align: right">9</td><td style="text-align: right">35.06 KiB</td></tr>
+<tr><td>Scope-LRS, $\ell=10$</td><td style="text-align: right">28,170</td><td style="text-align: right">15,360</td><td style="text-align: right">9</td><td style="text-align: right">60.08 KiB</td></tr>
+<tr><td>Batch Scope-LRS, $N=10,\ell=5$</td><td style="text-align: right">153,650</td><td style="text-align: right">89,600</td><td style="text-align: right">9</td><td style="text-align: right">306.64 KiB</td></tr>
+</tbody>
+</table>
+</div>
+<p>实现层面的必要收口如下：</p>
+<ol>
+<li><code>StreamingMatrixCols</code> 保留旧 <code>seed + zero IV</code> 构造器，新增 256-bit <code>key + IV</code> 材料路径；AES-NI 和 FAEST FFI 都按同一个 FAEST PRG 定义处理 upper-word tweak 与 low-word block counter。</li>
+<li>通用 <code>Transcript::absorb_matrix</code> 在 IV 非零时吸收 <code>label.iv</code>，在 IV 为零时不增加任何 frame；因此新矩阵状态不会漏绑，旧 transcript 也不变。</li>
+<li>ReSolveD+ artifact bundle v1 只序列化 128-bit seed，因此现在明确拒绝非零 IV，而不是编码后静默解码成另一个矩阵。</li>
+<li><code>scope_matrix_profile</code>、scope id、矩阵 key/IV 和 key image 都受 statement transcript 绑定；单签和 Batch 都有交叉 profile 验证失败测试。</li>
+<li><code>signatures_linked</code> 现在同时比较 profile、规范 scope bytes 和 key image，避免将两个 profile 的同名 scope 当成同一个链接命名空间。</li>
+</ol>
+<p>无 profile 参数的公开构造函数默认到 <code>ChosenScope256</code>，但这只是安全的 API 默认值，不是对完整 Scope-LRS 安全定理的代替。</p>
+<h3 id="143-所有性能入口统一落到-justfile"><a class="header" href="#143-所有性能入口统一落到-justfile">14.3 所有性能入口统一落到 <code>justfile</code></a></h3>
+<p>面向使用者和审稿人的性能入口只是 <code>just</code> recipe：</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>公开入口</th><th>作用</th><th>双 profile 覆盖</th></tr>
+</thead>
+<tbody>
+<tr><td><code>just speed-table</code></td><td>固定 P-core 单核的端到端 Sign+encode / decode+Verify</td><td>单签 $\ell=5,10$ 和 Batch $N=10,\ell=5$ 均分别报告 Trusted/Chosen</td></tr>
+<tr><td><code>just speed-table-all-cores</code> / <code>just speed-table-both</code> / <code>just speed-table-no-hw</code></td><td>全核、单/全核合并、portable 对照</td><td>复用同一张双 profile schema</td></tr>
+<tr><td><code>just bench-matrix-prg</code></td><td>固定 P-core 的矩阵 PRG 微基准</td><td>同轮注册 seed128 与 key/IV-256 两组 Criterion 函数</td></tr>
+<tr><td><code>just bench-single</code> / <code>just bench-parallel</code></td><td>冻结的 51 项 Atomic schema</td><td>为不破坏历史 schema，Atomic Scope-LRS 显式固定 <code>ChosenScope256</code>；跨 profile 比较以上两个入口为准</td></tr>
+<tr><td><code>just report</code></td><td>小参数/底层诊断</td><td>已纳入原本只能单独触发的 Rust-vs-C <code>vole_hash</code> 性能审计</td></tr>
+</tbody>
+</table>
+</div>
+<p><code>scripts/paper_speed_table.sh</code> 与 <code>scripts/paper_speed_compare.sh</code> 现在只是 <code>justfile</code> 内部的采集/报表辅助程序；没有 <code>CBZK_PERF_VIA_JUST=1</code> 时直接执行会以状态 2 退出。三个 Criterion binary 和所有 ignored Rust 计时报告也执行同一门禁，裸 <code>cargo bench</code>/<code>cargo test --ignored</code> 不再是旁路性能入口。<code>bench_table.py</code> 允许直接读取已有 JSON，因为它只渲染、不启动采样。</p>
+<p>速度表会保存 <code>source-status.txt</code>、worktree/index patch，记录运行前/后 worktree fingerprint、Cargo.lock/子模块状态、每个 sample 实际使用且必须一致的 paper-report binary/hash、Keccak backend 与 native-C backend；采集期间源码或二进制发生变化会使整个 <code>just</code> 命令失败。<code>just speed-table-both</code> 还要求单核/全核两轮恰好包含相同的 13 个 case、wire size 一致，并逐项比较源码、patch、binary、编译参数与 backend metadata，不再对两张不完整表静默取交集。回归测试覆盖直接入口拒绝、子任务失败传播、双 profile schema、provenance 保存、缺行和跨轮源码不一致拒绝。</p>
+<h3 id="144-双-profile-性能数据及其可解释边界"><a class="header" href="#144-双-profile-性能数据及其可解释边界">14.4 双 profile 性能数据及其可解释边界</a></h3>
+<p>开发轮通过下列唯一公开入口运行：</p>
+<pre><code class="language-text">PAPER_SPEED_ALLOW_DIRTY=1 \
+PAPER_SPEED_REPEATS=10 \
+PAPER_SPEED_OUT_DIR=target/paper_speed_table_scope_profiles_final \
+just speed-table
+</code></pre>
+<p>单核 CPU 2、Rayon 1 worker、10 轮各去掉一个最低/最高值后的结果为：</p>
+<blockquote>
+<p><strong>Provenance 限制：</strong> 该目录的 metadata 记录了 <code>HEAD=e041b0f</code>、<code>dirty=true</code> 和环境，但旧 speed-table helper 未冻结 worktree fingerprint、source patch 或 benchmark binary hash。测量后的改动经逐项核对为文档、标签/注释、回归测试和未激活的旧粗粒度输出，没有修改被测的 Scope-LRS timed relation/PRG/transcript 路径；但这仍不能使它成为“最终 worktree 逐字节可证明”的发布数据。当前门禁/provenance 脚本状态另以 <code>target/paper_speed_table_scope_profiles_provenance_smoke_final/</code> 完成 3 轮/13 行 smoke：运行前后源码指纹均为 <code>1d769570700962729a7201daf9b39a416a10c8d160977341d32f8e042940680a</code>，binary SHA-256 为 <code>31402bbc7075dfbf80ed12b1bb1fad049d2970aa8a4903465762cfe27e356b7a</code>，实际 backend 为 <code>avx2-xkcp-asm</code> 与 native-C。这里不用三轮的 middle-one 值代替十轮数据；投稿数据仍必须在 clean commit 上重跑并归档全部证据。</p>
+</blockquote>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>配置</th><th style="text-align: right">Sign+encode</th><th style="text-align: right">decode+Verify</th><th style="text-align: right">wire</th><th>timed boundary</th></tr>
+</thead>
+<tbody>
+<tr><td>Trusted128, $\ell=5$</td><td style="text-align: right">93.774 ms</td><td style="text-align: right">47.609 ms</td><td style="text-align: right">35.06 KiB</td><td>scoped Sign 包含 key-image 生成</td></tr>
+<tr><td>Chosen256, $\ell=5$</td><td style="text-align: right">86.367 ms</td><td style="text-align: right">52.074 ms</td><td style="text-align: right">35.06 KiB</td><td>同上</td></tr>
+<tr><td>Trusted128, $\ell=10$</td><td style="text-align: right">151.975 ms</td><td style="text-align: right">79.789 ms</td><td style="text-align: right">60.08 KiB</td><td>同上</td></tr>
+<tr><td>Chosen256, $\ell=10$</td><td style="text-align: right">149.386 ms</td><td style="text-align: right">89.103 ms</td><td style="text-align: right">60.08 KiB</td><td>同上</td></tr>
+<tr><td>Batch Trusted128, $N=10,\ell=5$</td><td style="text-align: right">783.372 ms</td><td style="text-align: right">451.501 ms</td><td style="text-align: right">306.64 KiB</td><td>旧 Batch API；key image 在计时前生成</td></tr>
+<tr><td>Batch Chosen256, $N=10,\ell=5$</td><td style="text-align: right">737.818 ms</td><td style="text-align: right">422.673 ms</td><td style="text-align: right">306.64 KiB</td><td>同上</td></tr>
+</tbody>
+</table>
+</div>
+<p>这些端到端差值的方向并不一致：Chosen 的 Sign 表面更快，但单签 Verify 又更慢；原始样本还包含多个远高于中位区间的调度尖峰。两个 profile 的主导 relation/PRG hot loop 相同；Chosen 只额外吸收一个 16-byte IV transcript frame。这一极小固定差异无法解释上表方向相反的数十毫秒波动，因此不应把跨行差值当作 profile 性能因果。它们证明两个入口都可执行并产生同尺寸 wire，不是严格配对 A/B。</p>
+<p>更接近机制差异的 <code>just bench-matrix-prg</code> 每组采样 100 次。Criterion 终端 <code>time</code> 中心值是 <code>slope.point_estimate</code>，不是 JSON 里的 <code>mean.point_estimate</code>；两种估计量分开披露如下：</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>矩阵宽度</th><th style="text-align: right">seed128 slope</th><th style="text-align: right">key/IV-256 slope</th><th style="text-align: right">slope 差值</th><th style="text-align: right">seed128 mean</th><th style="text-align: right">key/IV-256 mean</th><th style="text-align: right">mean 差值</th></tr>
+</thead>
+<tbody>
+<tr><td>4,096 columns</td><td style="text-align: right">44.207 us</td><td style="text-align: right">45.003 us</td><td style="text-align: right">+1.80%</td><td style="text-align: right">44.579 us</td><td style="text-align: right">45.085 us</td><td style="text-align: right">+1.13%</td></tr>
+<tr><td>1,024 columns</td><td style="text-align: right">11.397 us</td><td style="text-align: right">11.502 us</td><td style="text-align: right">+0.91%</td><td style="text-align: right">11.929 us</td><td style="text-align: right">11.352 us</td><td style="text-align: right">-4.84%</td></tr>
+</tbody>
+</table>
+</div>
+<p>门禁收口后的最终 <code>just bench-matrix-prg</code> 诊断轮更新了上表 JSON；不同估计量在 1,024 列上给出相反方向，且每组存在较多高端 outlier，正说明不能宣称某个 profile 更快。所有差值的绝对值为 0.91%–4.84%，没有发现大幅性能损失，因此没有触发“若 Chosen profile 明显降速则回退”的条件。</p>
+<h3 id="145-与论文的一致性以及-difftxt"><a class="header" href="#145-与论文的一致性以及-difftxt">14.5 与论文的一致性以及 <code>diff.txt</code></a></h3>
+<p>根目录现在存在已跟踪的 <code>diff.txt</code>（SHA-256 <code>1d769570700962729a7201daf9b39a416a10c8d160977341d32f8e042940680a</code>）。逐字验证表明，它等于 <code>git diff 7b0a466^ 7b0a466 -- . ':(exclude)diff.txt'</code>：这是 commit <code>7b0a466</code> 的自存档历史 patch，不是“与论文原文的 diff”，也不是当前 working-tree diff；它不包含第 14.8 节的 GroupSig Setup 测量修改。当前审查因此同时对照了该历史 patch、当前 <code>git diff HEAD</code>、ASIACRYPT 2024 / ePrint 2024/1414 原文参数和本地 raw logs/metadata。若将 <code>diff.txt</code> 作为投稿 artifact 发布，必须在附近 README/manifest 明示 base/target commit；直接修改该文件会破坏它与历史 commit patch 的逐字等价。</p>
+<p>结论必须分两层：</p>
+<ul>
+<li>对 ASIACRYPT 2024 原论文应用：没有改变 ReSolveD+、RingSig、GroupSig、FDABS 的 relation、witness、参数、proof 数或零-IV 矩阵字节；通用 transcript 对零 IV 也保持旧 frame。本轮没有新增论文不符。</li>
+<li>对仓库扩展 Scope-LRS：v2 domain、profile 和非零 IV 是新方案定义，本来就不在原论文 Tables 2–7 中；它们不能被写成“复现论文的 LRS”，也不能借用原 RingSig 定理自动得到 chosen-scope unlinkability。</li>
+<li>对 Batch 扩展：当前是一份 proof 证明拼接后的直积 relation，应对该合并 relation 应用原 soundness theorem；源码已删除未经组合定理支持的 “$N\epsilon$ amplified bound” 声称，不能凭实例数自行乘一个误差项。</li>
+</ul>
+<p><code>diff.txt</code> 对 Scope-LRS/Batch 的“仓库/工程扩展”标签是正确的，其 <code>n=1280,c=8</code>、GroupSig <code>n_e=4096,k_e=3328,t_e=64</code>、ReSolveD+ <code>n=453,c=3</code> 以及 FDABS <code>L=128,K=512,k=1536</code> 也与论文文本参数一致。但它保留了两个不应原样进入新论文的历史措辞：</p>
+<ol>
+<li>“paper-aligned zero-IV matrix bytes” 超过了原文依据；原论文规定公开均匀随机矩阵，没有规定 seed/AES-CTR/IV 字节派生。当前源码和文档已收紧为“本仓库既有矩阵实例化保持逐字节不变”，不再写成论文规定的 encoding。</li>
+<li>历史 speed-table 的 <code>Security parameters</code> 列只列了 relation 参数，不足以区分 VOLE profile。当前报表已改称 <code>Relation parameters</code>，并明示 ReSolveD+ 使用 <code>ReSolveD128Var2, tau=10, w_grind=8, T_open=102</code>，其余行使用 <code>Faest128F, tau=16, w_grind=8, T_open=110</code>；原始 log 仍逐行打印实际 profile。</li>
+</ol>
+<p>第 13.4 节列出的既有 PoC/论文边界仍全部保留，特别是 degree-9 soundness 不应标成 strict 128-bit，以及论文没有本仓库 CPU 的 runtime 表。</p>
+<h3 id="146-历史遗留与尚未完整的性能对照"><a class="header" href="#146-历史遗留与尚未完整的性能对照">14.6 历史遗留与尚未完整的性能对照</a></h3>
+<p>下列代码此次没有冒充成完整结果：</p>
+<ol>
+<li><code>tests/paper_report.rs::future_report_lrs_single10_ell5</code> 只是 <code>#[allow(dead_code)]</code> 的保留函数，不是 test，也没有 <code>just</code> 入口。它还调用预计算 key image 的旧 <code>sign_lrs</code> API，且没有 RSS 测量；此次已把原来的“Peak memory O(1)”改成“只能说 B-link 列不物化”。因此它仍不能直接作为 Batch 强 baseline。</li>
+<li>Batch Scope-LRS 仍是一个 prover 持有全部 witness 的静态直积摊销，不是独立签名者的 public aggregation。它的正式速度行已清楚标记 key image 预计算，但尚无 signer-independent scoped Batch lifecycle API。</li>
+<li>冻结的 51 项 Atomic Criterion schema 显式固定 <code>ChosenScope256</code>，metadata 与生成表也明确写出该 profile。若未来要把两个 profile 都纳入 Atomic 表，必须同时升级 <code>bench_table.py</code>、完整性测试、历史 schema 编号和文档，不能悄悄多加几行。</li>
+<li><code>benches/paper_benchmarks.rs</code> 约 425–995 行仍保留早期粗粒度 suite，但 canonical <code>just bench-single/parallel</code> 强制 <code>BENCH_SUITE=atomic</code>，这些函数会在构造昂贵 fixture 前返回；源码已标为 legacy/dead，当前没有性能入口。<code>BENCH_FILTER=</code> 只取消 Atomic 名称过滤，不会错误地重新启用它们。</li>
+<li><code>just bench-gf128</code> 和 <code>just bench-matrix-prg</code> 是门禁后的机制诊断入口，但仍使用 Criterion 的 microbenchmark 口径，不具备端到端速度表的完整 source-patch/跨轮发布校验；第 14.4 节只用后者排除明显回退，不把它提升为最终应用性能表。</li>
+<li><code>docs/工程优化PERFORMANCE_OPTIMIZATION_REPORT_CN_2026-07-10.md</code> 的 §8.4、<code>docs/[历史遗留]最终性能与优化总结_20260709.md</code>、模块 12/<code>原始数据.txt</code> 的原始日志仍包含裸 <code>perf stat</code>、旧 binary 或直接 Criterion 历史命令。模块 11/12 已加现行 <code>just</code> 入口或历史免责声明；原始日志保留作为证据，不是当前入口。</li>
+<li>固定的第三方 <code>faest-ref/bench.sh</code> 属于上游子模块且根仓库从不调用；它还把 <code>git_commit</code> 错填成 timestamp，不能作为本 artifact 的发布证据。此次不修改 pinned submodule，只在最终遗留清单中排除它。</li>
+</ol>
+<p>上述遗留都不会被当前公开 recipe 静默调用。前两项是真正的功能/比较边界，最终投稿前应当补齐或从主张中降级，而不是仅修改文案；其余项要么是诊断口径，要么是明确隔离的历史/第三方材料。</p>
+<h3 id="147-本轮汇编与测试验收"><a class="header" href="#147-本轮汇编与测试验收">14.7 本轮汇编与测试验收</a></h3>
+<p>本轮的最终验收集合为：</p>
+<pre><code class="language-text">just fmt-check:    passed
+just script-tests: 19 passed
+just test:         124 passed, 0 failed, 10 ignored; integration tests passed
+just test-no-hw:   portable/no-hardware path passed
+just paper-tables: passed
+just bench-check:  passed
+just report:       passed; all low-level performance reports enter through just
+just speed-table:  10-repeat development table complete; current provenance path also passed a 3-repeat/13-row smoke
+just bench-matrix-prg: completed on AES-NI P-core
+mdbook build:      passed
+git diff --check:  passed
+</code></pre>
+<p>关键新回归包括：非零 IV 与 FAEST FFI 逐字节等价；零 IV transcript 保持不变；非零 IV 必须被吸收；artifact bundle v1 拒绝不可表达的非零 IV；两个 profile 均可单签/Batch round-trip 且不能交叉验签；shell、Criterion binary 和 ignored report 不能绕过 <code>justfile</code> 直接成为性能入口；单/全核比较缺行、wire 或 provenance 不一致时必须失败。</p>
+<p>本轮不需要为双 profile 手写汇编：非零 IV 路径复用同一 AES-NI hot loop，微基准没有发现降速。若未来继续追求极限性能，仍应按第 13.7 节的条件先做 profile-guided 采样和 intrinsics A/B，只在确认 LLVM 生成了可修复的错误调度后，才把小型 kernel 下沉到汇编。</p>
+<h3 id="148-groupsig-setup-长尾的统计收口"><a class="header" href="#148-groupsig-setup-长尾的统计收口">14.8 GroupSig Setup 长尾的统计收口</a></h3>
+<p><code>Atomic/GroupSig_ell5/Setup</code> 和 <code>Atomic/GroupSig_ell10/Setup</code> 的高方差不是“没有预热”。51 项 canonical Criterion 基准原本就共享 3 s 预热；真正原因是 Setup 每次生成两组独立的 McEliece keypair，而且这部分工作量本身是随机的：</p>
+<ol>
+<li><code>group_setup_with_rng</code> 收到的 Rust RNG 用于外层 ring setup，不控制 PQClean C keypair 内部的 <code>randombytes()</code>；在 Linux 上后者来自 OS 随机源。</li>
+<li>McEliece <code>operations.c</code> 会在 <code>genpoly_gen</code> 或 <code>pk_gen</code> 拒绝当前候选时重新展开 seed 并继续循环；不同迭代因此可以执行不同次数的重试。</li>
+<li>多核路径使用 <code>rayon::join</code> 并行这两次单线程 keypair；操作系统调度，特别是混合 P/E 核主机上的调度，会进一步放大墙钟时间的长尾。</li>
+</ol>
+<p>因此，此次没有删除 outlier，也没有用确定性 seed ABI 把真实拒绝采样替换为人工固定工作量。修改只发生在 benchmark harness 和报表层：两个 GroupSig Setup 都固定为 <code>SamplingMode::Flat</code>、50 个 sample 和 5 s measurement target。<code>Flat</code> 使每个 sample 使用同一迭代数，便于直接审计归一化后的长尾分布；它不会消除、截断或“修复”真实随机方差。Setup 登记完成后，harness 立即恢复全局 <code>SamplingMode::Auto</code>、10 samples 和 5 s measurement；所以其余 49 项，包括 GroupSig KeyGen/Sign/Verify/Open，仍使用原有采样策略和 3 s 预热。</p>
+<p>报表对这两项同时读取 Criterion <code>median.point_estimate</code> 及其 95% 置信区间，并从 <code>sample.json</code> 将每个 sample 的总时间除以迭代数，报告归一化 mean、P95、CV 和 min–max。若一个 sample 含多次迭代，后四者描述的是“sample 内均值”的分布，不是单次 Setup 的原始 P95。报表还会核对 metadata 中的 Flat mode、sample 数和 measurement target，防止将旧口径误当成新口径。</p>
+<p>不同轮次的 OS-randomized keypair 没有配对随机输入，所以 before/after 可以并列原始中位数和分布，但不计算看似精确的 Setup speedup/improvement。GroupSig Setup 是一次性随机化阶段，其数值不用于论证主要 Sign/Verify 性能优势；主要在线性能结论因此不会被这个高方差的一次性阶段统计放大或掩盖。</p>
+<p>这一收口没有修改 <code>src/</code> 中的生产 RNG、McEliece 生成逻辑、GroupSig 代数关系、transcript、参数或 wire，也没有改变 Sign/Verify 热路径。完整性能验收仍只从 <code>justfile</code> 进入：<code>just bench-single</code> 和 <code>just bench-parallel</code> 分别采集单 P-core 与全核的 51 项 canonical Criterion，<code>just bench-both</code> 连续完成两者。<code>just speed-table*</code> 是另一套端到端口径，不能替代本节的完整 Criterion 验收。</p>
 
                     </main>
 

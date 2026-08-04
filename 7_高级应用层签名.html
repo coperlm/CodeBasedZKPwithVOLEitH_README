@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-c9994b1b.js";
+            window.path_to_searchindex_js = "searchindex-57bf697a.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-86594551.js"></script>
@@ -563,13 +563,27 @@ Output: FdabsSignature
 </table>
 </div>
 <h2 id="四scope-lrs-工程扩展"><a class="header" href="#四scope-lrs-工程扩展">四、Scope-LRS 工程扩展</a></h2>
-<p><code>LinkableRingPublicKey</code> 在环签名公钥的基础上增加 <code>context_id</code>、链接矩阵 <code>b_link_cols</code> 与 key image。链接矩阵种子由 <code>context_id</code>、矩阵维度和叶秘密长度经 Keccak-256 确定性派生；因此验证者可检查矩阵与 scope 的对应关系。</p>
+<p><code>LinkableRingPublicKey</code> 在环签名公钥的基础上增加 <code>context_id</code>、链接矩阵 <code>b_link_cols</code>、矩阵派生 profile 与 key image。链接矩阵材料由 <code>context_id</code>、矩阵维度、叶秘密长度和 profile 经 Keccak-256 确定性派生；因此验证者可检查矩阵、profile 与 scope 的对应关系。</p>
+<p>当前保留两种显式 profile，而不是把不同假设混成一条性能数据：</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Profile</th><th>公开矩阵材料</th><th>适用模型</th><th>声明边界</th></tr>
+</thead>
+<tbody>
+<tr><td><code>TrustedScope128</code></td><td>Keccak digest 前 128 bit，AES IV 固定为零</td><td>scope 由可信方在有界命名空间中规范发放</td><td>接受约 $q(q-1)/2^{129}$ 的有限规模 seed 碰撞概率；不声称抵抗攻击者搜索任意 scope pair</td></tr>
+<tr><td><code>ChosenScope256</code></td><td>完整 256-bit digest，拆为公开 AES-128 key 与 128-bit IV</td><td>攻击者可选择 scope</td><td>消除先截断为 128-bit seed 所带来的直接 $2^{64}$ 生日瓶颈，但仍不自动给出跨 scope 不可链接性归约</td></tr>
+</tbody>
+</table>
+</div>
+<p>两种 profile 只改变公开矩阵派生；代数关系、witness、约束数、key-image 长度与签名 wire 大小不变。profile id、矩阵 key 和 IV 都绑定到 Fiat–Shamir transcript，两个 profile 的签名不能交叉验证。无 profile 参数的构造入口默认选择 <code>ChosenScope256</code>。</p>
+<p>这两个名称都属于 Scope-LRS v2 transcript。<code>TrustedScope128</code> 保留的是旧 128-bit 矩阵派生假设，不是对仓库早期实验性 v1 Scope-LRS 签名或矩阵字节的兼容承诺。v2 显式分离 profile 并拒绝交叉验签；ReSolveD+、RingSig、GroupSig 和 FDABS 使用的论文对齐零 IV 矩阵仍逐字节不变。</p>
 <p>对叶秘密 $x=(x_0|x_1)$，代码计算</p>
 <p>$$
 I=B_{\mathrm{link}}\cdot\operatorname{RE}(x),
 $$</p>
-<p>并将 $I$、<code>context_id</code> 和环公钥吸收到 statement digest。签名显式携带 <code>key_image</code>；验证时先检查其等于公钥中的 $I$，再验证包含 Merkle 关系和链接关系的零知识证明。由同一叶秘密和相同 <code>context_id</code> 得到的 key image 相同，因此可作为该 scope 内的链接标识。</p>
-<p>批量接口 <code>sign_lrs_batch</code> 将各实例 witness 顺序拼接，使用一次 <code>VoleitHProver::commit</code>，并按实例偏移量分别计算关系值。批量签名携带一组 key images；<code>verify_lrs_batch</code> 检查它们与每个实例的公开 key image 对应。该接口属于仓库的工程扩展，模块十单独列出其性能记录。</p>
+<p>并将 $I$、<code>context_id</code>、profile 和环公钥吸收到 statement digest。正式 scoped API 的签名显式携带 <code>key_image</code>；验证者只需要 signer-independent <code>LinkableRingContext</code>，再从签名取得 $I$ 并验证包含 Merkle 关系和链接关系的零知识证明。由同一叶秘密、相同 <code>context_id</code> 和相同 profile 得到的 key image 相同，因此可作为该 scope 内的链接标识。</p>
+<p>批量接口 <code>sign_lrs_batch</code> 将各实例 witness 顺序拼接，使用一次 <code>VoleitHProver::commit</code>，并按实例偏移量分别计算关系值。批量签名携带一组 key images；<code>verify_lrs_batch</code> 检查它们与每个实例的公开 key image 对应。该接口属于仓库的工程扩展，仍使用预计算 key image 的旧 Batch API，而不是 signer-independent scoped Batch lifecycle。<code>just speed-table</code> 分别测量两个 profile，并在表头披露这一计时边界。</p>
 <h2 id="五总结对比"><a class="header" href="#五总结对比">五、总结对比</a></h2>
 <div class="table-wrapper">
 <table>

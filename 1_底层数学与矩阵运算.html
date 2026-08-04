@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-c9994b1b.js";
+            window.path_to_searchindex_js = "searchindex-57bf697a.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-86594551.js"></script>
@@ -238,7 +238,7 @@ $$</p>
 B \in \mathbb{F}_2^{n \times m}, \quad n = 1280,\ m = (1280/8)\cdot 2^8 = 40960
 $$</p>
 <p>若直接物化，该单个矩阵约为 $1280 \times 40960\text{ bits}=6.25\text{ MiB}$（不计容器开销）。上层关系会在求值时反复访问这类矩阵；完整保存多张矩阵会增大内存占用并降低缓存局部性。应用层的种子派生矩阵与 FAEST 的 VOLE/BAVC 树是不同对象：前者服务于 AFS 哈希和线性关系，后者服务于 VOLE 承诺与打开。</p>
-<p>本实现采用列式伪随机流式生成，不存储整个矩阵，而是存储一个 128-bit 种子，在需要某一列时即时计算。</p>
+<p>本实现采用列式伪随机流式生成，不存储整个矩阵，而是存储一个 128-bit AES key、一个 128-bit IV 和维度。论文对齐矩阵的 IV 为零；Scope-LRS <code>ChosenScope256</code> 允许非零 IV。某一列仍只在被请求时即时计算。</p>
 <h3 id="32-核心数据结构与公式-代码映射"><a class="header" href="#32-核心数据结构与公式-代码映射">3.2 核心数据结构与公式-代码映射</a></h3>
 <div class="table-wrapper">
 <table>
@@ -246,8 +246,9 @@ $$</p>
 <tr><th>数学符号</th><th>代码对应</th><th>说明</th></tr>
 </thead>
 <tbody>
-<tr><td>$B \in \mathbb{F}_2^{n \times m}$</td><td><code>StreamingMatrixCols</code></td><td>不存储矩阵本身，仅持有种子和维度信息</td></tr>
-<tr><td>种子 $\sigma$</td><td><code>seed: [u8; 16]</code></td><td>128-bit PRG 种子，用于确定性扩展</td></tr>
+<tr><td>$B \in \mathbb{F}_2^{n \times m}$</td><td><code>StreamingMatrixCols</code></td><td>不存储矩阵本身，仅持有 AES key/IV 和维度信息</td></tr>
+<tr><td>种子/AES key $\sigma$</td><td><code>seed: [u8; 16]</code></td><td>128-bit AES key，用于确定性扩展</td></tr>
+<tr><td>初始计数器 $\nu$</td><td><code>iv: [u8; 16]</code></td><td>论文对齐路径为零；256-bit 派生路径使用后 128 bit</td></tr>
 <tr><td>行数 $n$</td><td><code>rows: usize</code></td><td>矩阵行数</td></tr>
 <tr><td>列数 $m$</td><td><code>cols: usize</code></td><td>矩阵列数</td></tr>
 <tr><td>$B_{:,j}$（第 $j$ 列）</td><td><code>column(j) -&gt; BitVec</code></td><td>按需生成第 $j$ 列</td></tr>
@@ -259,11 +260,11 @@ $$</p>
 <pre class="mermaid">graph TD
     subgraph SMC [StreamingMatrixCols&lt;br&gt;核心逻辑]
         direction TB
-        A[seed: 16 Bytes] --&gt;|初始化 MatrixPrg| B(AES-128 密钥扩展)
+        A[key: 16 Bytes&lt;br&gt;IV: 16 Bytes] --&gt;|初始化 MatrixPrg| B(AES-128 密钥扩展)
         B --&gt; C[(round_keys 11轮子密钥)]
         C --&gt;|全局复用密钥| E{AES-CTR 生成器}
         Req[外部按需请求 column j] -.-&gt;|传入 col_idx = j| E
-        E --&gt; |"counter = j&lt;br&gt;nonce = 0"| F[fill_column_bytes]
+        E --&gt; |"upper word += column j&lt;br&gt;low word += block index"| F[fill_column_bytes]
         F --&gt;|生成 n/8 字节&lt;br&gt;并清除尾部无效比特| G[/BitVec 列向量/]
     end
     style SMC fill:none,stroke:#666,stroke-width:2px,stroke-dasharray:5,5
@@ -273,15 +274,15 @@ $$</p>
 
 <h3 id="34-内存管理策略详解"><a class="header" href="#34-内存管理策略详解">3.4 内存管理策略详解</a></h3>
 <h4 id="策略一按需生成不存储完整矩阵"><a class="header" href="#策略一按需生成不存储完整矩阵">策略一：按需生成，不存储完整矩阵</a></h4>
-<p>矩阵默认不完整存储在内存中。<code>StreamingMatrixCols</code> 保存 16 字节种子、维度、尾部掩码和 PRG 状态；每次调用 <code>column(j)</code> 生成一列的 $n$ 个比特，完成计算后释放临时列数据。因此主要工作空间从物化矩阵的 $\mathcal{O}(nm)$ 降为一列缓冲区和 PRG 状态，具体字节数随所选实现路径而变。</p>
+<p>矩阵默认不完整存储在内存中。<code>StreamingMatrixCols</code> 保存 16 字节 key、16 字节 IV、维度、尾部掩码和 PRG 状态；每次调用 <code>column(j)</code> 生成一列的 $n$ 个比特，完成计算后释放临时列数据。因此主要工作空间从物化矩阵的 $\mathcal{O}(nm)$ 降为一列缓冲区和 PRG 状态，具体字节数随所选实现路径而变。这只是矩阵物化的空间边界，不是整个签名过程的 peak-RSS $\mathcal{O}(1)$ 声称。</p>
 <h4 id="策略二延迟生成"><a class="header" href="#策略二延迟生成">策略二：延迟生成</a></h4>
 <p><code>fill_column_bytes</code> 使用按需填充模式。只有 <code>column(j)</code> 或 <code>fill_column_bytes</code> 被显式调用时，数据才被生成。<code>materialize()</code> 提供完整矩阵的参考接口，主要用于测试和等价性验证；在线签名与验证的主要路径通过列缓冲区逐列处理矩阵。</p>
 <h4 id="策略三aes-ctr-作为向量-prg"><a class="header" href="#策略三aes-ctr-作为向量-prg">策略三：AES-CTR 作为向量 PRG</a></h4>
-<p>每一列 $B_{:,j}$ 通过 AES-128 在 CTR 模式下生成：</p>
+<p>每一列 $B_{:,j}$ 通过 AES-128 在 FAEST PRG 的 CTR 布局下生成。记 $\nu[j,k]$ 为在公开 IV $\nu$ 的高 32-bit little-endian word 上加列 tweak $j$，并在低 32-bit word 上加块序号 $k$ 得到的计数器，则：</p>
 <p>$$
-B_{:,j} = \text{AES}_\sigma(\text{ctr}=j || \text{nonce}=0) ; | ; \text{AES}_\sigma(\text{ctr}=j || \text{nonce}=1) ; | ; \cdots
+B_{:,j} = \text{AES}_\sigma(\nu[j,0]) ; | ; \text{AES}_\sigma(\nu[j,1]) ; | ; \cdots
 $$</p>
-<p>其中 $\sigma$ 是 16 字节种子。每个 AES 块产生 128 位伪随机输出，因此生成 $n$ 位列向量需要 $\lceil n/128 \rceil$ 次 AES 加密调用。</p>
+<p>其中 $\sigma$ 是 16 字节 AES key。旧构造器固定 $\nu=0$，新的 256-bit 材料构造器将前/后 16 字节分别用作 $\sigma/\nu$。每个 AES 块产生 128 位伪随机输出，因此生成 $n$ 位列向量需要 $\lceil n/128 \rceil$ 次 AES 加密调用。</p>
 <p>关键优化细节：</p>
 <ul>
 <li>密钥扩展一次：<code>expand_key</code> 在构造 <code>MatrixPrg</code> 时把种子扩展为 11 轮子密钥，后续 <code>fill_column_bytes</code> 的每次 AES 加密都复用这些轮密钥，避免重复扩展。</li>
@@ -402,7 +403,7 @@ fn test_streaming_matrix_is_deterministic() {
 <tr><td>$\mathbb{F}_{2^{128}}$ 乘法</td><td>CLMUL/PMULL 硬件指令</td><td>~0.5 ms / 万次</td></tr>
 <tr><td>矩阵列生成（$n=1280$）</td><td>AES-CTR, 约 10 个 AES 块</td><td>&lt; 1 μs / 列</td></tr>
 <tr><td>$y = Bx$ 稀疏乘法（$w=320$）</td><td>字节级 XOR 累加</td><td>&lt; 50 ms / 次</td></tr>
-<tr><td>矩阵全物化</td><td>从不发生</td><td>内存占用从 12.5 MB → 32 字节</td></tr>
+<tr><td>矩阵全物化</td><td>在主要在线路径不发生</td><td>从 $\mathcal{O}(nm)$ 物化降为 $\mathcal{O}(n)$ 列缓冲 + $\mathcal{O}(1)$ 描述符/PRG 状态；不声称整个过程 peak RSS 为常数</td></tr>
 </tbody>
 </table>
 </div>

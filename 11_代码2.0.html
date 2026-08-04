@@ -57,7 +57,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-c9994b1b.js";
+            window.path_to_searchindex_js = "searchindex-57bf697a.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-86594551.js"></script>
@@ -256,7 +256,7 @@
 </table>
 </div>
 <h2 id="batch-scope-lrs-结果单核"><a class="header" href="#batch-scope-lrs-结果单核">Batch Scope-LRS 结果（单核）</a></h2>
-<p>本测试同样固定 <code>RAYON_NUM_THREADS=1</code>，参数为 <code>ell=5</code>、每批 <code>N=10</code> 条独立消息。运行命令为 <code>RAYON_NUM_THREADS=1 cargo bench --bench paper_benchmarks -- 'BatchedScopeLRS_N10_ell5_{sign,verify}' --sample-size 10</code>。为控制单核批量操作的运行时间，本次 Criterion 测试显式使用 <code>--sample-size 10</code>；下表时间均为<strong>一整批 10 条签名</strong>的总耗时，最后一列为按 10 条均摊的 point estimate。该批量接口不提供逐阶段原子分解，故不并入上方“原子阶段结果”表。</p>
+<p>本测试同样固定 <code>RAYON_NUM_THREADS=1</code>，参数为 <code>ell=5</code>、每批 <code>N=10</code> 条独立消息。历史快照当时由裸 Criterion 命令生成；该旧入口不再支持，也不能复刻当前双 profile 的计时边界。当前唯一公开复现实验使用 <code>just speed-table</code>（Batch Trusted/Chosen 都会输出）或 <code>just bench-single</code>（冻结的 Atomic Batch schema）。为控制单核批量操作的运行时间，历史测试使用 10 个 Criterion samples；下表时间均为<strong>一整批 10 条签名</strong>的总耗时，最后一列为按 10 条均摊的 point estimate。该批量接口不提供逐阶段原子分解，故不并入上方“原子阶段结果”表。</p>
 <div class="table-wrapper">
 <table>
 <thead>
